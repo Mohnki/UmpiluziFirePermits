@@ -65,9 +65,6 @@ const farmFormSchema = z.object({
   description: z.string().optional(),
   areaId: z.string().min(1, "Please select an area"),
   address: z.string().min(5, "Address must be at least 5 characters"),
-  latitude: z.coerce.number().min(-90).max(90),
-  longitude: z.coerce.number().min(-180).max(180),
-  size: z.coerce.number().min(0).optional(),
 });
 
 type FarmFormValues = z.infer<typeof farmFormSchema>;
@@ -90,9 +87,6 @@ export default function ManageFarms() {
       description: "",
       areaId: "",
       address: "",
-      latitude: 0,
-      longitude: 0,
-      size: undefined,
     },
   });
   
@@ -135,9 +129,6 @@ export default function ManageFarms() {
       description: farm.description || "",
       areaId: farm.areaId,
       address: farm.location.address,
-      latitude: farm.location.latitude,
-      longitude: farm.location.longitude,
-      size: farm.size,
     });
     
     setFormDialogOpen(true);
@@ -152,9 +143,6 @@ export default function ManageFarms() {
       description: "",
       areaId: "",
       address: "",
-      latitude: 0,
-      longitude: 0,
-      size: undefined,
     });
     
     setFormDialogOpen(true);
@@ -172,11 +160,8 @@ export default function ManageFarms() {
         description: values.description,
         areaId: values.areaId,
         location: {
-          latitude: values.latitude,
-          longitude: values.longitude,
           address: values.address,
         },
-        size: values.size,
       };
       
       if (editingFarm) {
@@ -391,66 +376,6 @@ export default function ManageFarms() {
                   )}
                 />
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="latitude"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Latitude</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            step="any" 
-                            placeholder="e.g. -25.123456" 
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="longitude"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Longitude</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            step="any" 
-                            placeholder="e.g. 31.123456" 
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <FormField
-                  control={form.control}
-                  name="size"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Farm Size (hectares, optional)</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          step="any" 
-                          placeholder="Size in hectares" 
-                          {...field} 
-                          value={field.value || ""}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
                 <DialogFooter className="mt-6">
                   <Button 
                     type="button" 
@@ -514,9 +439,6 @@ export default function ManageFarms() {
                     <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
                     <span>{farm.location.address}</span>
                   </div>
-                  {farm.size && (
-                    <p className="text-sm">Size: {farm.size} hectares</p>
-                  )}
                 </div>
               </CardContent>
               <CardFooter className="justify-end space-x-2">

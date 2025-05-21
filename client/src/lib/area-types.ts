@@ -36,11 +36,8 @@ export interface Farm {
   description?: string;
   areaId: string; // The area in which the farm is located
   location: {
-    latitude: number;
-    longitude: number;
     address: string;
   };
-  size?: number; // Size in hectares (optional)
   createdAt: Date;
   updatedAt: Date;
 }

@@ -14,7 +14,9 @@ import {
   updateArea, 
   updateBurnType,
   deleteArea,
-  deleteBurnType
+  deleteBurnType,
+  updateAreaBurnTypes,
+  getAreaById
 } from "@/lib/area-service";
 import { Area, BurnType } from "@/lib/area-types";
 
@@ -74,8 +76,20 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { UserRole } from "@/lib/roles";
-import { Loader2, User, Plus, Trash, Pencil, MapPin, Flame } from "lucide-react";
+import { 
+  Loader2, 
+  User, 
+  Plus, 
+  Trash, 
+  Pencil, 
+  MapPin, 
+  Flame, 
+  CheckCircle2, 
+  XCircle, 
+  Info 
+} from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -114,6 +128,11 @@ export default function AdminPage() {
   const [loadingBurnTypes, setLoadingBurnTypes] = useState(true);
   const [burnTypeDialogOpen, setBurnTypeDialogOpen] = useState(false);
   const [editingBurnTypeId, setEditingBurnTypeId] = useState<string | null>(null);
+  
+  // Area permissions state
+  const [selectedArea, setSelectedArea] = useState<Area | null>(null);
+  const [burnTypePermissions, setBurnTypePermissions] = useState<{ [key: string]: boolean }>({});
+  const [savingPermissions, setSavingPermissions] = useState(false);
 
   // Area form
   const areaForm = useForm<z.infer<typeof areaFormSchema>>({
@@ -488,6 +507,7 @@ export default function AdminPage() {
                 <TabsTrigger value="users">User Management</TabsTrigger>
                 <TabsTrigger value="areas">Areas</TabsTrigger>
                 <TabsTrigger value="burn-types">Burn Types</TabsTrigger>
+                <TabsTrigger value="area-permissions">Area Permissions</TabsTrigger>
               </TabsList>
               
               {/* User Management Tab */}

@@ -18,18 +18,8 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
-import { 
-  Table, 
-  TableBody, 
-  TableCaption, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   FileCheck, 
   FileX, 
@@ -200,152 +190,68 @@ export default function MyPermits() {
               </div>
             </div>
             
-            <Tabs defaultValue="active" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="active" className="flex items-center">
-                  <FileCheck className="h-4 w-4 mr-2" />
-                  <span>Active</span>
-                  {activePermits.length > 0 && (
-                    <Badge variant="secondary" className="ml-2">{activePermits.length}</Badge>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="pending" className="flex items-center">
-                  <FileClock className="h-4 w-4 mr-2" />
-                  <span>Pending</span>
-                  {pendingPermits.length > 0 && (
-                    <Badge variant="secondary" className="ml-2">{pendingPermits.length}</Badge>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="rejected" className="flex items-center">
-                  <FileX className="h-4 w-4 mr-2" />
-                  <span>Rejected</span>
-                  {rejectedPermits.length > 0 && (
-                    <Badge variant="secondary" className="ml-2">{rejectedPermits.length}</Badge>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="completed" className="flex items-center">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  <span>Completed</span>
-                  {completedPermits.length > 0 && (
-                    <Badge variant="secondary" className="ml-2">{completedPermits.length}</Badge>
-                  )}
-                </TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="active" className="mt-6">
-                {activePermits.length === 0 ? (
-                  <Card>
-                    <CardContent className="pt-6 text-center">
-                      <FileCheck className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-                      <h3 className="text-lg font-medium mb-2">No Active Permits</h3>
-                      <p className="text-muted-foreground mb-4">
-                        You don't have any active burn permits for today.
-                      </p>
-                      <Button asChild>
-                        <a href="/apply-permit">Apply for a Permit</a>
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <div className="space-y-4">
-                    {activePermits.map(permit => (
-                      <PermitCard 
-                        key={permit.id} 
-                        permit={permit}
-                        areaName={getAreaName(permit.areaId)}
-                        burnTypeName={getBurnTypeName(permit.burnTypeId)}
-                        statusIcon={getStatusIcon(permit.status)}
-                        statusBadgeVariant={getStatusBadgeVariant(permit.status)}
-                      />
-                    ))}
-                  </div>
+            <div className="mb-4">
+              <h2 className="text-xl font-bold flex items-center">
+                <FileCheck className="h-5 w-5 mr-2 text-primary" />
+                Today's Active Permits
+                {activePermits.length > 0 && (
+                  <Badge variant="secondary" className="ml-2">{activePermits.length}</Badge>
                 )}
-              </TabsContent>
-              
-              <TabsContent value="pending" className="mt-6">
-                {pendingPermits.length === 0 ? (
-                  <Card>
-                    <CardContent className="pt-6 text-center">
-                      <FileClock className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-                      <h3 className="text-lg font-medium mb-2">No Pending Permits</h3>
-                      <p className="text-muted-foreground mb-4">
-                        You don't have any pending burn permit applications.
-                      </p>
-                      <Button asChild>
-                        <a href="/apply-permit">Apply for a Permit</a>
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <div className="space-y-4">
-                    {pendingPermits.map(permit => (
-                      <PermitCard 
-                        key={permit.id} 
-                        permit={permit}
-                        areaName={getAreaName(permit.areaId)}
-                        burnTypeName={getBurnTypeName(permit.burnTypeId)}
-                        statusIcon={getStatusIcon(permit.status)}
-                        statusBadgeVariant={getStatusBadgeVariant(permit.status)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-              
-              <TabsContent value="rejected" className="mt-6">
-                {rejectedPermits.length === 0 ? (
-                  <Card>
-                    <CardContent className="pt-6 text-center">
-                      <FileX className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-                      <h3 className="text-lg font-medium mb-2">No Rejected Permits</h3>
-                      <p className="text-muted-foreground mb-4">
-                        You don't have any rejected burn permit applications.
-                      </p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <div className="space-y-4">
-                    {rejectedPermits.map(permit => (
-                      <PermitCard 
-                        key={permit.id} 
-                        permit={permit}
-                        areaName={getAreaName(permit.areaId)}
-                        burnTypeName={getBurnTypeName(permit.burnTypeId)}
-                        statusIcon={getStatusIcon(permit.status)}
-                        statusBadgeVariant={getStatusBadgeVariant(permit.status)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-              
-              <TabsContent value="completed" className="mt-6">
-                {completedPermits.length === 0 ? (
-                  <Card>
-                    <CardContent className="pt-6 text-center">
-                      <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-                      <h3 className="text-lg font-medium mb-2">No Completed Permits</h3>
-                      <p className="text-muted-foreground mb-4">
-                        You don't have any completed burn permits.
-                      </p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <div className="space-y-4">
-                    {completedPermits.map(permit => (
-                      <PermitCard 
-                        key={permit.id} 
-                        permit={permit}
-                        areaName={getAreaName(permit.areaId)}
-                        burnTypeName={getBurnTypeName(permit.burnTypeId)}
-                        statusIcon={getStatusIcon(permit.status)}
-                        statusBadgeVariant={getStatusBadgeVariant(permit.status)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
+              </h2>
+            </div>
+            
+            <div>
+              {activePermits.length === 0 ? (
+                <Card>
+                  <CardContent className="pt-6 text-center">
+                    <FileCheck className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+                    <h3 className="text-lg font-medium mb-2">No Active Permits For Today</h3>
+                    <p className="text-muted-foreground mb-4">
+                      You don't have any active burn permits for today.
+                    </p>
+                    <Button asChild>
+                      <a href="/apply-permit">Apply for a Permit</a>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-4">
+                  {activePermits.map(permit => (
+                    <PermitCard 
+                      key={permit.id} 
+                      permit={permit}
+                      areaName={getAreaName(permit.areaId)}
+                      burnTypeName={getBurnTypeName(permit.burnTypeId)}
+                      statusIcon={getStatusIcon(permit.status)}
+                      statusBadgeVariant={getStatusBadgeVariant(permit.status)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {historyPermits.length > 0 && (
+              <div className="mt-12">
+                <h2 className="text-xl font-bold flex items-center mb-4">
+                  <Calendar className="h-5 w-5 mr-2 text-primary" />
+                  Permit History
+                  <Badge variant="secondary" className="ml-2">{historyPermits.length}</Badge>
+                </h2>
+                
+                <div className="space-y-4">
+                  {historyPermits.map(permit => (
+                    <PermitCard 
+                      key={permit.id} 
+                      permit={permit}
+                      areaName={getAreaName(permit.areaId)}
+                      burnTypeName={getBurnTypeName(permit.burnTypeId)}
+                      statusIcon={getStatusIcon(permit.status)}
+                      statusBadgeVariant={getStatusBadgeVariant(permit.status)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
             
             {permits.length === 0 && (
               <div className="text-center mt-8">
@@ -421,17 +327,23 @@ function PermitCard({ permit, areaName, burnTypeName, statusIcon, statusBadgeVar
         {permit.status === "rejected" && permit.rejectionReason && (
           <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-md">
             <h4 className="text-sm font-medium text-red-800 dark:text-red-300 mb-1">Reason for Rejection</h4>
-            <p className="text-sm text-red-700 dark:text-red-400">{permit.rejectionReason}</p>
+            <p className="text-sm text-red-600 dark:text-red-400">{permit.rejectionReason}</p>
           </div>
         )}
       </CardContent>
-      
-      <CardFooter className="text-xs text-muted-foreground border-t pt-4">
-        <div className="w-full flex justify-between">
-          <span>Applied: {format(new Date(permit.createdAt), "MMM d, yyyy")}</span>
-          <span>Permit ID: {permit.id.slice(0, 8)}</span>
-        </div>
-      </CardFooter>
     </Card>
   );
+}
+
+// Function to check if a date is in a range
+function isDateInRange(date: Date, start: Date, end: Date): boolean {
+  const checkDate = new Date(date);
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  
+  checkDate.setHours(0, 0, 0, 0);
+  startDate.setHours(0, 0, 0, 0);
+  endDate.setHours(0, 0, 0, 0);
+  
+  return checkDate >= startDate && checkDate <= endDate;
 }

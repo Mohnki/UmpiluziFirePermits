@@ -42,6 +42,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Popover,
   PopoverContent,
@@ -67,6 +68,9 @@ const permitFormSchema = z.object({
     address: z.string().optional(),
   }),
   details: z.string().min(10, "Please provide at least 10 characters of details about your burn"),
+  acceptDisclaimer: z.boolean().refine(val => val === true, {
+    message: "You must accept the disclaimer before proceeding",
+  }),
 });
 
 // Fix Leaflet icon issues
@@ -153,6 +157,7 @@ export default function ApplyPermitPage() {
         latitude: 0,
         longitude: 0,
       },
+      acceptDisclaimer: false,
     },
   });
 
@@ -600,6 +605,73 @@ export default function ApplyPermitPage() {
                                 Include information about the size of the area to be burned, safety measures in place, etc.
                               </FormDescription>
                               <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <div className="border rounded-md p-4 mb-6 bg-gray-50 dark:bg-gray-800/50 max-h-80 overflow-y-auto">
+                          <h3 className="font-semibold mb-2">Disclaimer</h3>
+                          <div className="text-sm text-gray-700 dark:text-gray-300 space-y-4">
+                            <p>Please read this disclaimer carefully before using the Alasia Marketing permit management app ("the App"). By using the App, you agree to the terms and conditions stated below.</p>
+                            
+                            <div className="space-y-2">
+                              <p className="font-medium">1. Facilitation of Permit Management</p>
+                              <p>The App developed by Alasia Marketing is intended to facilitate the management of burning permits on behalf of the local authority. Alasia Marketing does not issue permits directly. The App serves as a tool for users to manage their permits in accordance with the rules and regulations of the Fire Protection Associations (FPAs) and applicable legislation.</p>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <p className="font-medium">2. No Permit Issuance Responsibility</p>
+                              <p>Alasia Marketing explicitly states that it does not issue burning permits. The issuance of permits is solely the responsibility of the local authority and/or the relevant FPA. Alasia Marketing acts as a facilitator in managing the permits, providing a platform for users to apply for, receive, and track their permits.</p>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <p className="font-medium">3. No Liability for Permit Compliance</p>
+                              <p>By using the App, users acknowledge and agree that they are solely responsible for their compliance with the rules and regulations of the FPA and all applicable legislation. Alasia Marketing will not be held responsible for any non-compliance or violation of FPA rules, regulations, or any legal obligations by the users of the App.</p>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <p className="font-medium">4. No Warranty or Endorsement</p>
+                              <p>Alasia Marketing provides the App "as is" without any warranties or guarantees of any kind, either expressed or implied. While every effort is made to ensure the accuracy and reliability of the App, Alasia Marketing does not warrant or endorse the completeness, reliability, or suitability of the information and materials provided within the App.</p>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <p className="font-medium">5. Limitation of Liability</p>
+                              <p>In no event shall Alasia Marketing be liable for any direct, indirect, incidental, consequential, or special damages arising out of or in connection with the use or inability to use the App or the information provided within it. This limitation of liability applies to all damages, including, but not limited to, damages for loss of data, loss of profits, or interruption of business.</p>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <p className="font-medium">6. Use at Your Own Risk</p>
+                              <p>The use of the App is entirely at your own risk. Alasia Marketing shall not be responsible for any damage to your device, data loss, or any other harm that may arise from the use of the App.</p>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <p className="font-medium">7. Compliance with Laws</p>
+                              <p>Users of the App are responsible for complying with all applicable laws, rules, and regulations, including those related to burning permits, fire safety, and environmental protection.</p>
+                            </div>
+                            
+                            <p>By using the App, you acknowledge that you have read and understood this disclaimer and agree to its terms and conditions. If you do not agree with any part of this disclaimer, please refrain from using the App.</p>
+                            
+                            <p>This disclaimer is subject to change without notice. It is your responsibility to review and understand the most up-to-date version of the disclaimer before using the App.</p>
+                          </div>
+                        </div>
+                        
+                        <FormField
+                          control={form.control}
+                          name="acceptDisclaimer"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 mb-6">
+                              <FormControl>
+                                <Checkbox 
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel className="font-medium cursor-pointer">
+                                  I have read and agree to the disclaimer
+                                </FormLabel>
+                                <FormMessage />
+                              </div>
                             </FormItem>
                           )}
                         />

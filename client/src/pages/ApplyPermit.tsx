@@ -120,8 +120,8 @@ function LocationPicker({ position, setPosition }: {
   return (
     <div className="w-full h-full">
       <MapContainer 
-        center={position || [-26.5, 31.5]} // Default to Eswatini area
-        zoom={position ? 13 : 8} 
+        center={position || [-26.233070192235484, 30.497703552246097]} // Default to specified coordinates
+        zoom={position ? 13 : 9} 
         style={{ height: '100%', width: '100%' }}
         scrollWheelZoom={true}
         zoomControl={true}

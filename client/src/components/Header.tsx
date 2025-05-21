@@ -45,9 +45,14 @@ export default function Header() {
           <ThemeToggle />
           <LoginButton />
           {user && (
-            <a href="#apply">
-              <Button className="bg-primary text-white hover:bg-primary/90">Apply for Permit</Button>
-            </a>
+            <>
+              <Link href="/my-farms">
+                <Button variant="outline">My Farms</Button>
+              </Link>
+              <Link href="/apply-permit">
+                <Button className="bg-primary text-white hover:bg-primary/90">Apply for Permit</Button>
+              </Link>
+            </>
           )}
         </div>
 
@@ -103,14 +108,18 @@ export default function Header() {
               Contact
             </a>
             {user && (
-              <a 
-                href="#apply" 
-                onClick={closeMobileMenu}
-              >
-                <Button className="w-full bg-primary text-white hover:bg-primary/90">
-                  Apply for Permit
-                </Button>
-              </a>
+              <>
+                <Link href="/my-farms" onClick={closeMobileMenu}>
+                  <Button variant="outline" className="w-full mb-2">
+                    My Farms
+                  </Button>
+                </Link>
+                <Link href="/apply-permit" onClick={closeMobileMenu}>
+                  <Button className="w-full bg-primary text-white hover:bg-primary/90">
+                    Apply for Permit
+                  </Button>
+                </Link>
+              </>
             )}
           </div>
         </div>

@@ -140,18 +140,48 @@ export default function MyPermits() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   
+  console.log("Current date:", today.toISOString());
+  
+  // Log each permit's dates for debugging
+  permits.forEach(p => {
+    console.log(`Permit ${p.id.substring(0, 8)}: status=${p.status}, startDate=${new Date(p.startDate).toISOString()}, endDate=${new Date(p.endDate).toISOString()}`);
+  });
+  
+  // Helper function to check if a date is today (ignoring time)
+  const isToday = (date: Date): boolean => {
+    const d = new Date(date);
+    return d.getDate() === today.getDate() && 
+           d.getMonth() === today.getMonth() && 
+           d.getFullYear() === today.getFullYear();
+  };
+  
+  // Helper to convert Firebase timestamp to date with consistent time zone handling
+  const normalizeDate = (dateString: string | Date): Date => {
+    const date = new Date(dateString);
+    // Create a new date using UTC components but in local time
+    return new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate()
+    );
+  };
+  
   // Group permits - focus only on today's active permits
-  const activePermits = permits.filter(p => 
-    p.status === "approved" && 
-    new Date(p.startDate) <= today && 
-    new Date(p.endDate) >= today
-  );
+  const activePermits = permits.filter(p => {
+    const status = p.status === "approved";
+    const startDate = normalizeDate(p.startDate);
+    const endDate = normalizeDate(p.endDate);
+    
+    // Check if either the start or end date is today, or if today falls between them
+    const isActiveToday = isToday(startDate) || isToday(endDate) || 
+      (startDate <= today && endDate >= today);
+      
+    return status && isActiveToday;
+  });
   
   // All other permits (for history) - everything that's not active today
   const historyPermits = permits.filter(p => 
-    !(p.status === "approved" && 
-    new Date(p.startDate) <= today && 
-    new Date(p.endDate) >= today)
+    !activePermits.includes(p)
   );
   
   console.log("Total permits:", permits.length);

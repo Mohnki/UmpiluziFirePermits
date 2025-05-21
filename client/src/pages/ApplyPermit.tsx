@@ -61,9 +61,6 @@ const permitFormSchema = z.object({
   farmId: z.string({
     required_error: "Please select a farm",
   }),
-  burnDate: z.date({
-    required_error: "Please select the date of your burn",
-  }),
   location: z.object({
     latitude: z.number(),
     longitude: z.number(),
@@ -284,15 +281,15 @@ export default function ApplyPermitPage() {
     try {
       setIsSubmitting(true);
       
-      // For a single day permit, both start and end date are the same
-      const burnDate = values.burnDate;
+      // Use today's date for the permit
+      const today = new Date();
       
       const permit = await createBurnPermit({
         userId: user.uid,
         burnTypeId: values.burnTypeId,
         areaId: selectedFarm.areaId, // Use the farm's area ID
-        startDate: burnDate,
-        endDate: burnDate, // Same as burn date for single-day permits
+        startDate: today,
+        endDate: today, // Same as start date for single-day permits
         location: values.location,
         details: values.details,
       });
@@ -426,50 +423,13 @@ export default function ApplyPermitPage() {
                           />
                         </div>
                         
-                        <div className="grid grid-cols-1 gap-6">
-                          <FormField
-                            control={form.control}
-                            name="burnDate"
-                            render={({ field }) => (
-                              <FormItem className="flex flex-col">
-                                <FormLabel>Burn Date</FormLabel>
-                                <div className="relative" style={{ zIndex: 999 }}>
-                                  <Popover>
-                                    <PopoverTrigger asChild>
-                                      <FormControl>
-                                        <Button
-                                          variant={"outline"}
-                                          className={`w-full text-left font-normal ${
-                                            !field.value && "text-muted-foreground"
-                                          }`}
-                                        >
-                                          {field.value ? (
-                                            format(field.value, "PPP")
-                                          ) : (
-                                            <span>Pick a date</span>
-                                          )}
-                                          <CalendarIcon className="ml-auto h-4 w-4" />
-                                        </Button>
-                                      </FormControl>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start" style={{ zIndex: 9999 }}>
-                                      <Calendar
-                                        mode="single"
-                                        selected={field.value}
-                                        onSelect={field.onChange}
-                                        disabled={(date) => date < new Date()}
-                                        initialFocus
-                                      />
-                                    </PopoverContent>
-                                  </Popover>
-                                </div>
-                                <FormDescription>
-                                  The date you plan to conduct the burn - permits are valid for a single day only
-                                </FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                        <div className="p-4 bg-orange-50 dark:bg-orange-950/30 border border-orange-100 dark:border-orange-900 rounded-lg mb-4">
+                          <p className="text-sm flex items-start gap-2">
+                            <CalendarIcon className="h-5 w-5 text-orange-500 flex-shrink-0 mt-0.5" />
+                            <span>
+                              <strong>Today's date will be used for your permit.</strong> Burn permits are only valid for the day they are issued. If you need to burn on a different day, please apply on that day.
+                            </span>
+                          </p>
                         </div>
                         
                         <div className="space-y-4">

@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/AuthContext";
 import { Link } from "wouter";
+import umpiluziLogo from "../assets/umpiluzi-logo.jpeg";
 
 export default function Hero() {
   const { user } = useAuth();
@@ -18,6 +19,15 @@ export default function Hero() {
   return (
     <section className="bg-gradient-to-r from-primary to-accent text-white py-12 md:py-20">
       <div className="container mx-auto px-4">
+        {/* Logo section - prominently displayed */}
+        <div className="flex justify-center mb-10">
+          <img 
+            src={umpiluziLogo} 
+            alt="Umpiluzi Fire Protection Association Logo" 
+            className="max-w-full md:max-w-lg h-auto"
+          />
+        </div>
+        
         <div className="md:flex items-center">
           <div className="md:w-1/2 mb-8 md:mb-0">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 leading-tight">

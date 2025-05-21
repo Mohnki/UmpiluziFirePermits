@@ -168,31 +168,68 @@ export default function ApplyPermitPage() {
       
       try {
         setLoadingData(true);
-        const [userFarms, allBurnTypes] = await Promise.all([
-          getFarmsByUser(user.uid),
-          getAllBurnTypes()
-        ]);
         
-        setFarms(userFarms);
-        setBurnTypes(allBurnTypes);
-        
-        if (userFarms.length === 0) {
+        // Fetch farms first
+        let userFarms: Farm[] = [];
+        try {
+          userFarms = await getFarmsByUser(user.uid);
+          setFarms(userFarms);
+          
+          if (userFarms.length === 0) {
+            toast({
+              title: "No Farms Found",
+              description: "You need to register a farm before applying for a burn permit. Redirecting to the farm management page.",
+              duration: 5000,
+            });
+            
+            // Give the user time to read the message before redirecting
+            setTimeout(() => {
+              navigate("/my-farms");
+            }, 2500);
+            return; // Exit early if no farms
+          }
+        } catch (farmError) {
+          console.error("Error fetching farms:", farmError);
           toast({
-            title: "No Farms Found",
-            description: "You need to register a farm before applying for a burn permit. Redirecting to the farm management page.",
+            title: "Farm Data Error",
+            description: "Unable to load your farm information. Please try again later.",
+            variant: "destructive",
+          });
+          setLoadingData(false);
+          return; // Exit if we can't get farms
+        }
+        
+        // Then fetch burn types
+        try {
+          const allBurnTypes = await getAllBurnTypes();
+          setBurnTypes(allBurnTypes);
+        } catch (burnTypeError) {
+          console.error("Error fetching burn types:", burnTypeError);
+          // Create some default burn types if the query fails due to permissions
+          setBurnTypes([
+            {
+              id: "default-burn",
+              name: "Standard Burn",
+              description: "Standard controlled burn",
+              defaultAllowed: true,
+              requiresPermit: true,
+              createdAt: new Date(),
+              createdBy: "system",
+              updatedAt: new Date()
+            }
+          ]);
+          
+          toast({
+            title: "Burn Types Unavailable",
+            description: "We're using default burn types as the complete list couldn't be loaded.",
             duration: 5000,
           });
-          
-          // Give the user time to read the message before redirecting
-          setTimeout(() => {
-            navigate("/my-farms");
-          }, 2500);
         }
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error in data fetching:", error);
         toast({
           title: "Error",
-          description: "Failed to load your farms and burn types. Please try again.",
+          description: "Failed to load application data. Please try again later.",
           variant: "destructive",
         });
       } finally {

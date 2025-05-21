@@ -35,9 +35,6 @@ export interface Farm {
   name: string;
   description?: string;
   areaId: string; // The area in which the farm is located
-  location: {
-    address: string;
-  };
   createdAt: Date;
   updatedAt: Date;
 }

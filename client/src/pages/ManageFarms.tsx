@@ -64,7 +64,6 @@ const farmFormSchema = z.object({
   name: z.string().min(3, "Farm name must be at least 3 characters"),
   description: z.string().optional(),
   areaId: z.string().min(1, "Please select an area"),
-  address: z.string().min(5, "Address must be at least 5 characters"),
 });
 
 type FarmFormValues = z.infer<typeof farmFormSchema>;
@@ -86,7 +85,6 @@ export default function ManageFarms() {
       name: "",
       description: "",
       areaId: "",
-      address: "",
     },
   });
   
@@ -128,7 +126,6 @@ export default function ManageFarms() {
       name: farm.name,
       description: farm.description || "",
       areaId: farm.areaId,
-      address: farm.location.address,
     });
     
     setFormDialogOpen(true);
@@ -142,7 +139,6 @@ export default function ManageFarms() {
       name: "",
       description: "",
       areaId: "",
-      address: "",
     });
     
     setFormDialogOpen(true);
@@ -159,9 +155,6 @@ export default function ManageFarms() {
         name: values.name,
         description: values.description,
         areaId: values.areaId,
-        location: {
-          address: values.address,
-        },
       };
       
       if (editingFarm) {
@@ -275,7 +268,7 @@ export default function ManageFarms() {
         <div>
           <h1 className="text-3xl font-bold">My Farms</h1>
           <p className="text-muted-foreground mt-1">
-            Manage your farms and their locations for easy permit applications
+            Manage your farms for easy permit applications
           </p>
         </div>
         <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
@@ -362,20 +355,6 @@ export default function ManageFarms() {
                   )}
                 />
                 
-                <FormField
-                  control={form.control}
-                  name="address"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Address</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Farm address" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
                 <DialogFooter className="mt-6">
                   <Button 
                     type="button" 
@@ -435,10 +414,6 @@ export default function ManageFarms() {
                   {farm.description && (
                     <p className="text-sm">{farm.description}</p>
                   )}
-                  <div className="flex items-start space-x-2 text-sm">
-                    <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                    <span>{farm.location.address}</span>
-                  </div>
                 </div>
               </CardContent>
               <CardFooter className="justify-end space-x-2">

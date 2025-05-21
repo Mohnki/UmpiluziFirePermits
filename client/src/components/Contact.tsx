@@ -95,8 +95,7 @@ export default function Contact() {
                 <div>
                   <h4 className="font-medium">Phone Numbers</h4>
                   <p className="text-muted-foreground">
-                    Main Office: (123) 456-7890<br />
-                    Emergency: (123) 456-7999
+                    Mobile: 060 906 0319
                   </p>
                 </div>
               </div>

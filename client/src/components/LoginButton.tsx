@@ -1,8 +1,14 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { signInWithGoogle, logOut } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,26 +18,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogOut, User } from "lucide-react";
+import { AuthForms } from "@/components/AuthForms";
 
 export default function LoginButton() {
   const { user, loading } = useAuth();
   const { toast } = useToast();
-
-  const handleLogin = async () => {
-    try {
-      await signInWithGoogle();
-      toast({
-        title: "Success!",
-        description: "You have successfully signed in.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error signing in",
-        description: "There was a problem signing in with Google.",
-        variant: "destructive",
-      });
-    }
-  };
+  const [open, setOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -67,7 +59,9 @@ export default function LoginButton() {
                 <AvatarImage src={user.photoURL} alt={user.displayName || "User"} />
               ) : (
                 <AvatarFallback>
-                  <User className="h-6 w-6" />
+                  {user.displayName ? user.displayName.charAt(0).toUpperCase() : 
+                   user.email ? user.email.charAt(0).toUpperCase() : 
+                   <User className="h-6 w-6" />}
                 </AvatarFallback>
               )}
             </Avatar>
@@ -75,10 +69,10 @@ export default function LoginButton() {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
-          <DropdownMenuSeparator />
           <DropdownMenuItem disabled>
             {user.displayName || user.email || "User"}
           </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" />
             <span>Log out</span>
@@ -89,8 +83,15 @@ export default function LoginButton() {
   }
 
   return (
-    <Button onClick={handleLogin} variant="outline" className="min-w-[120px]">
-      Sign in
-    </Button>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" className="min-w-[120px]">
+          Sign in
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px] p-0">
+        <AuthForms onClose={() => setOpen(false)} />
+      </DialogContent>
+    </Dialog>
   );
 }

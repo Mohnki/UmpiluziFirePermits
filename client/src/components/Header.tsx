@@ -10,7 +10,9 @@ import {
   FileText,
   Settings,
   LogOut,
-  HelpCircle
+  HelpCircle,
+  Bookmark,
+  CheckSquare
 } from "lucide-react";
 import LoginButton from "@/components/LoginButton";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -112,6 +114,9 @@ export default function Header() {
               <Link href="/" className="text-foreground hover:text-primary transition font-medium">
                 Home
               </Link>
+              <Link href="/my-permits" className="text-foreground hover:text-primary transition font-medium">
+                My Permits
+              </Link>
               <Link href="/apply-permit" className="text-foreground hover:text-primary transition font-medium">
                 Apply for Permit
               </Link>
@@ -153,17 +158,24 @@ export default function Header() {
                 
                 <DropdownMenuSeparator />
                 
-                <Link href="/my-farms">
+                <Link href="/my-permits">
                   <DropdownMenuItem className="cursor-pointer">
-                    <MapPin className="mr-2 h-4 w-4" />
-                    <span>My Farms</span>
+                    <Bookmark className="mr-2 h-4 w-4" />
+                    <span>My Permits</span>
                   </DropdownMenuItem>
                 </Link>
-                
+
                 <Link href="/apply-permit">
                   <DropdownMenuItem className="cursor-pointer">
                     <FileText className="mr-2 h-4 w-4" />
                     <span>Apply for Permit</span>
+                  </DropdownMenuItem>
+                </Link>
+                
+                <Link href="/my-farms">
+                  <DropdownMenuItem className="cursor-pointer">
+                    <MapPin className="mr-2 h-4 w-4" />
+                    <span>My Farms</span>
                   </DropdownMenuItem>
                 </Link>
                 
@@ -285,12 +297,12 @@ export default function Header() {
             
             {user && (
               <>
-                <Link href="/my-farms" 
+                <Link href="/my-permits" 
                   className="text-foreground hover:text-primary transition py-2 border-b border-gray-100 dark:border-gray-700 flex items-center"
                   onClick={closeMobileMenu}
                 >
-                  <MapPin className="h-4 w-4 mr-2" />
-                  My Farms
+                  <Bookmark className="h-4 w-4 mr-2" />
+                  My Permits
                 </Link>
                 
                 <Link href="/apply-permit" 
@@ -299,6 +311,14 @@ export default function Header() {
                 >
                   <FileText className="h-4 w-4 mr-2" />
                   Apply for Permit
+                </Link>
+                
+                <Link href="/my-farms" 
+                  className="text-foreground hover:text-primary transition py-2 border-b border-gray-100 dark:border-gray-700 flex items-center"
+                  onClick={closeMobileMenu}
+                >
+                  <MapPin className="h-4 w-4 mr-2" />
+                  My Farms
                 </Link>
                 
                 {isAdmin && (

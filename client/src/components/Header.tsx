@@ -53,6 +53,21 @@ export default function Header() {
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
+  
+  // Listen for custom login dialog event
+  useEffect(() => {
+    const handleShowLoginDialog = () => {
+      const loginButton = document.querySelector('[data-login-trigger]');
+      if (loginButton && loginButton instanceof HTMLElement) {
+        loginButton.click();
+      }
+    };
+    
+    window.addEventListener('show-login-dialog', handleShowLoginDialog);
+    return () => {
+      window.removeEventListener('show-login-dialog', handleShowLoginDialog);
+    };
+  }, []);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);

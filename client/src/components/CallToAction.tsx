@@ -5,6 +5,15 @@ import { useAuth } from "@/lib/AuthContext";
 export default function CallToAction() {
   const { user } = useAuth();
 
+  // Handle the click for non-logged in users
+  const handleApplyClick = () => {
+    if (!user) {
+      // Show login dialog by dispatching a custom event
+      const loginEvent = new CustomEvent('show-login-dialog');
+      window.dispatchEvent(loginEvent);
+    }
+  };
+
   return (
     <section id="apply" className="py-12 md:py-20 bg-primary text-white">
       <div className="container mx-auto px-4 text-center">
@@ -27,19 +36,14 @@ export default function CallToAction() {
             </Button>
           </Link>
         ) : (
-          <div className="space-y-4">
-            <Button 
-              variant="secondary" 
-              size="lg" 
-              className="bg-white text-primary hover:bg-gray-100 px-8"
-              disabled
-            >
-              Start Application
-            </Button>
-            <p className="text-sm opacity-90">
-              Please sign in to apply for a permit
-            </p>
-          </div>
+          <Button 
+            variant="secondary" 
+            size="lg" 
+            className="bg-white text-primary hover:bg-gray-100 px-8"
+            onClick={handleApplyClick}
+          >
+            Start Application
+          </Button>
         )}
         
         <p className="mt-4 text-sm opacity-80">

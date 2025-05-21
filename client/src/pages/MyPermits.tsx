@@ -281,7 +281,7 @@ export default function MyPermits() {
                               <TableCell>{getAreaName(permit.areaId)}</TableCell>
                               <TableCell>{format(new Date(permit.startDate), "MMM d, yyyy")}</TableCell>
                               <TableCell>
-                                <Badge className="flex items-center gap-1 capitalize" variant="success">
+                                <Badge className="flex items-center gap-1 capitalize bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800">
                                   {getStatusIcon(permit.status)}
                                   {permit.status}
                                 </Badge>

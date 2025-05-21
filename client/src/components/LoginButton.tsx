@@ -114,7 +114,7 @@ export default function LoginButton() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="min-w-[120px]">
+        <Button variant="outline" className="min-w-[120px]" data-login-trigger>
           Sign in
         </Button>
       </DialogTrigger>

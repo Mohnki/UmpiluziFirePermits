@@ -56,7 +56,6 @@ import {
   MapPin, 
   Plus, 
   Trash,
-  FileEdit,
   FileText,
   Bookmark
 } from "lucide-react";
@@ -269,138 +268,132 @@ export default function ManageFarms() {
   
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
-      <div className="mb-6 bg-card p-4 rounded-lg border border-border shadow-sm">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">My Farms</h1>
-            <p className="text-muted-foreground mt-1">
-              Manage your farms for easy permit applications
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Link href="/apply-permit">
-              <Button className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Apply for Permit
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold">My Farms</h1>
+          <p className="text-muted-foreground mt-2">
+            Manage your farms for easy permit applications
+          </p>
+        </div>
+        <div className="mt-3 md:mt-0 flex items-center space-x-4">
+          <Link href="/apply-permit">
+            <Button className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Apply for Permit
+            </Button>
+          </Link>
+          <Link href="/my-permits" className="flex items-center text-primary hover:text-primary/80 text-sm font-medium">
+            <Bookmark className="h-4 w-4 mr-1" />
+            My Permits
+          </Link>
+          <Link href="/" className="flex items-center text-primary hover:text-primary/80 text-sm font-medium">
+            <Home className="h-4 w-4 mr-1" />
+            Home
+          </Link>
+          <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={handleNewFarm} className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Add New Farm
               </Button>
-            </Link>
-            <Link href="/my-permits">
-              <Button variant="outline" className="flex items-center gap-2">
-                <Bookmark className="h-4 w-4" />
-                My Permits
-              </Button>
-            </Link>
-            <Link href="/">
-              <Button variant="outline" className="flex items-center gap-2">
-                <Home className="h-4 w-4" />
-                Home
-              </Button>
-            </Link>
-            <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={handleNewFarm} className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  Add New Farm
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[550px]">
-                <DialogHeader>
-                  <DialogTitle>
-                    {editingFarm ? "Edit Farm Details" : "Add New Farm"}
-                  </DialogTitle>
-                  <DialogDescription>
-                    {editingFarm 
-                      ? "Update your farm's information below."
-                      : "Enter your farm's details to add it to your list."}
-                  </DialogDescription>
-                </DialogHeader>
-                
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Farm Name</FormLabel>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[550px]">
+              <DialogHeader>
+                <DialogTitle>
+                  {editingFarm ? "Edit Farm Details" : "Add New Farm"}
+                </DialogTitle>
+                <DialogDescription>
+                  {editingFarm 
+                    ? "Update your farm's information below."
+                    : "Enter your farm's details to add it to your list."}
+                </DialogDescription>
+              </DialogHeader>
+              
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Farm Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter farm name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description (Optional)</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Brief description of your farm" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="areaId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Area</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          defaultValue={field.value}
+                          value={field.value}
+                        >
                           <FormControl>
-                            <Input placeholder="Enter farm name" {...field} />
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select an area" />
+                            </SelectTrigger>
                           </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Description (Optional)</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="Brief description of your farm" 
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="areaId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Area</FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                            value={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select an area" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {areas.map(area => (
-                                <SelectItem key={area.id} value={area.id}>
-                                  {area.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormDescription>
-                            The fire protection area where your farm is located
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <DialogFooter className="mt-6">
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        onClick={() => setFormDialogOpen(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button 
-                        type="submit"
-                        disabled={isSubmitting}
-                      >
-                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        {editingFarm ? "Update Farm" : "Create Farm"}
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
-          </div>
+                          <SelectContent>
+                            {areas.map(area => (
+                              <SelectItem key={area.id} value={area.id}>
+                                {area.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          The fire protection area where your farm is located
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <DialogFooter className="mt-6">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setFormDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      {editingFarm ? "Update Farm" : "Create Farm"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
       

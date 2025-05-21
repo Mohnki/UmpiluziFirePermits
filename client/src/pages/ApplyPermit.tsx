@@ -60,11 +60,8 @@ const permitFormSchema = z.object({
   areaId: z.string({
     required_error: "Please select an area",
   }),
-  startDate: z.date({
-    required_error: "Please select a start date",
-  }),
-  endDate: z.date({
-    required_error: "Please select an end date",
+  burnDate: z.date({
+    required_error: "Please select the date of your burn",
   }),
   location: z.object({
     latitude: z.number(),
@@ -72,11 +69,6 @@ const permitFormSchema = z.object({
     address: z.string().optional(),
   }),
   details: z.string().min(10, "Please provide at least 10 characters of details about your burn"),
-}).refine(data => {
-  return data.endDate >= data.startDate;
-}, {
-  message: "End date must be on or after the start date",
-  path: ["endDate"],
 });
 
 // Fix Leaflet icon issues
@@ -264,12 +256,15 @@ export default function ApplyPermitPage() {
     try {
       setIsSubmitting(true);
       
+      // For a single day permit, both start and end date are the same
+      const burnDate = values.burnDate;
+      
       const permit = await createBurnPermit({
         userId: user.uid,
         burnTypeId: values.burnTypeId,
         areaId: values.areaId,
-        startDate: values.startDate,
-        endDate: values.endDate,
+        startDate: burnDate,
+        endDate: burnDate, // Same as burn date for single-day permits
         location: values.location,
         details: values.details,
       });
@@ -403,13 +398,13 @@ export default function ApplyPermitPage() {
                           />
                         </div>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 gap-6">
                           <FormField
                             control={form.control}
-                            name="startDate"
+                            name="burnDate"
                             render={({ field }) => (
                               <FormItem className="flex flex-col">
-                                <FormLabel>Start Date</FormLabel>
+                                <FormLabel>Burn Date</FormLabel>
                                 <Popover>
                                   <PopoverTrigger asChild>
                                     <FormControl>
@@ -439,52 +434,7 @@ export default function ApplyPermitPage() {
                                   </PopoverContent>
                                 </Popover>
                                 <FormDescription>
-                                  The date you plan to start the burn
-                                </FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={form.control}
-                            name="endDate"
-                            render={({ field }) => (
-                              <FormItem className="flex flex-col">
-                                <FormLabel>End Date</FormLabel>
-                                <Popover>
-                                  <PopoverTrigger asChild>
-                                    <FormControl>
-                                      <Button
-                                        variant={"outline"}
-                                        className={`w-full text-left font-normal ${
-                                          !field.value && "text-muted-foreground"
-                                        }`}
-                                      >
-                                        {field.value ? (
-                                          format(field.value, "PPP")
-                                        ) : (
-                                          <span>Pick a date</span>
-                                        )}
-                                        <CalendarIcon className="ml-auto h-4 w-4" />
-                                      </Button>
-                                    </FormControl>
-                                  </PopoverTrigger>
-                                  <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar
-                                      mode="single"
-                                      selected={field.value}
-                                      onSelect={field.onChange}
-                                      disabled={(date) => {
-                                        const startDate = form.getValues("startDate");
-                                        return startDate && date < startDate;
-                                      }}
-                                      initialFocus
-                                    />
-                                  </PopoverContent>
-                                </Popover>
-                                <FormDescription>
-                                  The date you plan to finish the burn
+                                  The date you plan to conduct the burn - permits are valid for a single day only
                                 </FormDescription>
                                 <FormMessage />
                               </FormItem>

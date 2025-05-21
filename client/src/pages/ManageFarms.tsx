@@ -5,6 +5,7 @@ import { Farm } from "@/lib/area-types";
 import { Area } from "@/lib/area-types";
 import { getAllAreas } from "@/lib/area-service";
 import { Link } from "wouter";
+import { Home, MapPin, FileText, Bookmark, PlusCircle } from "lucide-react";
 import { 
   getFarmsByUser, 
   createFarm, 
@@ -276,16 +277,22 @@ export default function ManageFarms() {
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
+            <Link href="/apply-permit">
+              <Button className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Apply for Permit
+              </Button>
+            </Link>
+            <Link href="/my-permits">
+              <Button variant="outline" className="flex items-center gap-2">
+                <Bookmark className="h-4 w-4" />
+                My Permits
+              </Button>
+            </Link>
             <Link href="/">
               <Button variant="outline" className="flex items-center gap-2">
                 <Home className="h-4 w-4" />
                 Home
-              </Button>
-            </Link>
-            <Link href="/apply-permit">
-              <Button variant="outline" className="flex items-center gap-2">
-                <FileEdit className="h-4 w-4" />
-                Apply for Permit
               </Button>
             </Link>
             <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>

@@ -4,6 +4,7 @@ import { signInWithGoogle, logOut } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Link } from "wouter";
 import {
   Dialog,
   DialogContent,
@@ -17,11 +18,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, ShieldAlert } from "lucide-react";
 import { AuthForms } from "@/components/AuthForms";
 
 export default function LoginButton() {
-  const { user, loading } = useAuth();
+  const { user, userProfile, loading, isAdmin, isAreaManager } = useAuth();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
 
@@ -69,10 +70,38 @@ export default function LoginButton() {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
-          <DropdownMenuItem disabled>
-            {user.displayName || user.email || "User"}
+          <DropdownMenuItem disabled className="flex flex-col items-start">
+            <span>{user.displayName || user.email || "User"}</span>
+            {userProfile && (
+              <span className="text-xs text-muted-foreground mt-1">
+                Role: {userProfile.role === 'admin' ? 'Admin' : 
+                      userProfile.role === 'area-manager' ? 'Area Manager' : 'User'}
+              </span>
+            )}
           </DropdownMenuItem>
+
           <DropdownMenuSeparator />
+          
+          {isAdmin && (
+            <DropdownMenuItem asChild>
+              <Link href="/admin">
+                <ShieldAlert className="mr-2 h-4 w-4" />
+                <span>Admin Dashboard</span>
+              </Link>
+            </DropdownMenuItem>
+          )}
+          
+          {isAreaManager && !isAdmin && (
+            <DropdownMenuItem asChild>
+              <Link href="/area-manager">
+                <ShieldAlert className="mr-2 h-4 w-4" />
+                <span>Area Manager</span>
+              </Link>
+            </DropdownMenuItem>
+          )}
+          
+          {(isAdmin || isAreaManager) && <DropdownMenuSeparator />}
+          
           <DropdownMenuItem onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" />
             <span>Log out</span>

@@ -1,11 +1,16 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User } from "firebase/auth";
-import { onAuthStateChange } from "./firebase";
+import { onAuthStateChange, getUserProfile, UserProfile } from "./firebase";
+import { UserRole } from "./roles";
 
 // Create the auth context
 type AuthContextType = {
   user: User | null;
+  userProfile: UserProfile | null;
   loading: boolean;
+  isAdmin: boolean;
+  isAreaManager: boolean;
+  hasManagerAccess: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -13,21 +18,54 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Provider component
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Fetch user profile when user auth state changes
   useEffect(() => {
+    const fetchUserProfile = async (user: User) => {
+      try {
+        const profile = await getUserProfile(user.uid);
+        setUserProfile(profile);
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     // Subscribe to auth state changes
     const unsubscribe = onAuthStateChange((user) => {
       setUser(user);
-      setLoading(false);
+      
+      if (user) {
+        fetchUserProfile(user);
+      } else {
+        setUserProfile(null);
+        setLoading(false);
+      }
     });
 
     // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
 
+  // Compute role-based access flags
+  const isAdmin = userProfile?.role === 'admin';
+  const isAreaManager = userProfile?.role === 'area-manager';
+  const hasManagerAccess = isAdmin || isAreaManager;
+
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider 
+      value={{ 
+        user, 
+        userProfile, 
+        loading, 
+        isAdmin, 
+        isAreaManager, 
+        hasManagerAccess 
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

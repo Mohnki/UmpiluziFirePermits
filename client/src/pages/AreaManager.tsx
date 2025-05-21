@@ -12,7 +12,16 @@ import {
   getAreaById
 } from "@/lib/area-service";
 import { Area, BurnType } from "@/lib/area-types";
+import BanManagement from "@/components/BanManagement";
+import { getPermitsByArea } from "@/lib/permit-service";
+import { BurnPermit } from "@/lib/permit-types";
 
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -39,8 +48,11 @@ import {
   Flame,
   CheckCircle2,
   XCircle,
-  Info
+  Info,
+  Calendar,
+  SquareUser
 } from "lucide-react";
+import { format } from "date-fns";
 
 export default function AreaManagerPage() {
   const { user, userProfile, isAreaManager, hasManagerAccess, loading } = useAuth();
@@ -58,6 +70,10 @@ export default function AreaManagerPage() {
   // Permission state
   const [savingPermissions, setSavingPermissions] = useState(false);
   const [burnTypePermissions, setBurnTypePermissions] = useState<{ [key: string]: boolean }>({});
+  
+  // Permits state
+  const [permits, setPermits] = useState<BurnPermit[]>([]);
+  const [loadingPermits, setLoadingPermits] = useState(false);
 
   // Fetch areas managed by the current user
   useEffect(() => {
@@ -70,6 +86,7 @@ export default function AreaManagerPage() {
           if (userAreas.length > 0 && !selectedArea) {
             setSelectedArea(userAreas[0]);
             setBurnTypePermissions(userAreas[0].allowedBurnTypes || {});
+            fetchPermits(userAreas[0].id);
           }
         } catch (error) {
           console.error("Error fetching areas:", error);
@@ -115,10 +132,29 @@ export default function AreaManagerPage() {
     }
   }, [hasManagerAccess, loading, toast]);
 
+  // Fetch permits for an area
+  const fetchPermits = async (areaId: string) => {
+    try {
+      setLoadingPermits(true);
+      const areaPermits = await getPermitsByArea(areaId);
+      setPermits(areaPermits);
+    } catch (error) {
+      console.error("Error fetching permits:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load permit applications. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingPermits(false);
+    }
+  };
+
   // Handle area selection
   const handleAreaSelect = async (area: Area) => {
     setSelectedArea(area);
     setBurnTypePermissions(area.allowedBurnTypes || {});
+    fetchPermits(area.id);
   };
 
   // Handle burn type toggle
@@ -164,6 +200,20 @@ export default function AreaManagerPage() {
       });
     } finally {
       setSavingPermissions(false);
+    }
+  };
+
+  // Get status badge variant
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'approved':
+        return 'secondary';
+      case 'rejected':
+        return 'destructive';
+      case 'pending':
+        return 'outline';
+      default:
+        return 'default';
     }
   };
 
@@ -234,91 +284,172 @@ export default function AreaManagerPage() {
                   </div>
                 </div>
                 
-                {/* Burn Type Permissions */}
+                {/* Area Management Sections */}
                 <div className="md:col-span-8 lg:col-span-9">
                   {selectedArea ? (
                     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                      <div className="flex justify-between items-center mb-6">
-                        <div>
-                          <h2 className="text-xl font-semibold">{selectedArea.name}</h2>
-                          <p className="text-muted-foreground">{selectedArea.description}</p>
-                        </div>
-                        <Button 
-                          onClick={saveBurnTypePermissions}
-                          disabled={savingPermissions}
-                        >
-                          {savingPermissions && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                          Save Permissions
-                        </Button>
+                      <div className="mb-6">
+                        <h2 className="text-xl font-semibold">{selectedArea.name}</h2>
+                        <p className="text-muted-foreground">{selectedArea.description}</p>
                       </div>
                       
-                      <h3 className="text-lg font-medium mb-4">Burn Type Permissions</h3>
-                      
-                      {burnTypes.length === 0 ? (
-                        <div className="text-center py-6 bg-gray-50 dark:bg-gray-700 rounded-md">
-                          <Info className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                          <p>No burn types have been defined yet. Contact an administrator to set up burn types.</p>
-                        </div>
-                      ) : (
-                        <Table>
-                          <TableCaption>Toggle permissions for each burn type in this area</TableCaption>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Burn Type</TableHead>
-                              <TableHead>Description</TableHead>
-                              <TableHead>Requires Permit</TableHead>
-                              <TableHead>Status</TableHead>
-                              <TableHead>Allow in Area</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {burnTypes.map(burnType => {
-                              const isAllowed = burnTypePermissions[burnType.id] !== undefined 
-                                ? burnTypePermissions[burnType.id] 
-                                : burnType.defaultAllowed;
-                                
-                              return (
-                                <TableRow key={burnType.id}>
-                                  <TableCell className="font-medium">{burnType.name}</TableCell>
-                                  <TableCell>{burnType.description}</TableCell>
-                                  <TableCell>
-                                    {burnType.requiresPermit 
-                                      ? <Badge variant="secondary">Required</Badge>
-                                      : <Badge variant="outline">Not Required</Badge>
-                                    }
-                                  </TableCell>
-                                  <TableCell>
-                                    {isAllowed 
-                                      ? <div className="flex items-center text-green-600 dark:text-green-500">
-                                          <CheckCircle2 className="h-4 w-4 mr-1" />
-                                          <span>Allowed</span>
-                                        </div>
-                                      : <div className="flex items-center text-red-600 dark:text-red-500">
-                                          <XCircle className="h-4 w-4 mr-1" />
-                                          <span>Not Allowed</span>
-                                        </div>
-                                    }
-                                  </TableCell>
-                                  <TableCell>
-                                    <div className="flex items-center space-x-2">
-                                      <Switch
-                                        checked={isAllowed}
-                                        onCheckedChange={(checked) => 
-                                          handleBurnTypeToggle(burnType.id, checked)
-                                        }
-                                        disabled={savingPermissions}
-                                      />
-                                      <Label htmlFor={`burn-type-${burnType.id}`}>
-                                        {isAllowed ? "Allowed" : "Not Allowed"}
-                                      </Label>
-                                    </div>
-                                  </TableCell>
+                      <Tabs defaultValue="permissions" className="w-full">
+                        <TabsList>
+                          <TabsTrigger value="permissions">Burn Type Permissions</TabsTrigger>
+                          <TabsTrigger value="bans">Burn Bans</TabsTrigger>
+                          <TabsTrigger value="permits">Permit Applications</TabsTrigger>
+                        </TabsList>
+                        
+                        {/* Permissions Tab */}
+                        <TabsContent value="permissions" className="pt-4">
+                          <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-medium">Burn Type Permissions</h3>
+                            <Button 
+                              onClick={saveBurnTypePermissions}
+                              disabled={savingPermissions}
+                            >
+                              {savingPermissions && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                              Save Permissions
+                            </Button>
+                          </div>
+                          
+                          {burnTypes.length === 0 ? (
+                            <div className="text-center py-6 bg-gray-50 dark:bg-gray-700 rounded-md">
+                              <Info className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                              <p>No burn types have been defined yet. Contact an administrator to set up burn types.</p>
+                            </div>
+                          ) : (
+                            <Table>
+                              <TableCaption>Toggle permissions for each burn type in this area</TableCaption>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Burn Type</TableHead>
+                                  <TableHead>Description</TableHead>
+                                  <TableHead>Requires Permit</TableHead>
+                                  <TableHead>Status</TableHead>
+                                  <TableHead>Allow in Area</TableHead>
                                 </TableRow>
-                              );
-                            })}
-                          </TableBody>
-                        </Table>
-                      )}
+                              </TableHeader>
+                              <TableBody>
+                                {burnTypes.map(burnType => {
+                                  const isAllowed = burnTypePermissions[burnType.id] !== undefined 
+                                    ? burnTypePermissions[burnType.id] 
+                                    : burnType.defaultAllowed;
+                                    
+                                  return (
+                                    <TableRow key={burnType.id}>
+                                      <TableCell className="font-medium">{burnType.name}</TableCell>
+                                      <TableCell>{burnType.description}</TableCell>
+                                      <TableCell>
+                                        {burnType.requiresPermit 
+                                          ? <Badge variant="secondary">Required</Badge>
+                                          : <Badge variant="outline">Not Required</Badge>
+                                        }
+                                      </TableCell>
+                                      <TableCell>
+                                        {isAllowed 
+                                          ? <div className="flex items-center text-green-600 dark:text-green-500">
+                                              <CheckCircle2 className="h-4 w-4 mr-1" />
+                                              <span>Allowed</span>
+                                            </div>
+                                          : <div className="flex items-center text-red-600 dark:text-red-500">
+                                              <XCircle className="h-4 w-4 mr-1" />
+                                              <span>Not Allowed</span>
+                                            </div>
+                                        }
+                                      </TableCell>
+                                      <TableCell>
+                                        <div className="flex items-center space-x-2">
+                                          <Switch
+                                            checked={isAllowed}
+                                            onCheckedChange={(checked) => 
+                                              handleBurnTypeToggle(burnType.id, checked)
+                                            }
+                                            disabled={savingPermissions}
+                                          />
+                                          <Label htmlFor={`burn-type-${burnType.id}`}>
+                                            {isAllowed ? "Allowed" : "Not Allowed"}
+                                          </Label>
+                                        </div>
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                })}
+                              </TableBody>
+                            </Table>
+                          )}
+                        </TabsContent>
+                        
+                        {/* Burn Bans Tab */}
+                        <TabsContent value="bans" className="pt-4">
+                          {selectedArea && <BanManagement area={selectedArea} />}
+                        </TabsContent>
+                        
+                        {/* Permits Tab */}
+                        <TabsContent value="permits" className="pt-4">
+                          <h3 className="text-lg font-medium mb-4">Burn Permit Applications</h3>
+                          
+                          {loadingPermits ? (
+                            <div className="flex items-center justify-center py-10">
+                              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                              <span className="ml-2">Loading permit applications...</span>
+                            </div>
+                          ) : permits.length === 0 ? (
+                            <div className="text-center py-8 bg-gray-50 dark:bg-gray-700 rounded-md">
+                              <Calendar className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                              <h4 className="text-lg font-medium mb-1">No Permit Applications</h4>
+                              <p className="text-muted-foreground">
+                                There are no burn permit applications for this area.
+                              </p>
+                            </div>
+                          ) : (
+                            <Table>
+                              <TableCaption>List of burn permit applications for {selectedArea.name}</TableCaption>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Burn Type</TableHead>
+                                  <TableHead>Dates</TableHead>
+                                  <TableHead>Status</TableHead>
+                                  <TableHead>Applicant</TableHead>
+                                  <TableHead>Submitted</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {permits.map(permit => {
+                                  const burnType = burnTypes.find(bt => bt.id === permit.burnTypeId);
+                                  
+                                  return (
+                                    <TableRow key={permit.id}>
+                                      <TableCell className="font-medium">
+                                        {burnType ? burnType.name : "Unknown Burn Type"}
+                                      </TableCell>
+                                      <TableCell>
+                                        {format(permit.startDate, "MMM d, yyyy")}
+                                        {permit.startDate.toDateString() !== permit.endDate.toDateString() && 
+                                          ` - ${format(permit.endDate, "MMM d, yyyy")}`}
+                                      </TableCell>
+                                      <TableCell>
+                                        <Badge variant={getStatusBadgeVariant(permit.status)}>
+                                          {permit.status.charAt(0).toUpperCase() + permit.status.slice(1)}
+                                        </Badge>
+                                      </TableCell>
+                                      <TableCell>
+                                        <div className="flex items-center">
+                                          <SquareUser className="h-4 w-4 mr-1 text-muted-foreground" />
+                                          <span>User</span>
+                                        </div>
+                                      </TableCell>
+                                      <TableCell>
+                                        {format(permit.createdAt, "MMM d, yyyy")}
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                })}
+                              </TableBody>
+                            </Table>
+                          )}
+                        </TabsContent>
+                      </Tabs>
                     </div>
                   ) : (
                     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 flex items-center justify-center h-full">

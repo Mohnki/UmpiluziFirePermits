@@ -5,7 +5,6 @@ import { Farm } from "@/lib/area-types";
 import { Area } from "@/lib/area-types";
 import { getAllAreas } from "@/lib/area-service";
 import { Link } from "wouter";
-import { Home, MapPin, FileText, Bookmark, PlusCircle } from "lucide-react";
 import { 
   getFarmsByUser, 
   createFarm, 
@@ -57,7 +56,9 @@ import {
   MapPin, 
   Plus, 
   Trash,
-  FileEdit
+  FileEdit,
+  FileText,
+  Bookmark
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { Redirect, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -9,6 +9,9 @@ import { createBurnPermit } from "@/lib/permit-service";
 import { getAllAreas, getAllBurnTypes } from "@/lib/area-service";
 import { Area, BurnType } from "@/lib/area-types";
 import { BurnPermit } from "@/lib/permit-types";
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 import {
   Form,
@@ -76,6 +79,29 @@ const permitFormSchema = z.object({
   path: ["endDate"],
 });
 
+// Fix Leaflet icon issues
+const DefaultIcon = L.icon({
+  iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+L.Marker.prototype.options.icon = DefaultIcon;
+
+// Map click handler component
+function LocationMarker({ setPosition }: { setPosition: (pos: [number, number]) => void }) {
+  const map = useMapEvents({
+    click(e) {
+      const { lat, lng } = e.latlng;
+      setPosition([lat, lng]);
+    },
+  });
+  
+  return null;
+}
+
 export default function ApplyPermitPage() {
   const { user, loading } = useAuth();
   const { toast } = useToast();
@@ -86,6 +112,9 @@ export default function ApplyPermitPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
+  const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [showLocationModal, setShowLocationModal] = useState(false);
   
   const form = useForm<z.infer<typeof permitFormSchema>>({
     resolver: zodResolver(permitFormSchema),
@@ -129,27 +158,69 @@ export default function ApplyPermitPage() {
 
   // Get user's location
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setUserLocation({ latitude, longitude });
-          form.setValue("location", {
-            latitude,
-            longitude,
-          });
-        },
-        (error) => {
-          console.error("Error getting location:", error);
-          toast({
-            title: "Location Error",
-            description: "Could not get your current location. Please enter coordinates manually.",
-            variant: "destructive",
-          });
-        }
-      );
-    }
+    const getLocation = () => {
+      if (navigator.geolocation) {
+        setLocationError(null);
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            setUserLocation({ latitude, longitude });
+            setMarkerPosition([latitude, longitude]);
+            form.setValue("location", {
+              latitude,
+              longitude,
+            });
+          },
+          (error) => {
+            console.error("Error getting location:", error);
+            let errorMessage = "Could not get your current location.";
+            
+            switch(error.code) {
+              case error.PERMISSION_DENIED:
+                errorMessage = "Location access was denied. Please enable location services in your browser.";
+                setLocationError("PERMISSION_DENIED");
+                break;
+              case error.POSITION_UNAVAILABLE:
+                errorMessage = "Location information is unavailable.";
+                setLocationError("POSITION_UNAVAILABLE");
+                break;
+              case error.TIMEOUT:
+                errorMessage = "The request to get your location timed out.";
+                setLocationError("TIMEOUT");
+                break;
+              default:
+                setLocationError("UNKNOWN_ERROR");
+                break;
+            }
+            
+            toast({
+              title: "Location Error",
+              description: errorMessage,
+              variant: "destructive",
+            });
+          }
+        );
+      } else {
+        setLocationError("NOT_SUPPORTED");
+        toast({
+          title: "Location Not Supported",
+          description: "Geolocation is not supported by this browser.",
+          variant: "destructive",
+        });
+      }
+    };
+    
+    getLocation();
   }, [form, toast]);
+  
+  // Update form values when marker position changes
+  useEffect(() => {
+    if (markerPosition) {
+      const [latitude, longitude] = markerPosition;
+      form.setValue("location.latitude", latitude);
+      form.setValue("location.longitude", longitude);
+    }
+  }, [markerPosition, form]);
 
   const onSubmit = async (values: z.infer<typeof permitFormSchema>) => {
     if (!user) return;
@@ -385,48 +456,168 @@ export default function ApplyPermitPage() {
                           />
                         </div>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <FormField
-                            control={form.control}
-                            name="location.latitude"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Latitude</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    type="number" 
-                                    step="any" 
-                                    placeholder="Latitude" 
-                                    {...field}
-                                    onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                                    value={field.value || (userLocation ? userLocation.latitude : "")} 
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
+                        <div className="space-y-6">
+                          <div className="flex flex-col">
+                            <div className="flex items-center justify-between mb-2">
+                              <h3 className="text-base font-medium">Burn Location</h3>
+                              
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  if (navigator.geolocation) {
+                                    navigator.geolocation.getCurrentPosition(
+                                      (position) => {
+                                        const { latitude, longitude } = position.coords;
+                                        setMarkerPosition([latitude, longitude]);
+                                        setLocationError(null);
+                                      },
+                                      (error) => {
+                                        console.error("Error getting location:", error);
+                                        setLocationError("PERMISSION_DENIED");
+                                        toast({
+                                          title: "Location Error",
+                                          description: "Could not get your current location. Please check your browser permissions.",
+                                          variant: "destructive",
+                                        });
+                                      }
+                                    );
+                                  }
+                                }}
+                                className="flex items-center gap-1"
+                              >
+                                <MapPin className="h-4 w-4" />
+                                Use My Location
+                              </Button>
+                            </div>
+                            
+                            {locationError === "PERMISSION_DENIED" && (
+                              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md p-3 mb-4">
+                                <div className="flex items-start">
+                                  <div className="flex-shrink-0">
+                                    <svg className="h-5 w-5 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
+                                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                    </svg>
+                                  </div>
+                                  <div className="ml-3">
+                                    <p className="text-sm text-amber-800 dark:text-amber-200">
+                                      Location permission was denied. Click 'Use My Location' and allow location access, or manually set a location by clicking on the map below.
+                                    </p>
+                                    <div className="mt-2">
+                                      <Button 
+                                        type="button" 
+                                        size="sm" 
+                                        variant="outline"
+                                        className="text-xs"
+                                        onClick={() => {
+                                          // This opens browser settings for most browsers
+                                          if (window.confirm("Would you like to open your browser settings to enable location access?")) {
+                                            if (navigator.userAgent.indexOf("Chrome") !== -1) {
+                                              window.open('chrome://settings/content/location');
+                                            } else if (navigator.userAgent.indexOf("Firefox") !== -1) {
+                                              window.open('about:preferences#privacy');
+                                            } else {
+                                              alert("Please manually enable location access in your browser settings.");
+                                            }
+                                          }
+                                        }}
+                                      >
+                                        Open Browser Settings
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
                             )}
-                          />
-                          
-                          <FormField
-                            control={form.control}
-                            name="location.longitude"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Longitude</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    type="number" 
-                                    step="any" 
-                                    placeholder="Longitude" 
-                                    {...field}
-                                    onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                                    value={field.value || (userLocation ? userLocation.longitude : "")} 
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                            
+                            <div className="border rounded-md h-[300px] mb-4 overflow-hidden relative">
+                              {!markerPosition && (
+                                <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/5">
+                                  <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg text-center">
+                                    <p className="text-sm font-medium mb-2">Click on the map to set your burn location</p>
+                                    <p className="text-xs text-muted-foreground">Or use the "Use My Location" button above</p>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              <MapContainer 
+                                center={markerPosition || [-26.5, 31.5]} // Default to Eswatini area
+                                zoom={markerPosition ? 13 : 8} 
+                                style={{ height: '100%', width: '100%' }}
+                                attributionControl={false}
+                              >
+                                <TileLayer
+                                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                />
+                                <LocationMarker 
+                                  setPosition={(pos) => {
+                                    setMarkerPosition(pos);
+                                  }} 
+                                />
+                                {markerPosition && (
+                                  <Marker position={markerPosition} />
+                                )}
+                              </MapContainer>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <FormField
+                                control={form.control}
+                                name="location.latitude"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Latitude</FormLabel>
+                                    <FormControl>
+                                      <Input 
+                                        type="number" 
+                                        step="any" 
+                                        placeholder="Latitude" 
+                                        {...field}
+                                        onChange={(e) => {
+                                          const value = parseFloat(e.target.value);
+                                          field.onChange(value);
+                                          if (markerPosition) {
+                                            setMarkerPosition([value, markerPosition[1]]);
+                                          }
+                                        }}
+                                        value={field.value || ""} 
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={form.control}
+                                name="location.longitude"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Longitude</FormLabel>
+                                    <FormControl>
+                                      <Input 
+                                        type="number" 
+                                        step="any" 
+                                        placeholder="Longitude" 
+                                        {...field}
+                                        onChange={(e) => {
+                                          const value = parseFloat(e.target.value);
+                                          field.onChange(value);
+                                          if (markerPosition) {
+                                            setMarkerPosition([markerPosition[0], value]);
+                                          }
+                                        }}
+                                        value={field.value || ""} 
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                          </div>
                         </div>
                         
                         <FormField

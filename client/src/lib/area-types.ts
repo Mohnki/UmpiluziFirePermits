@@ -27,3 +27,20 @@ export interface BurnType {
   createdBy: string; // Admin user ID
   updatedAt: Date;
 }
+
+// Farm model
+export interface Farm {
+  id: string;
+  userId: string; // Owner of the farm
+  name: string;
+  description?: string;
+  areaId: string; // The area in which the farm is located
+  location: {
+    latitude: number;
+    longitude: number;
+    address: string;
+  };
+  size?: number; // Size in hectares (optional)
+  createdAt: Date;
+  updatedAt: Date;
+}

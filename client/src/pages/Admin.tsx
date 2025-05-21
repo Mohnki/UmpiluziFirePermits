@@ -458,6 +458,58 @@ export default function AdminPage() {
     setEditingBurnTypeId(burnType.id);
     setBurnTypeDialogOpen(true);
   };
+  
+  // Handle area selection for permissions
+  const handleAreaSelect = async (area: Area) => {
+    setSelectedArea(area);
+    setBurnTypePermissions(area.allowedBurnTypes || {});
+  };
+
+  // Handle burn type toggle
+  const handleBurnTypeToggle = (burnTypeId: string, allowed: boolean) => {
+    setBurnTypePermissions(prev => ({
+      ...prev,
+      [burnTypeId]: allowed
+    }));
+  };
+
+  // Save burn type permissions
+  const saveBurnTypePermissions = async () => {
+    if (!selectedArea) return;
+    
+    try {
+      setSavingPermissions(true);
+      await updateAreaBurnTypes(selectedArea.id, burnTypePermissions);
+      
+      // Update local state
+      setAreas(prevAreas => 
+        prevAreas.map(area => 
+          area.id === selectedArea.id 
+            ? { ...area, allowedBurnTypes: burnTypePermissions } 
+            : area
+        )
+      );
+      
+      // Update selected area
+      setSelectedArea(prev => 
+        prev ? { ...prev, allowedBurnTypes: burnTypePermissions } : null
+      );
+      
+      toast({
+        title: "Permissions saved",
+        description: "Burn type permissions have been updated successfully.",
+      });
+    } catch (error) {
+      console.error("Error saving permissions:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save burn type permissions. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingPermissions(false);
+    }
+  };
 
   // Loading state
   if (loading) {
@@ -995,6 +1047,163 @@ export default function AdminPage() {
                           </CardContent>
                         </Card>
                       ))}
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+              
+              {/* Area Permissions Tab */}
+              <TabsContent value="area-permissions">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                  <h2 className="text-xl font-semibold mb-6">Area Burn Type Permissions</h2>
+                  
+                  {loadingAreas || loadingBurnTypes ? (
+                    <div className="flex items-center justify-center py-10">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      <span className="ml-2">Loading data...</span>
+                    </div>
+                  ) : areas.length === 0 ? (
+                    <div className="text-center py-10 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <MapPin className="h-10 w-10 mx-auto mb-4 opacity-30" />
+                      <h3 className="text-lg font-medium mb-2">No Areas Available</h3>
+                      <p className="text-muted-foreground max-w-md mx-auto mb-4">
+                        There are no areas configured in the system. Create areas first before managing burn type permissions.
+                      </p>
+                      <Button asChild>
+                        <a href="#areas" onClick={() => document.querySelector('button[value="areas"]')?.click()}>
+                          Go to Area Management
+                        </a>
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="grid md:grid-cols-12 gap-6">
+                      {/* Areas List */}
+                      <div className="md:col-span-4 lg:col-span-3">
+                        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                          <h3 className="text-lg font-medium mb-4">Select Area</h3>
+                          <div className="space-y-2">
+                            {areas.map(area => (
+                              <Card 
+                                key={area.id}
+                                className={`cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors ${
+                                  selectedArea?.id === area.id ? 'border-2 border-primary' : ''
+                                }`}
+                                onClick={() => handleAreaSelect(area)}
+                              >
+                                <CardHeader className="p-4">
+                                  <CardTitle className="text-base">{area.name}</CardTitle>
+                                  <CardDescription className="text-xs line-clamp-1">
+                                    {area.description}
+                                  </CardDescription>
+                                </CardHeader>
+                              </Card>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Permission Management */}
+                      <div className="md:col-span-8 lg:col-span-9">
+                        {selectedArea ? (
+                          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
+                            <div className="mb-6">
+                              <h3 className="text-lg font-medium">{selectedArea.name}</h3>
+                              <p className="text-muted-foreground">{selectedArea.description}</p>
+                            </div>
+                            
+                            <div className="flex justify-between items-center mb-4">
+                              <h4 className="text-base font-medium">Burn Type Permissions</h4>
+                              <Button 
+                                onClick={saveBurnTypePermissions}
+                                disabled={savingPermissions}
+                              >
+                                {savingPermissions && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                                Save Permissions
+                              </Button>
+                            </div>
+                            
+                            {burnTypes.length === 0 ? (
+                              <div className="text-center py-6 bg-gray-100 dark:bg-gray-600 rounded-md">
+                                <Info className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                                <p className="mb-4">No burn types have been defined yet.</p>
+                                <Button asChild variant="outline" size="sm">
+                                  <a href="#burn-types" onClick={() => document.querySelector('button[value="burn-types"]')?.click()}>
+                                    Go to Burn Type Management
+                                  </a>
+                                </Button>
+                              </div>
+                            ) : (
+                              <Table>
+                                <TableCaption>Toggle permissions for each burn type in this area</TableCaption>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>Burn Type</TableHead>
+                                    <TableHead>Description</TableHead>
+                                    <TableHead>Requires Permit</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Allow in Area</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {burnTypes.map(burnType => {
+                                    // Check if burnTypeId exists in allowedBurnTypes
+                                    // If it doesn't exist at all (not just false), it's not allowed
+                                    const exists = burnType.id in burnTypePermissions;
+                                    const isAllowed = exists ? burnTypePermissions[burnType.id] : burnType.defaultAllowed;
+                                    
+                                    return (
+                                      <TableRow key={burnType.id}>
+                                        <TableCell className="font-medium">{burnType.name}</TableCell>
+                                        <TableCell>{burnType.description}</TableCell>
+                                        <TableCell>
+                                          {burnType.requiresPermit 
+                                            ? <Badge variant="secondary">Required</Badge>
+                                            : <Badge variant="outline">Not Required</Badge>
+                                          }
+                                        </TableCell>
+                                        <TableCell>
+                                          {isAllowed 
+                                            ? <div className="flex items-center text-green-600 dark:text-green-500">
+                                                <CheckCircle2 className="h-4 w-4 mr-1" />
+                                                <span>Allowed</span>
+                                              </div>
+                                            : <div className="flex items-center text-red-600 dark:text-red-500">
+                                                <XCircle className="h-4 w-4 mr-1" />
+                                                <span>Not Allowed</span>
+                                              </div>
+                                          }
+                                        </TableCell>
+                                        <TableCell>
+                                          <div className="flex items-center space-x-2">
+                                            <Switch
+                                              checked={isAllowed}
+                                              onCheckedChange={(checked) => 
+                                                handleBurnTypeToggle(burnType.id, checked)
+                                              }
+                                              disabled={savingPermissions}
+                                            />
+                                            <Label htmlFor={`burn-type-${burnType.id}`}>
+                                              {isAllowed ? "Allowed" : "Not Allowed"}
+                                            </Label>
+                                          </div>
+                                        </TableCell>
+                                      </TableRow>
+                                    );
+                                  })}
+                                </TableBody>
+                              </Table>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center py-12 px-4 bg-gray-50 dark:bg-gray-700 rounded-lg h-full">
+                            <MapPin className="h-12 w-12 text-primary opacity-50 mb-4" />
+                            <h3 className="text-xl font-medium mb-2">Select an Area</h3>
+                            <p className="text-center text-muted-foreground mb-6">
+                              Choose an area from the list to manage its burn type permissions
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

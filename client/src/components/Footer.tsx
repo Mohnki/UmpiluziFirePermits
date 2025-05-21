@@ -1,4 +1,4 @@
-import { Flame, Facebook, Twitter, Instagram, Phone } from "lucide-react";
+import { Flame, Phone } from "lucide-react";
 
 export default function Footer() {
   return (
@@ -37,18 +37,6 @@ export default function Footer() {
             <p className="text-gray-400 text-sm mb-2">UFPA Building Ferniehaug Jessievale, Warburton, 2333</p>
             <p className="text-gray-400 text-sm mb-3">Office Hours: Monday-Friday: 8:00 AM - 5:00 PM</p>
             <p className="text-gray-400 text-sm">Saturday: 8:00 AM - 12:00 PM | Sunday: Closed</p>
-            
-            <div className="mt-4 flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-white transition">
-                <Facebook className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition">
-                <Twitter className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition">
-                <Instagram className="h-5 w-5" />
-              </a>
-            </div>
           </div>
         </div>
 

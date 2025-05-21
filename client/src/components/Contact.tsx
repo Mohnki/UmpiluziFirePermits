@@ -2,11 +2,7 @@ import {
   MapPin, 
   Phone, 
   Mail, 
-  Clock, 
-  Facebook, 
-  Twitter, 
-  Instagram, 
-  Linkedin 
+  Clock
 } from "lucide-react";
 
 export default function Contact() {
@@ -79,23 +75,7 @@ export default function Contact() {
               </div>
             </div>
 
-            <div className="mt-6">
-              <h4 className="font-medium mb-2">Connect With Us</h4>
-              <div className="flex space-x-4">
-                <a href="#" className="text-primary hover:text-accent transition">
-                  <Facebook className="h-5 w-5" />
-                </a>
-                <a href="#" className="text-primary hover:text-accent transition">
-                  <Twitter className="h-5 w-5" />
-                </a>
-                <a href="#" className="text-primary hover:text-accent transition">
-                  <Instagram className="h-5 w-5" />
-                </a>
-                <a href="#" className="text-primary hover:text-accent transition">
-                  <Linkedin className="h-5 w-5" />
-                </a>
-              </div>
-            </div>
+
           </div>
         </div>
       </div>

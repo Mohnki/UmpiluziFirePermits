@@ -67,7 +67,7 @@ const permitFormSchema = z.object({
     longitude: z.number(),
     address: z.string().optional(),
   }),
-  details: z.string().min(10, "Please provide at least 10 characters of details about your burn"),
+  details: z.string().optional(),
   acceptDisclaimer: z.boolean().refine(val => val === true, {
     message: "You must accept the disclaimer before proceeding",
   }),
@@ -296,7 +296,7 @@ export default function ApplyPermitPage() {
         startDate: today,
         endDate: today, // Same as start date for single-day permits
         location: values.location,
-        details: values.details,
+        details: values.details || "", // Use empty string if details are not provided
       });
       
       toast({
@@ -602,7 +602,7 @@ export default function ApplyPermitPage() {
                                 />
                               </FormControl>
                               <FormDescription>
-                                Include information about the size of the area to be burned, safety measures in place, etc.
+                                Optional: Include information about the size of the area to be burned, safety measures in place, etc.
                               </FormDescription>
                               <FormMessage />
                             </FormItem>

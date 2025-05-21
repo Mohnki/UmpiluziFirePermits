@@ -677,7 +677,11 @@ export default function ApplyPermitPage() {
                         />
                         
                         <div className="flex justify-end">
-                          <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto">
+                          <Button 
+                            type="submit" 
+                            disabled={isSubmitting || !form.watch("acceptDisclaimer")} 
+                            className="w-full md:w-auto"
+                          >
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Submit Application
                           </Button>

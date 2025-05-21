@@ -72,6 +72,7 @@ const banFormSchema = z.object({
   }),
   reason: z.string().min(10, "Reason must be at least 10 characters"),
 }).refine(data => {
+  // Allow same day burn bans (start date = end date)
   return data.endDate >= data.startDate;
 }, {
   message: "End date must be on or after the start date",
@@ -288,7 +289,8 @@ export default function BanManagement({ area }: BanManagementProps) {
                               onSelect={field.onChange}
                               disabled={(date) => {
                                 const startDate = form.getValues("startDate");
-                                return startDate && date < startDate;
+                                // Allow the same date as start date
+                                return startDate && date < new Date(startDate.setHours(0, 0, 0, 0));
                               }}
                               initialFocus
                             />

@@ -1,0 +1,421 @@
+import { useState, useEffect } from "react";
+import { useAuth } from "@/lib/AuthContext";
+import { Redirect } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import { Helmet } from "react-helmet";
+import { getPermitsByUser } from "@/lib/permit-service";
+import { getAllBurnTypes } from "@/lib/area-service";
+import { getAllAreas } from "@/lib/area-service";
+import { BurnPermit } from "@/lib/permit-types";
+import { BurnType, Area } from "@/lib/area-types";
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { 
+  Table, 
+  TableBody, 
+  TableCaption, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  FileCheck, 
+  FileX, 
+  FileClock, 
+  Calendar, 
+  Loader2, 
+  MapPin, 
+  Info 
+} from "lucide-react";
+import { format } from "date-fns";
+
+export default function MyPermits() {
+  const { user, loading } = useAuth();
+  const { toast } = useToast();
+  
+  const [permits, setPermits] = useState<BurnPermit[]>([]);
+  const [burnTypes, setBurnTypes] = useState<BurnType[]>([]);
+  const [areas, setAreas] = useState<Area[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Fetch user's permits, areas and burn types
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!user) return;
+      
+      try {
+        setIsLoading(true);
+        
+        // First fetch the user's permits
+        const userPermits = await getPermitsByUser(user.uid);
+        setPermits(userPermits);
+        
+        // Then fetch burn types and areas for displaying names
+        try {
+          const [allBurnTypes, allAreas] = await Promise.all([
+            getAllBurnTypes(),
+            getAllAreas()
+          ]);
+          
+          setBurnTypes(allBurnTypes);
+          setAreas(allAreas);
+        } catch (secondaryError) {
+          console.error("Error fetching secondary data:", secondaryError);
+          toast({
+            title: "Note",
+            description: "Some permit details may not display correctly due to data loading issues.",
+            duration: 5000,
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching permits:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load your permits. Please try again later.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [user, toast]);
+  
+  // Get status badge styling
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case "approved":
+        return "success";
+      case "rejected":
+        return "destructive";
+      case "completed":
+        return "secondary";
+      default:
+        return "default";
+    }
+  };
+  
+  // Get status icon
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "approved":
+        return <FileCheck className="h-4 w-4 mr-1" />;
+      case "rejected":
+        return <FileX className="h-4 w-4 mr-1" />;
+      case "pending":
+        return <FileClock className="h-4 w-4 mr-1" />;
+      case "completed":
+        return <FileCheck className="h-4 w-4 mr-1" />;
+      default:
+        return <Info className="h-4 w-4 mr-1" />;
+    }
+  };
+  
+  // Get area name by ID
+  const getAreaName = (areaId: string) => {
+    const area = areas.find(a => a.id === areaId);
+    return area ? area.name : "Unknown Area";
+  };
+  
+  // Get burn type name by ID
+  const getBurnTypeName = (burnTypeId: string) => {
+    const burnType = burnTypes.find(bt => bt.id === burnTypeId);
+    return burnType ? burnType.name : "Unknown Burn Type";
+  };
+  
+  // Group permits by status
+  const activePermits = permits.filter(p => 
+    p.status === "approved" && 
+    new Date(p.startDate) <= new Date() && 
+    new Date(p.endDate) >= new Date()
+  );
+  
+  const pendingPermits = permits.filter(p => p.status === "pending");
+  const rejectedPermits = permits.filter(p => p.status === "rejected");
+  const completedPermits = permits.filter(p => 
+    p.status === "completed" || 
+    (p.status === "approved" && new Date(p.endDate) < new Date())
+  );
+  
+  // Handle redirect if not logged in
+  if (!loading && !user) {
+    return <Redirect to="/" />;
+  }
+  
+  // Loading state
+  if (loading || isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Loading your permits...</span>
+      </div>
+    );
+  }
+  
+  return (
+    <>
+      <Helmet>
+        <title>My Burn Permits - Umpiluzi Fire Protection Association</title>
+        <meta name="description" content="View and manage your burn permits" />
+      </Helmet>
+      
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        
+        <main className="flex-grow bg-gray-50 dark:bg-gray-900">
+          <div className="container mx-auto px-4 py-8">
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold">My Burn Permits</h1>
+              <p className="text-muted-foreground mt-2">
+                View and manage your burn permit applications
+              </p>
+            </div>
+            
+            <Tabs defaultValue="active" className="w-full">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="active" className="flex items-center">
+                  <FileCheck className="h-4 w-4 mr-2" />
+                  <span>Active</span>
+                  {activePermits.length > 0 && (
+                    <Badge variant="secondary" className="ml-2">{activePermits.length}</Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="pending" className="flex items-center">
+                  <FileClock className="h-4 w-4 mr-2" />
+                  <span>Pending</span>
+                  {pendingPermits.length > 0 && (
+                    <Badge variant="secondary" className="ml-2">{pendingPermits.length}</Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="rejected" className="flex items-center">
+                  <FileX className="h-4 w-4 mr-2" />
+                  <span>Rejected</span>
+                  {rejectedPermits.length > 0 && (
+                    <Badge variant="secondary" className="ml-2">{rejectedPermits.length}</Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="completed" className="flex items-center">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  <span>Completed</span>
+                  {completedPermits.length > 0 && (
+                    <Badge variant="secondary" className="ml-2">{completedPermits.length}</Badge>
+                  )}
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="active" className="mt-6">
+                {activePermits.length === 0 ? (
+                  <Card>
+                    <CardContent className="pt-6 text-center">
+                      <FileCheck className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+                      <h3 className="text-lg font-medium mb-2">No Active Permits</h3>
+                      <p className="text-muted-foreground mb-4">
+                        You don't have any active burn permits for today.
+                      </p>
+                      <Button asChild>
+                        <a href="/apply-permit">Apply for a Permit</a>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-4">
+                    {activePermits.map(permit => (
+                      <PermitCard 
+                        key={permit.id} 
+                        permit={permit}
+                        areaName={getAreaName(permit.areaId)}
+                        burnTypeName={getBurnTypeName(permit.burnTypeId)}
+                        statusIcon={getStatusIcon(permit.status)}
+                        statusBadgeVariant={getStatusBadgeVariant(permit.status)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="pending" className="mt-6">
+                {pendingPermits.length === 0 ? (
+                  <Card>
+                    <CardContent className="pt-6 text-center">
+                      <FileClock className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+                      <h3 className="text-lg font-medium mb-2">No Pending Permits</h3>
+                      <p className="text-muted-foreground mb-4">
+                        You don't have any pending burn permit applications.
+                      </p>
+                      <Button asChild>
+                        <a href="/apply-permit">Apply for a Permit</a>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-4">
+                    {pendingPermits.map(permit => (
+                      <PermitCard 
+                        key={permit.id} 
+                        permit={permit}
+                        areaName={getAreaName(permit.areaId)}
+                        burnTypeName={getBurnTypeName(permit.burnTypeId)}
+                        statusIcon={getStatusIcon(permit.status)}
+                        statusBadgeVariant={getStatusBadgeVariant(permit.status)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="rejected" className="mt-6">
+                {rejectedPermits.length === 0 ? (
+                  <Card>
+                    <CardContent className="pt-6 text-center">
+                      <FileX className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+                      <h3 className="text-lg font-medium mb-2">No Rejected Permits</h3>
+                      <p className="text-muted-foreground mb-4">
+                        You don't have any rejected burn permit applications.
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-4">
+                    {rejectedPermits.map(permit => (
+                      <PermitCard 
+                        key={permit.id} 
+                        permit={permit}
+                        areaName={getAreaName(permit.areaId)}
+                        burnTypeName={getBurnTypeName(permit.burnTypeId)}
+                        statusIcon={getStatusIcon(permit.status)}
+                        statusBadgeVariant={getStatusBadgeVariant(permit.status)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="completed" className="mt-6">
+                {completedPermits.length === 0 ? (
+                  <Card>
+                    <CardContent className="pt-6 text-center">
+                      <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+                      <h3 className="text-lg font-medium mb-2">No Completed Permits</h3>
+                      <p className="text-muted-foreground mb-4">
+                        You don't have any completed burn permits.
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-4">
+                    {completedPermits.map(permit => (
+                      <PermitCard 
+                        key={permit.id} 
+                        permit={permit}
+                        areaName={getAreaName(permit.areaId)}
+                        burnTypeName={getBurnTypeName(permit.burnTypeId)}
+                        statusIcon={getStatusIcon(permit.status)}
+                        statusBadgeVariant={getStatusBadgeVariant(permit.status)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+            
+            {permits.length === 0 && (
+              <div className="text-center mt-8">
+                <p className="mb-4">
+                  You haven't applied for any burn permits yet.
+                </p>
+                <Button asChild>
+                  <a href="/apply-permit">Apply for a Permit</a>
+                </Button>
+              </div>
+            )}
+          </div>
+        </main>
+        
+        <Footer />
+      </div>
+    </>
+  );
+}
+
+interface PermitCardProps {
+  permit: BurnPermit;
+  areaName: string;
+  burnTypeName: string;
+  statusIcon: React.ReactNode;
+  statusBadgeVariant: string;
+}
+
+function PermitCard({ permit, areaName, burnTypeName, statusIcon, statusBadgeVariant }: PermitCardProps) {
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="text-lg">{burnTypeName}</CardTitle>
+            <CardDescription>{areaName}</CardDescription>
+          </div>
+          <Badge className="flex items-center capitalize" variant={statusBadgeVariant as any}>
+            {statusIcon}
+            {permit.status}
+          </Badge>
+        </div>
+      </CardHeader>
+      
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <h4 className="text-sm font-medium mb-1">Burn Date</h4>
+            <p className="text-sm text-muted-foreground">
+              {format(new Date(permit.startDate), "MMMM d, yyyy")}
+              {permit.startDate.toDateString() !== permit.endDate.toDateString() && 
+                ` - ${format(new Date(permit.endDate), "MMMM d, yyyy")}`}
+            </p>
+          </div>
+          
+          <div>
+            <h4 className="text-sm font-medium mb-1">Location</h4>
+            <p className="text-sm text-muted-foreground flex items-center">
+              <MapPin className="h-3 w-3 mr-1" />
+              {permit.location.latitude.toFixed(6)}, {permit.location.longitude.toFixed(6)}
+              {permit.location.address && <span className="ml-1">({permit.location.address})</span>}
+            </p>
+          </div>
+        </div>
+        
+        {permit.details && (
+          <div className="mt-4">
+            <h4 className="text-sm font-medium mb-1">Details</h4>
+            <p className="text-sm text-muted-foreground">{permit.details}</p>
+          </div>
+        )}
+        
+        {permit.status === "rejected" && permit.rejectionReason && (
+          <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-md">
+            <h4 className="text-sm font-medium text-red-800 dark:text-red-300 mb-1">Reason for Rejection</h4>
+            <p className="text-sm text-red-700 dark:text-red-400">{permit.rejectionReason}</p>
+          </div>
+        )}
+      </CardContent>
+      
+      <CardFooter className="text-xs text-muted-foreground border-t pt-4">
+        <div className="w-full flex justify-between">
+          <span>Applied: {format(new Date(permit.createdAt), "MMM d, yyyy")}</span>
+          <span>Permit ID: {permit.id.slice(0, 8)}</span>
+        </div>
+      </CardFooter>
+    </Card>
+  );
+}

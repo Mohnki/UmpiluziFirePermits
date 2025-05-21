@@ -9,6 +9,7 @@ import Admin from "@/pages/Admin";
 import AreaManager from "@/pages/AreaManager";
 import ApplyPermit from "@/pages/ApplyPermit";
 import ManageFarms from "@/pages/ManageFarms";
+import MyPermits from "@/pages/MyPermits";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { AuthProvider } from "./lib/AuthContext";
 
@@ -20,6 +21,7 @@ function Router() {
       <Route path="/area-manager" component={AreaManager} />
       <Route path="/apply-permit" component={ApplyPermit} />
       <Route path="/my-farms" component={ManageFarms} />
+      <Route path="/my-permits" component={MyPermits} />
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>

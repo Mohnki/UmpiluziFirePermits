@@ -137,18 +137,21 @@ export default function MyPermits() {
     return burnType ? burnType.name : "Unknown Burn Type";
   };
   
-  // Group permits by status
+  // Get today's date with time set to 00:00:00
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  // Group permits - focus only on today's active permits
   const activePermits = permits.filter(p => 
     p.status === "approved" && 
-    new Date(p.startDate) <= new Date() && 
-    new Date(p.endDate) >= new Date()
+    new Date(p.startDate) <= today && 
+    new Date(p.endDate) >= today
   );
   
-  const pendingPermits = permits.filter(p => p.status === "pending");
-  const rejectedPermits = permits.filter(p => p.status === "rejected");
-  const completedPermits = permits.filter(p => 
-    p.status === "completed" || 
-    (p.status === "approved" && new Date(p.endDate) < new Date())
+  // All other permits (for history)
+  const historyPermits = permits.filter(p => 
+    p.status !== "approved" || 
+    new Date(p.endDate) < today
   );
   
   // Handle redirect if not logged in

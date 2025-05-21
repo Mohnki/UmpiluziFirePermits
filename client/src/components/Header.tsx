@@ -2,9 +2,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { Flame, Menu, X } from "lucide-react";
+import LoginButton from "@/components/LoginButton";
+import ThemeToggle from "@/components/ThemeToggle";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user } = useAuth();
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -15,7 +19,7 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-md">
+    <header className="sticky top-0 z-50 bg-white dark:bg-gray-900 shadow-md">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <div className="flex items-center">
           <div className="mr-3">
@@ -37,46 +41,56 @@ export default function Header() {
           <a href="#contact" className="text-foreground hover:text-primary transition font-medium">Contact</a>
         </nav>
 
-        <div className="hidden md:block">
-          <a href="#apply">
-            <Button className="bg-primary text-white hover:bg-primary/90">Apply for Permit</Button>
-          </a>
+        <div className="hidden md:flex items-center space-x-4">
+          <ThemeToggle />
+          <LoginButton />
+          {user && (
+            <a href="#apply">
+              <Button className="bg-primary text-white hover:bg-primary/90">Apply for Permit</Button>
+            </a>
+          )}
         </div>
 
         {/* Mobile menu button */}
-        <button 
-          onClick={toggleMobileMenu}
-          className="md:hidden text-foreground focus:outline-none"
-        >
-          {isMobileMenuOpen ? (
-            <X className="h-6 w-6" />
-          ) : (
-            <Menu className="h-6 w-6" />
-          )}
-        </button>
+        <div className="md:hidden flex items-center">
+          <ThemeToggle />
+          <div className="mx-2">
+            <LoginButton />
+          </div>
+          <button 
+            onClick={toggleMobileMenu}
+            className="text-foreground focus:outline-none"
+          >
+            {isMobileMenuOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Navigation */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-white">
+        <div className="md:hidden bg-white dark:bg-gray-900">
           <div className="container mx-auto px-4 py-2 flex flex-col space-y-3">
             <a 
               href="#" 
-              className="text-foreground hover:text-primary transition py-2 border-b border-gray-100"
+              className="text-foreground hover:text-primary transition py-2 border-b border-gray-100 dark:border-gray-700"
               onClick={closeMobileMenu}
             >
               Home
             </a>
             <a 
               href="#about" 
-              className="text-foreground hover:text-primary transition py-2 border-b border-gray-100"
+              className="text-foreground hover:text-primary transition py-2 border-b border-gray-100 dark:border-gray-700"
               onClick={closeMobileMenu}
             >
               About Us
             </a>
             <a 
               href="#permits" 
-              className="text-foreground hover:text-primary transition py-2 border-b border-gray-100"
+              className="text-foreground hover:text-primary transition py-2 border-b border-gray-100 dark:border-gray-700"
               onClick={closeMobileMenu}
             >
               Fire Permits
@@ -88,14 +102,16 @@ export default function Header() {
             >
               Contact
             </a>
-            <a 
-              href="#apply" 
-              onClick={closeMobileMenu}
-            >
-              <Button className="w-full bg-primary text-white hover:bg-primary/90">
-                Apply for Permit
-              </Button>
-            </a>
+            {user && (
+              <a 
+                href="#apply" 
+                onClick={closeMobileMenu}
+              >
+                <Button className="w-full bg-primary text-white hover:bg-primary/90">
+                  Apply for Permit
+                </Button>
+              </a>
+            )}
           </div>
         </div>
       )}

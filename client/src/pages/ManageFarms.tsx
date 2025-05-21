@@ -281,18 +281,6 @@ export default function ManageFarms() {
               </p>
             </div>
             <div className="mt-3 md:mt-0 flex items-center space-x-4">
-              <Link href="/apply-permit" className="flex items-center bg-primary text-primary-foreground py-2 px-4 rounded-md hover:bg-primary/90 text-sm font-medium">
-                <FileText className="h-4 w-4 mr-1" />
-                Apply for Permit
-              </Link>
-              <Link href="/my-permits" className="flex items-center text-primary hover:text-primary/80 text-sm font-medium">
-                <Bookmark className="h-4 w-4 mr-1" />
-                My Permits
-              </Link>
-              <Link href="/" className="flex items-center text-primary hover:text-primary/80 text-sm font-medium">
-                <Home className="h-4 w-4 mr-1" />
-                Home
-              </Link>
               <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
                 <DialogTrigger asChild>
                   <button onClick={handleNewFarm} className="flex items-center bg-primary text-primary-foreground py-2 px-4 rounded-md hover:bg-primary/90 text-sm font-medium">

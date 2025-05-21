@@ -1,7 +1,3 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { 
   MapPin, 
   Phone, 
@@ -25,52 +21,7 @@ export default function Contact() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold mb-4">Send Us a Message</h3>
-            <form>
-              <div className="mb-4">
-                <Label htmlFor="name">Full Name</Label>
-                <Input 
-                  type="text" 
-                  id="name" 
-                  placeholder="Your name" 
-                  className="mt-1"
-                />
-              </div>
-              <div className="mb-4">
-                <Label htmlFor="email">Email Address</Label>
-                <Input 
-                  type="email" 
-                  id="email" 
-                  placeholder="Your email" 
-                  className="mt-1"
-                />
-              </div>
-              <div className="mb-4">
-                <Label htmlFor="subject">Subject</Label>
-                <Input 
-                  type="text" 
-                  id="subject" 
-                  placeholder="Message subject" 
-                  className="mt-1"
-                />
-              </div>
-              <div className="mb-4">
-                <Label htmlFor="message">Message</Label>
-                <Textarea 
-                  id="message" 
-                  rows={4} 
-                  placeholder="Your message" 
-                  className="mt-1"
-                />
-              </div>
-              <Button type="submit" className="bg-primary text-white hover:bg-primary/90">
-                Send Message
-              </Button>
-            </form>
-          </div>
-
+        <div className="max-w-2xl mx-auto">
           <div className="bg-white p-6 rounded-lg shadow-md">
             <h3 className="text-xl font-semibold mb-4">Contact Information</h3>
             <div className="space-y-4">

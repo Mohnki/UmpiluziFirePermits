@@ -3,7 +3,6 @@ import Hero from "@/components/Hero";
 import About from "@/components/About";
 import PermitsInfo from "@/components/PermitsInfo";
 import CallToAction from "@/components/CallToAction";
-import FireSafety from "@/components/FireSafety";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
 import { Helmet } from "react-helmet";
@@ -25,7 +24,6 @@ export default function Home() {
           <About />
           <PermitsInfo />
           <CallToAction />
-          <FireSafety />
           <Contact />
         </main>
         <Footer />

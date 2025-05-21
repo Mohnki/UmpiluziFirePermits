@@ -91,15 +91,52 @@ const DefaultIcon = L.icon({
 L.Marker.prototype.options.icon = DefaultIcon;
 
 // Map click handler component
-function LocationMarker({ setPosition }: { setPosition: (pos: [number, number]) => void }) {
-  const map = useMapEvents({
-    click(e) {
-      const { lat, lng } = e.latlng;
-      setPosition([lat, lng]);
-    },
-  });
+function LocationPicker({ position, setPosition }: { 
+  position: [number, number] | null, 
+  setPosition: (pos: [number, number]) => void 
+}) {
+  // Set up click events
+  const MapClickHandler = () => {
+    useMapEvents({
+      click(e) {
+        const { lat, lng } = e.latlng;
+        setPosition([lat, lng]);
+      },
+    });
+    return null;
+  };
   
-  return null;
+  // Set up Leaflet icons
+  useEffect(() => {
+    // Fix the broken icon issue
+    delete (L.Icon.Default.prototype as any)._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+      iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+    });
+  }, []);
+  
+  return (
+    <div className="w-full h-full">
+      <MapContainer 
+        center={position || [-26.5, 31.5]} // Default to Eswatini area
+        zoom={position ? 13 : 8} 
+        style={{ height: '100%', width: '100%' }}
+        scrollWheelZoom={true}
+        zoomControl={true}
+      >
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        />
+        <MapClickHandler />
+        {position && (
+          <Marker position={position} />
+        )}
+      </MapContainer>
+    </div>
+  );
 }
 
 export default function ApplyPermitPage() {
@@ -114,7 +151,6 @@ export default function ApplyPermitPage() {
   const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
   const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
-  const [showLocationModal, setShowLocationModal] = useState(false);
   
   const form = useForm<z.infer<typeof permitFormSchema>>({
     resolver: zodResolver(permitFormSchema),
@@ -282,7 +318,7 @@ export default function ApplyPermitPage() {
       <div className="flex flex-col min-h-screen">
         <Header />
         <main className="flex-grow bg-gray-50 dark:bg-gray-900">
-          <div className="container mx-auto py-8 px-4">
+          <div className="mx-auto max-w-7xl px-4 py-8">
             <div className="max-w-3xl mx-auto">
               <h1 className="text-2xl md:text-3xl font-bold mb-6">Apply for a Burn Permit</h1>
               
@@ -456,7 +492,7 @@ export default function ApplyPermitPage() {
                           />
                         </div>
                         
-                        <div className="space-y-6">
+                        <div className="space-y-4">
                           <div className="flex flex-col">
                             <div className="flex items-center justify-between mb-2">
                               <h3 className="text-base font-medium">Burn Location</h3>
@@ -533,7 +569,7 @@ export default function ApplyPermitPage() {
                             
                             <div className="border rounded-md h-[300px] mb-4 overflow-hidden relative">
                               {!markerPosition && (
-                                <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/5">
+                                <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/5 pointer-events-none">
                                   <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg text-center">
                                     <p className="text-sm font-medium mb-2">Click on the map to set your burn location</p>
                                     <p className="text-xs text-muted-foreground">Or use the "Use My Location" button above</p>
@@ -541,25 +577,12 @@ export default function ApplyPermitPage() {
                                 </div>
                               )}
                               
-                              <MapContainer 
-                                center={markerPosition || [-26.5, 31.5]} // Default to Eswatini area
-                                zoom={markerPosition ? 13 : 8} 
-                                style={{ height: '100%', width: '100%' }}
-                                attributionControl={false}
-                              >
-                                <TileLayer
-                                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                                />
-                                <LocationMarker 
-                                  setPosition={(pos) => {
-                                    setMarkerPosition(pos);
-                                  }} 
-                                />
-                                {markerPosition && (
-                                  <Marker position={markerPosition} />
-                                )}
-                              </MapContainer>
+                              <LocationPicker 
+                                position={markerPosition}
+                                setPosition={(pos) => {
+                                  setMarkerPosition(pos);
+                                }}
+                              />
                             </div>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -625,30 +648,26 @@ export default function ApplyPermitPage() {
                           name="details"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Burn Details</FormLabel>
+                              <FormLabel>Additional Details</FormLabel>
                               <FormControl>
                                 <Textarea 
-                                  placeholder="Please describe the purpose of the burn, materials to be burned, safety measures in place, etc." 
-                                  className="min-h-[120px]"
+                                  placeholder="Provide details about your controlled burn" 
+                                  className="min-h-[100px]"
                                   {...field} 
                                 />
                               </FormControl>
                               <FormDescription>
-                                Provide details about your controlled burn plan
+                                Include information about the size of the area to be burned, safety measures in place, etc.
                               </FormDescription>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
                         
-                        <div className="pt-4">
-                          <Button 
-                            type="submit" 
-                            className="w-full md:w-auto"
-                            disabled={isSubmitting}
-                          >
+                        <div className="flex justify-end">
+                          <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto">
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Submit Permit Application
+                            Submit Application
                           </Button>
                         </div>
                       </form>

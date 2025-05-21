@@ -7,7 +7,8 @@ import Footer from "@/components/Footer";
 import { Helmet } from "react-helmet";
 import { createBurnPermit } from "@/lib/permit-service";
 import { getAllAreas, getAllBurnTypes } from "@/lib/area-service";
-import { Area, BurnType } from "@/lib/area-types";
+import { getFarmsByUser } from "@/lib/farm-service";
+import { Area, BurnType, Farm } from "@/lib/area-types";
 import { BurnPermit } from "@/lib/permit-types";
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
@@ -57,8 +58,8 @@ const permitFormSchema = z.object({
   burnTypeId: z.string({
     required_error: "Please select a burn type",
   }),
-  areaId: z.string({
-    required_error: "Please select an area",
+  farmId: z.string({
+    required_error: "Please select a farm",
   }),
   burnDate: z.date({
     required_error: "Please select the date of your burn",
@@ -136,19 +137,20 @@ export default function ApplyPermitPage() {
   const { toast } = useToast();
   const [location, navigate] = useLocation();
   
-  const [areas, setAreas] = useState<Area[]>([]);
+  const [farms, setFarms] = useState<Farm[]>([]);
   const [burnTypes, setBurnTypes] = useState<BurnType[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
   const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [selectedFarm, setSelectedFarm] = useState<Farm | null>(null);
   
   const form = useForm<z.infer<typeof permitFormSchema>>({
     resolver: zodResolver(permitFormSchema),
     defaultValues: {
       burnTypeId: "",
-      areaId: "",
+      farmId: "",
       details: "",
       location: {
         latitude: 0,
@@ -157,23 +159,38 @@ export default function ApplyPermitPage() {
     },
   });
 
-  // Fetch areas and burn types
+  // Fetch farms and burn types
   useEffect(() => {
     const fetchData = async () => {
+      if (!user) return;
+      
       try {
         setLoadingData(true);
-        const [allAreas, allBurnTypes] = await Promise.all([
-          getAllAreas(),
+        const [userFarms, allBurnTypes] = await Promise.all([
+          getFarmsByUser(user.uid),
           getAllBurnTypes()
         ]);
         
-        setAreas(allAreas);
+        setFarms(userFarms);
         setBurnTypes(allBurnTypes);
+        
+        if (userFarms.length === 0) {
+          toast({
+            title: "No Farms Found",
+            description: "You need to register a farm before applying for a burn permit. Redirecting to the farm management page.",
+            duration: 5000,
+          });
+          
+          // Give the user time to read the message before redirecting
+          setTimeout(() => {
+            navigate("/my-farms");
+          }, 2500);
+        }
       } catch (error) {
         console.error("Error fetching data:", error);
         toast({
           title: "Error",
-          description: "Failed to load areas and burn types. Please try again.",
+          description: "Failed to load your farms and burn types. Please try again.",
           variant: "destructive",
         });
       } finally {
@@ -182,7 +199,7 @@ export default function ApplyPermitPage() {
     };
 
     fetchData();
-  }, [toast]);
+  }, [user, toast, navigate]);
 
   // Get user's location
   useEffect(() => {
@@ -250,8 +267,19 @@ export default function ApplyPermitPage() {
     }
   }, [markerPosition, form]);
 
+  // Update selected farm when farm ID changes
+  useEffect(() => {
+    const farmId = form.watch("farmId");
+    if (farmId) {
+      const farm = farms.find(f => f.id === farmId);
+      setSelectedFarm(farm || null);
+    } else {
+      setSelectedFarm(null);
+    }
+  }, [form.watch("farmId"), farms]);
+
   const onSubmit = async (values: z.infer<typeof permitFormSchema>) => {
-    if (!user) return;
+    if (!user || !selectedFarm) return;
     
     try {
       setIsSubmitting(true);
@@ -262,7 +290,7 @@ export default function ApplyPermitPage() {
       const permit = await createBurnPermit({
         userId: user.uid,
         burnTypeId: values.burnTypeId,
-        areaId: values.areaId,
+        areaId: selectedFarm.areaId, // Use the farm's area ID
         startDate: burnDate,
         endDate: burnDate, // Same as burn date for single-day permits
         location: values.location,
@@ -337,29 +365,29 @@ export default function ApplyPermitPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <FormField
                             control={form.control}
-                            name="areaId"
+                            name="farmId"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Area</FormLabel>
+                                <FormLabel>Farm</FormLabel>
                                 <Select
                                   onValueChange={field.onChange}
                                   defaultValue={field.value}
                                 >
                                   <FormControl>
                                     <SelectTrigger>
-                                      <SelectValue placeholder="Select an area" />
+                                      <SelectValue placeholder="Select a farm" />
                                     </SelectTrigger>
                                   </FormControl>
                                   <SelectContent>
-                                    {areas.map(area => (
-                                      <SelectItem key={area.id} value={area.id}>
-                                        {area.name}
+                                    {farms.map(farm => (
+                                      <SelectItem key={farm.id} value={farm.id}>
+                                        {farm.name}
                                       </SelectItem>
                                     ))}
                                   </SelectContent>
                                 </Select>
                                 <FormDescription>
-                                  Select the area where the burn will take place
+                                  Select the farm where the burn will take place
                                 </FormDescription>
                                 <FormMessage />
                               </FormItem>

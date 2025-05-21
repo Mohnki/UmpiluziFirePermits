@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/lib/AuthContext";
-import { Redirect, useLocation } from "wouter";
+import { Redirect, useLocation, Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -48,7 +48,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CalendarIcon, Flame, Loader2, MapPin } from "lucide-react";
+import { CalendarIcon, Flame, Loader2, MapPin, Bookmark } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -382,7 +382,19 @@ export default function ApplyPermitPage() {
         <main className="flex-grow bg-gray-50 dark:bg-gray-900">
           <div className="mx-auto max-w-7xl px-4 py-8">
             <div className="max-w-3xl mx-auto">
-              <h1 className="text-2xl md:text-3xl font-bold mb-6">Apply for a Burn Permit</h1>
+              <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
+                <h1 className="text-2xl md:text-3xl font-bold">Apply for a Burn Permit</h1>
+                <div className="mt-2 md:mt-0 flex items-center space-x-4">
+                  <Link href="/my-permits" className="flex items-center text-primary hover:text-primary/80 text-sm font-medium">
+                    <Bookmark className="h-4 w-4 mr-1" />
+                    View My Permits
+                  </Link>
+                  <Link href="/my-farms" className="flex items-center text-primary hover:text-primary/80 text-sm font-medium">
+                    <MapPin className="h-4 w-4 mr-1" />
+                    Manage Farms
+                  </Link>
+                </div>
+              </div>
               
               <Card>
                 <CardHeader>

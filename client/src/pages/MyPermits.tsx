@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/AuthContext";
-import { Redirect } from "wouter";
+import { Redirect, Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -37,7 +37,8 @@ import {
   Calendar, 
   Loader2, 
   MapPin, 
-  Info 
+  Info,
+  FileText
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -177,11 +178,23 @@ export default function MyPermits() {
         
         <main className="flex-grow bg-gray-50 dark:bg-gray-900">
           <div className="container mx-auto px-4 py-8">
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold">My Burn Permits</h1>
-              <p className="text-muted-foreground mt-2">
-                View and manage your burn permit applications
-              </p>
+            <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
+              <div>
+                <h1 className="text-3xl font-bold">My Burn Permits</h1>
+                <p className="text-muted-foreground mt-2">
+                  View and manage your burn permit applications
+                </p>
+              </div>
+              <div className="mt-3 md:mt-0 flex items-center space-x-4">
+                <Link href="/apply-permit" className="flex items-center bg-primary text-primary-foreground py-2 px-4 rounded-md hover:bg-primary/90 text-sm font-medium">
+                  <FileText className="h-4 w-4 mr-1" />
+                  Apply for Permit
+                </Link>
+                <Link href="/my-farms" className="flex items-center text-primary hover:text-primary/80 text-sm font-medium">
+                  <MapPin className="h-4 w-4 mr-1" />
+                  Manage Farms
+                </Link>
+              </div>
             </div>
             
             <Tabs defaultValue="active" className="w-full">

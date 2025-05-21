@@ -1,10 +1,10 @@
-import { Flame, Facebook, Twitter, Instagram } from "lucide-react";
+import { Flame, Facebook, Twitter, Instagram, Phone } from "lucide-react";
 
 export default function Footer() {
   return (
     <footer className="bg-[#343A40] text-white py-8">
       <div className="container mx-auto px-4">
-        <div className="grid md:grid-cols-4 gap-8">
+        <div className="grid md:grid-cols-3 gap-8">
           <div>
             <div className="flex items-center mb-4">
               <Flame className="h-6 w-6 text-primary mr-2" />
@@ -14,7 +14,7 @@ export default function Footer() {
               </div>
             </div>
             <p className="text-gray-400 text-sm">
-              Protecting our communities from wildfire through prevention, education, and coordinated response.
+              We provide an integrated community fire management service to members of the Association.
             </p>
           </div>
 
@@ -22,29 +22,21 @@ export default function Footer() {
             <h4 className="font-semibold text-lg mb-4">Quick Links</h4>
             <ul className="space-y-2">
               <li><a href="#" className="text-gray-400 hover:text-white transition">Home</a></li>
-              <li><a href="#about" className="text-gray-400 hover:text-white transition">About Us</a></li>
+              <li><a href="#about" className="text-gray-400 hover:text-white transition">What We Do</a></li>
               <li><a href="#permits" className="text-gray-400 hover:text-white transition">Fire Permits</a></li>
-              <li><a href="#info" className="text-gray-400 hover:text-white transition">Resources</a></li>
               <li><a href="#contact" className="text-gray-400 hover:text-white transition">Contact</a></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-semibold text-lg mb-4">Services</h4>
-            <ul className="space-y-2">
-              <li><a href="#" className="text-gray-400 hover:text-white transition">Fire Permits</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white transition">Fire Risk Assessments</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white transition">Community Training</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white transition">Fire Prevention</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white transition">Emergency Response</a></li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-semibold text-lg mb-4">Emergency Contact</h4>
-            <p className="text-gray-400 mb-2">For fire emergencies, call immediately:</p>
-            <p className="text-white font-bold text-xl mb-2">(123) 456-7999</p>
-            <p className="text-gray-400 text-sm">Available 24/7 for emergency response</p>
+            <h4 className="font-semibold text-lg mb-4">Contact Information</h4>
+            <div className="flex items-center mb-3">
+              <Phone className="h-5 w-5 text-primary mr-2" />
+              <p className="text-white">060 906 0319</p>
+            </div>
+            <p className="text-gray-400 text-sm mb-3">Office Hours: Monday-Friday: 8:00 AM - 5:00 PM</p>
+            <p className="text-gray-400 text-sm">Saturday: 8:00 AM - 12:00 PM | Sunday: Closed</p>
+            
             <div className="mt-4 flex space-x-4">
               <a href="#" className="text-gray-400 hover:text-white transition">
                 <Facebook className="h-5 w-5" />

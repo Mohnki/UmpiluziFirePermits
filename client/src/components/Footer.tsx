@@ -34,6 +34,7 @@ export default function Footer() {
               <Phone className="h-5 w-5 text-primary mr-2" />
               <p className="text-white">060 906 0319</p>
             </div>
+            <p className="text-gray-400 text-sm mb-2">UFPA Building Ferniehaug Jessievale, Warburton, 2333</p>
             <p className="text-gray-400 text-sm mb-3">Office Hours: Monday-Friday: 8:00 AM - 5:00 PM</p>
             <p className="text-gray-400 text-sm">Saturday: 8:00 AM - 12:00 PM | Sunday: Closed</p>
             

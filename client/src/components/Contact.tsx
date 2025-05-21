@@ -32,9 +32,9 @@ export default function Contact() {
                 <div>
                   <h4 className="font-medium">Office Address</h4>
                   <p className="text-muted-foreground">
-                    123 Fire Safety Road<br />
-                    Umpiluzi Region<br />
-                    Eswatini
+                    UFPA Building Ferniehaug Jessievale<br />
+                    Warburton, 2333<br />
+                    South Africa
                   </p>
                 </div>
               </div>

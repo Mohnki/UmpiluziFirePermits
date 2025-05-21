@@ -235,7 +235,7 @@ export default function MyPermits() {
             </div>
             
             <div className="mb-4">
-              <h2 className="text-xl font-bold flex items-center">
+              <h2 className="text-xl font-bold flex items-center mb-4">
                 <FileCheck className="h-5 w-5 mr-2 text-primary" />
                 Today's Active Permits
                 {activePermits.length > 0 && (
@@ -259,18 +259,52 @@ export default function MyPermits() {
                   </CardContent>
                 </Card>
               ) : (
-                <div className="space-y-4">
-                  {activePermits.map(permit => (
-                    <PermitCard 
-                      key={permit.id} 
-                      permit={permit}
-                      areaName={getAreaName(permit.areaId)}
-                      burnTypeName={getBurnTypeName(permit.burnTypeId)}
-                      statusIcon={getStatusIcon(permit.status)}
-                      statusBadgeVariant={getStatusBadgeVariant(permit.status)}
-                    />
-                  ))}
-                </div>
+                <Card>
+                  <CardContent>
+                    <div className="rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Permit Number</TableHead>
+                            <TableHead>Burn Type</TableHead>
+                            <TableHead>Area</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Details</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {activePermits.map(permit => (
+                            <TableRow key={permit.id}>
+                              <TableCell className="font-medium">{permit.id.substring(0, 8)}</TableCell>
+                              <TableCell>{getBurnTypeName(permit.burnTypeId)}</TableCell>
+                              <TableCell>{getAreaName(permit.areaId)}</TableCell>
+                              <TableCell>{format(new Date(permit.startDate), "MMM d, yyyy")}</TableCell>
+                              <TableCell>
+                                <Badge className="flex items-center gap-1 capitalize" variant="success">
+                                  {getStatusIcon(permit.status)}
+                                  {permit.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <Button 
+                                  size="sm" 
+                                  variant="default"
+                                  onClick={() => {
+                                    // Display more details in a modal if needed
+                                    alert(`Permit details: ${permit.details || "No additional details"}`);
+                                  }}
+                                >
+                                  View
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
+                </Card>
               )}
             </div>
             

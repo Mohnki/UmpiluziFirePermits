@@ -120,7 +120,21 @@ export default function Header() {
             <>
               <a href="#" className="text-foreground hover:text-primary transition font-medium">Home</a>
               <a href="#about" className="text-foreground hover:text-primary transition font-medium">About Us</a>
-              <a href="#permits" className="text-foreground hover:text-primary transition font-medium">Fire Permits</a>
+              {user ? (
+                <Link href="/apply-permit" className="text-foreground hover:text-primary transition font-medium">
+                  Fire Permits
+                </Link>
+              ) : (
+                <button 
+                  onClick={() => {
+                    const loginEvent = new CustomEvent('show-login-dialog');
+                    window.dispatchEvent(loginEvent);
+                  }}
+                  className="text-foreground hover:text-primary transition font-medium bg-transparent border-none cursor-pointer p-0"
+                >
+                  Fire Permits
+                </button>
+              )}
               <a href="#contact" className="text-foreground hover:text-primary transition font-medium">Contact</a>
             </>
           ) : (

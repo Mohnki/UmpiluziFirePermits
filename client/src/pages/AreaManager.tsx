@@ -332,10 +332,11 @@ export default function AreaManagerPage() {
                               </TableHeader>
                               <TableBody>
                                 {burnTypes.map(burnType => {
-                                  const isAllowed = burnTypePermissions[burnType.id] !== undefined 
-                                    ? burnTypePermissions[burnType.id] 
-                                    : burnType.defaultAllowed;
-                                    
+                                  // Check if burnTypeId exists in allowedBurnTypes
+                                  // If it doesn't exist at all (not just false), it's not allowed
+                                  const exists = burnType.id in burnTypePermissions;
+                                  const isAllowed = exists ? burnTypePermissions[burnType.id] : burnType.defaultAllowed;
+                                  
                                   return (
                                     <TableRow key={burnType.id}>
                                       <TableCell className="font-medium">{burnType.name}</TableCell>

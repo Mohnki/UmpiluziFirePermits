@@ -138,11 +138,16 @@ export default function MyPermits() {
     new Date(p.endDate) >= today
   );
   
-  // All other permits (for history)
+  // All other permits (for history) - everything that's not active today
   const historyPermits = permits.filter(p => 
-    p.status !== "approved" || 
-    new Date(p.endDate) < today
+    !(p.status === "approved" && 
+    new Date(p.startDate) <= today && 
+    new Date(p.endDate) >= today)
   );
+  
+  console.log("Total permits:", permits.length);
+  console.log("Active permits:", activePermits.length);
+  console.log("History permits:", historyPermits.length);
   
   // Handle redirect if not logged in
   if (!loading && !user) {
@@ -230,14 +235,26 @@ export default function MyPermits() {
               )}
             </div>
             
-            {historyPermits.length > 0 && (
-              <div className="mt-12">
-                <h2 className="text-xl font-bold flex items-center mb-4">
-                  <Calendar className="h-5 w-5 mr-2 text-primary" />
-                  Permit History
+            <div className="mt-12">
+              <h2 className="text-xl font-bold flex items-center mb-4">
+                <Calendar className="h-5 w-5 mr-2 text-primary" />
+                Permit History
+                {historyPermits.length > 0 && (
                   <Badge variant="secondary" className="ml-2">{historyPermits.length}</Badge>
-                </h2>
-                
+                )}
+              </h2>
+              
+              {historyPermits.length === 0 ? (
+                <Card>
+                  <CardContent className="pt-6 text-center">
+                    <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+                    <h3 className="text-lg font-medium mb-2">No Permit History</h3>
+                    <p className="text-muted-foreground mb-4">
+                      You don't have any past permit records.
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
                 <div className="space-y-4">
                   {historyPermits.map(permit => (
                     <PermitCard 
@@ -250,8 +267,8 @@ export default function MyPermits() {
                     />
                   ))}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
             
             {permits.length === 0 && (
               <div className="text-center mt-8">

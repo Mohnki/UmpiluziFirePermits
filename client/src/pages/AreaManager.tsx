@@ -15,6 +15,7 @@ import { Area, BurnType } from "@/lib/area-types";
 import BanManagement from "@/components/BanManagement";
 import { getPermitsByArea } from "@/lib/permit-service";
 import { BurnPermit } from "@/lib/permit-types";
+import PermitManagement from "@/components/PermitManagement";
 
 import {
   Tabs,
@@ -388,66 +389,32 @@ export default function AreaManagerPage() {
                         
                         {/* Permits Tab */}
                         <TabsContent value="permits" className="pt-4">
-                          <h3 className="text-lg font-medium mb-4">Burn Permit Applications</h3>
+                          <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-medium">Burn Permit Management</h3>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => fetchPermits(selectedArea.id)}
+                              disabled={loadingPermits}
+                            >
+                              {loadingPermits && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                              Refresh Permits
+                            </Button>
+                          </div>
                           
                           {loadingPermits ? (
                             <div className="flex items-center justify-center py-10">
                               <Loader2 className="h-6 w-6 animate-spin text-primary" />
                               <span className="ml-2">Loading permit applications...</span>
                             </div>
-                          ) : permits.length === 0 ? (
-                            <div className="text-center py-8 bg-gray-50 dark:bg-gray-700 rounded-md">
-                              <Calendar className="h-10 w-10 mx-auto mb-2 opacity-30" />
-                              <h4 className="text-lg font-medium mb-1">No Permit Applications</h4>
-                              <p className="text-muted-foreground">
-                                There are no burn permit applications for this area.
-                              </p>
-                            </div>
                           ) : (
-                            <Table>
-                              <TableCaption>List of burn permit applications for {selectedArea.name}</TableCaption>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead>Burn Type</TableHead>
-                                  <TableHead>Dates</TableHead>
-                                  <TableHead>Status</TableHead>
-                                  <TableHead>Applicant</TableHead>
-                                  <TableHead>Submitted</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {permits.map(permit => {
-                                  const burnType = burnTypes.find(bt => bt.id === permit.burnTypeId);
-                                  
-                                  return (
-                                    <TableRow key={permit.id}>
-                                      <TableCell className="font-medium">
-                                        {burnType ? burnType.name : "Unknown Burn Type"}
-                                      </TableCell>
-                                      <TableCell>
-                                        {format(permit.startDate, "MMM d, yyyy")}
-                                        {permit.startDate.toDateString() !== permit.endDate.toDateString() && 
-                                          ` - ${format(permit.endDate, "MMM d, yyyy")}`}
-                                      </TableCell>
-                                      <TableCell>
-                                        <Badge variant={getStatusBadgeVariant(permit.status)}>
-                                          {permit.status.charAt(0).toUpperCase() + permit.status.slice(1)}
-                                        </Badge>
-                                      </TableCell>
-                                      <TableCell>
-                                        <div className="flex items-center">
-                                          <SquareUser className="h-4 w-4 mr-1 text-muted-foreground" />
-                                          <span>User</span>
-                                        </div>
-                                      </TableCell>
-                                      <TableCell>
-                                        {format(permit.createdAt, "MMM d, yyyy")}
-                                      </TableCell>
-                                    </TableRow>
-                                  );
-                                })}
-                              </TableBody>
-                            </Table>
+                            <PermitManagement
+                              permits={permits}
+                              burnTypes={burnTypes}
+                              areaName={selectedArea.name}
+                              userId={user.uid}
+                              onPermitUpdated={() => fetchPermits(selectedArea.id)}
+                            />
                           )}
                         </TabsContent>
                       </Tabs>

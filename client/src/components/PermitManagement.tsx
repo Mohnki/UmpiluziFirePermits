@@ -1,7 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BurnPermit, PermitStatus } from "@/lib/permit-types";
 import { BurnType } from "@/lib/area-types";
 import { updatePermitStatus } from "@/lib/permit-service";
+import { firestore } from "@/lib/firebase";
+import { 
+  collection, 
+  addDoc, 
+  query, 
+  where, 
+  orderBy, 
+  getDocs, 
+  serverTimestamp 
+} from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -62,11 +72,24 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 
+// Define an interface for audit log entries
+interface AuditLogEntry {
+  id?: string;
+  permitId: string;
+  action: 'approved' | 'rejected' | 'cancelled' | 'viewed';
+  performedBy: string;
+  performedByName?: string;
+  timestamp: Date;
+  details?: string;
+  permitData?: Partial<BurnPermit>;
+}
+
 interface PermitManagementProps {
   permits: BurnPermit[];
   burnTypes: BurnType[];
   areaName: string;
   userId: string;
+  userName?: string;
   onPermitUpdated: () => void;
 }
 
@@ -75,6 +98,7 @@ export default function PermitManagement({
   burnTypes, 
   areaName,
   userId,
+  userName = "Administrator",
   onPermitUpdated
 }: PermitManagementProps) {
   const { toast } = useToast();
@@ -82,12 +106,87 @@ export default function PermitManagement({
   const [viewDetailsOpen, setViewDetailsOpen] = useState(false);
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
+  const [cancellationReason, setCancellationReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAuditLog, setShowAuditLog] = useState(false);
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
+  const [loadingAuditLogs, setLoadingAuditLogs] = useState(false);
   
-  // Filter only pending permits for action
+  // Firestore collection references
+  const auditLogsCollection = collection(firestore, "permitAuditLogs");
+  
+  // Filter permits by status for organization
   const pendingPermits = permits.filter(permit => permit.status === "pending");
-  const otherPermits = permits.filter(permit => permit.status !== "pending");
+  // Active permits that can be cancelled
+  const activePermits = permits.filter(permit => 
+    permit.status === "approved" && 
+    new Date(permit.endDate) >= new Date()
+  );
+  // Completed or rejected permits that can't be modified
+  const completedPermits = permits.filter(permit => 
+    permit.status === "completed" || 
+    permit.status === "cancelled" || 
+    permit.status === "rejected" ||
+    (permit.status === "approved" && new Date(permit.endDate) < new Date())
+  );
+  
+  // Load audit logs for a specific permit
+  const loadAuditLogs = async (permitId: string) => {
+    try {
+      setLoadingAuditLogs(true);
+      
+      const q = query(
+        auditLogsCollection,
+        where("permitId", "==", permitId),
+        orderBy("timestamp", "desc")
+      );
+      
+      const snapshot = await getDocs(q);
+      
+      const logs: AuditLogEntry[] = [];
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        logs.push({
+          id: doc.id,
+          permitId: data.permitId,
+          action: data.action,
+          performedBy: data.performedBy,
+          performedByName: data.performedByName,
+          timestamp: data.timestamp.toDate(),
+          details: data.details,
+          permitData: data.permitData
+        });
+      });
+      
+      setAuditLogs(logs);
+      setShowAuditLog(true);
+    } catch (error) {
+      console.error("Error loading audit logs:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load audit logs. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingAuditLogs(false);
+    }
+  };
+  
+  // Create an audit log entry
+  const createAuditLog = async (entry: Omit<AuditLogEntry, 'timestamp'>) => {
+    try {
+      await addDoc(auditLogsCollection, {
+        ...entry,
+        performedByName: userName,
+        timestamp: serverTimestamp()
+      });
+    } catch (error) {
+      console.error("Error creating audit log:", error);
+      // Don't throw, we don't want to interrupt the flow if logging fails
+    }
+  };
   
   // Get burn type name
   const getBurnTypeName = (burnTypeId: string) => {
@@ -130,6 +229,19 @@ export default function PermitManagement({
     setRejectDialogOpen(true);
   };
   
+  // Handle cancel click
+  const handleCancelClick = (permit: BurnPermit) => {
+    setSelectedPermit(permit);
+    setCancellationReason("");
+    setCancelDialogOpen(true);
+  };
+  
+  // Handle view audit log click
+  const handleViewAuditLog = (permit: BurnPermit) => {
+    setSelectedPermit(permit);
+    loadAuditLogs(permit.id);
+  };
+  
   // Approve permit
   const approvePermit = async () => {
     if (!selectedPermit) return;
@@ -142,6 +254,19 @@ export default function PermitManagement({
         "approved",
         userId
       );
+      
+      // Create audit log
+      await createAuditLog({
+        permitId: selectedPermit.id,
+        action: 'approved',
+        performedBy: userId,
+        details: "Permit approved by area manager",
+        permitData: {
+          status: "approved",
+          approvedBy: userId,
+          approvedAt: new Date()
+        }
+      });
       
       toast({
         title: "Permit Approved",
@@ -176,6 +301,18 @@ export default function PermitManagement({
         rejectionReason
       );
       
+      // Create audit log
+      await createAuditLog({
+        permitId: selectedPermit.id,
+        action: 'rejected',
+        performedBy: userId,
+        details: rejectionReason,
+        permitData: {
+          status: "rejected",
+          rejectionReason: rejectionReason
+        }
+      });
+      
       toast({
         title: "Permit Rejected",
         description: "The burn permit has been rejected.",
@@ -188,6 +325,51 @@ export default function PermitManagement({
       toast({
         title: "Error",
         description: error.message || "Failed to reject permit. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  // Cancel permit
+  const cancelPermit = async () => {
+    if (!selectedPermit || !cancellationReason.trim()) return;
+    
+    try {
+      setIsSubmitting(true);
+      
+      await updatePermitStatus(
+        selectedPermit.id,
+        "cancelled",
+        undefined,
+        cancellationReason
+      );
+      
+      // Create audit log
+      await createAuditLog({
+        permitId: selectedPermit.id,
+        action: 'cancelled',
+        performedBy: userId,
+        details: cancellationReason,
+        permitData: {
+          status: "cancelled",
+          rejectionReason: cancellationReason // Using the same field for simplicity
+        }
+      });
+      
+      toast({
+        title: "Permit Cancelled",
+        description: "The burn permit has been cancelled.",
+      });
+      
+      setCancelDialogOpen(false);
+      onPermitUpdated();
+    } catch (error: any) {
+      console.error("Error cancelling permit:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to cancel permit. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -285,29 +467,28 @@ export default function PermitManagement({
         </Card>
       )}
       
-      {otherPermits.length > 0 && (
+      {activePermits.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">All Permit Applications</CardTitle>
+            <CardTitle className="text-lg">Active Permits</CardTitle>
             <CardDescription>
-              History of all burn permit applications for this area
+              Currently active permits that can be cancelled if needed
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
-              <TableCaption>All permit applications for {areaName}</TableCaption>
+              <TableCaption>Active permits for {areaName}</TableCaption>
               <TableHeader>
                 <TableRow>
                   <TableHead>Burn Type</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Applicant</TableHead>
-                  <TableHead>Submitted</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {otherPermits.map(permit => (
+                {activePermits.map(permit => (
                   <TableRow key={permit.id}>
                     <TableCell className="font-medium">
                       {getBurnTypeName(permit.burnTypeId)}
@@ -327,17 +508,33 @@ export default function PermitManagement({
                       </div>
                     </TableCell>
                     <TableCell>
-                      {format(permit.createdAt, "MMM d, yyyy")}
-                    </TableCell>
-                    <TableCell>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => handleViewDetails(permit)}
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        View
-                      </Button>
+                      <div className="flex space-x-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleViewDetails(permit)}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 border-red-200"
+                          onClick={() => handleCancelClick(permit)}
+                        >
+                          <XCircle className="h-4 w-4 mr-1" />
+                          Cancel
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleViewAuditLog(permit)}
+                        >
+                          <Info className="h-4 w-4 mr-1" />
+                          History
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -346,6 +543,194 @@ export default function PermitManagement({
           </CardContent>
         </Card>
       )}
+      
+      {completedPermits.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Completed and Past Permits</CardTitle>
+            <CardDescription>
+              History of completed and past permit applications
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableCaption>Completed, cancelled and rejected permits for {areaName}</TableCaption>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Burn Type</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Applicant</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {completedPermits.map(permit => (
+                  <TableRow key={permit.id}>
+                    <TableCell className="font-medium">
+                      {getBurnTypeName(permit.burnTypeId)}
+                    </TableCell>
+                    <TableCell>
+                      {format(permit.startDate, "MMM d, yyyy")}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusBadgeVariant(permit.status) as any}>
+                        {permit.status.charAt(0).toUpperCase() + permit.status.slice(1)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center">
+                        <User className="h-4 w-4 mr-1 text-muted-foreground" />
+                        <span>User</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleViewDetails(permit)}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleViewAuditLog(permit)}
+                        >
+                          <Info className="h-4 w-4 mr-1" />
+                          History
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Audit Log Dialog */}
+      <Dialog open={showAuditLog} onOpenChange={setShowAuditLog}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Permit History</DialogTitle>
+            <DialogDescription>
+              Complete activity log for this permit
+            </DialogDescription>
+          </DialogHeader>
+          
+          {loadingAuditLogs ? (
+            <div className="flex items-center justify-center py-10">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <span className="ml-2">Loading audit logs...</span>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {auditLogs.length === 0 ? (
+                <div className="text-center py-8 bg-gray-50 dark:bg-gray-700 rounded-md">
+                  <Info className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                  <h4 className="text-lg font-medium mb-1">No History</h4>
+                  <p className="text-muted-foreground">
+                    There are no recorded activities for this permit yet.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="border rounded-md">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Action</TableHead>
+                          <TableHead>By</TableHead>
+                          <TableHead>Details</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {auditLogs.map((log, index) => (
+                          <TableRow key={log.id || index}>
+                            <TableCell className="whitespace-nowrap">
+                              {format(log.timestamp, "MMM d, yyyy HH:mm")}
+                            </TableCell>
+                            <TableCell>
+                              <Badge 
+                                variant={
+                                  log.action === 'approved' 
+                                    ? 'success' as any 
+                                    : log.action === 'rejected' || log.action === 'cancelled' 
+                                      ? 'destructive' as any 
+                                      : 'secondary'
+                                }
+                                className="capitalize"
+                              >
+                                {log.action}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {log.performedByName || log.performedBy.substring(0, 8)}
+                            </TableCell>
+                            <TableCell>
+                              {log.details || '-'}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAuditLog(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Cancel Permit Dialog */}
+      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancel Burn Permit</DialogTitle>
+            <DialogDescription>
+              Please provide a reason for cancelling this burn permit. This information will be shared with the applicant.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">Reason for Cancellation</h4>
+              <Textarea 
+                placeholder="Enter the reason for cancelling this permit..."
+                value={cancellationReason}
+                onChange={(e) => setCancellationReason(e.target.value)}
+                rows={4}
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCancelDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive"
+              onClick={cancelPermit}
+              disabled={isSubmitting || !cancellationReason.trim()}
+            >
+              {isSubmitting && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+              <XCircleIcon className="h-4 w-4 mr-1" />
+              Cancel Permit
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
       {/* Permit Details Dialog */}
       <Dialog open={viewDetailsOpen} onOpenChange={setViewDetailsOpen}>

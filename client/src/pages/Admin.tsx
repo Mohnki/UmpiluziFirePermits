@@ -834,21 +834,22 @@ export default function AdminPage() {
                                 
                                 <div>
                                   <h4 className="text-sm font-medium mb-1">Allowed Burn Types</h4>
-                                  {area.allowedBurnTypes && Object.keys(area.allowedBurnTypes).length > 0 ? (
+                                  {area.allowedBurnTypes && Object.entries(area.allowedBurnTypes).some(([_, allowed]) => allowed) ? (
                                     <div className="flex flex-wrap gap-1">
                                       {Object.entries(area.allowedBurnTypes).map(([id, allowed]) => {
+                                        if (!allowed) return null;
                                         const burnType = burnTypes.find(bt => bt.id === id);
                                         if (!burnType) return null;
                                         
-                                        return allowed ? (
+                                        return (
                                           <Badge key={id} variant="secondary" className="mr-1 mb-1">
                                             {burnType.name}
                                           </Badge>
-                                        ) : null;
+                                        );
                                       })}
                                     </div>
                                   ) : (
-                                    <span className="text-muted-foreground text-sm">No burn types configured</span>
+                                    <span className="text-muted-foreground text-sm">No burn types allowed</span>
                                   )}
                                 </div>
                               </div>
@@ -1146,10 +1147,10 @@ export default function AdminPage() {
                                 </TableHeader>
                                 <TableBody>
                                   {burnTypes.map(burnType => {
-                                    // Check if burnTypeId exists in allowedBurnTypes
-                                    // If it doesn't exist at all (not just false), it's not allowed
+                                    // Check if burnTypeId exists in allowedBurnTypes and is true
+                                    // If it doesn't exist at all or is false, it's not allowed
                                     const exists = burnType.id in burnTypePermissions;
-                                    const isAllowed = exists ? burnTypePermissions[burnType.id] : burnType.defaultAllowed;
+                                    const isAllowed = exists && burnTypePermissions[burnType.id];
                                     
                                     return (
                                       <TableRow key={burnType.id}>

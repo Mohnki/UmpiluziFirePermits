@@ -62,7 +62,7 @@ export default function Hero() {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="border-2 border-white text-white hover:bg-white/10 w-full sm:w-auto"
+                  className="border-2 border-white hover:bg-white/10 w-full sm:w-auto text-[#dd321e]"
                 >
                   Learn More
                 </Button>

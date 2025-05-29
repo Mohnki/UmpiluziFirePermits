@@ -251,11 +251,14 @@ Content-Type: application/json`}
                   You can authenticate using Google OAuth or email/password to get your ID token.
                 </p>
 
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div>
-                    <h4 className="font-medium mb-2">Google Authentication</h4>
-                    <CodeBlock 
-                      code={`import { initializeApp } from 'firebase/app';
+                    <h4 className="font-medium mb-3">Google Authentication</h4>
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-sm font-medium mb-2">JavaScript/Web</p>
+                        <CodeBlock 
+                          code={`import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 const firebaseConfig = {
@@ -280,15 +283,60 @@ const signInWithGoogle = async () => {
     console.error('Error signing in:', error);
   }
 };`}
-                      language="javascript"
-                      label="Google authentication"
-                    />
+                          language="javascript"
+                          label="Google authentication JavaScript"
+                        />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium mb-2">Python</p>
+                        <CodeBlock 
+                          code={`import firebase_admin
+from firebase_admin import credentials, auth
+import requests
+
+# Initialize Firebase Admin SDK (server-side)
+cred = credentials.Certificate('path/to/serviceAccountKey.json')
+firebase_admin.initialize_app(cred)
+
+# For client-side authentication, use Firebase Auth REST API
+def sign_in_with_google_oauth(oauth_token):
+    """
+    Sign in with Google OAuth token using Firebase Auth REST API
+    """
+    url = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithOauth"
+    payload = {
+        "requestUri": "http://localhost",
+        "postBody": f"id_token={oauth_token}&providerId=google.com",
+        "returnSecureToken": True
+    }
+    
+    response = requests.post(
+        f"{url}?key=AIzaSyAkU77KLYS1fW3nLuGs-VF1xok4FhQ_TEc",
+        json=payload
+    )
+    
+    if response.status_code == 200:
+        data = response.json()
+        id_token = data['idToken']
+        print(f'ID Token: {id_token}')
+        return id_token
+    else:
+        print(f'Error: {response.text}')
+        return None`}
+                          language="python"
+                          label="Google authentication Python"
+                        />
+                      </div>
+                    </div>
                   </div>
 
                   <div>
-                    <h4 className="font-medium mb-2">Email/Password Authentication</h4>
-                    <CodeBlock 
-                      code={`import { initializeApp } from 'firebase/app';
+                    <h4 className="font-medium mb-3">Email/Password Authentication</h4>
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-sm font-medium mb-2">JavaScript/Web</p>
+                        <CodeBlock 
+                          code={`import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 
 const firebaseConfig = {
@@ -325,9 +373,69 @@ const registerWithEmail = async (email, password) => {
     console.error('Error registering:', error);
   }
 };`}
-                      language="javascript"
-                      label="Email/password authentication"
-                    />
+                          language="javascript"
+                          label="Email/password authentication JavaScript"
+                        />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium mb-2">Python</p>
+                        <CodeBlock 
+                          code={`import requests
+import json
+
+# Firebase Auth REST API endpoints
+FIREBASE_WEB_API_KEY = "AIzaSyAkU77KLYS1fW3nLuGs-VF1xok4FhQ_TEc"
+SIGN_IN_URL = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={FIREBASE_WEB_API_KEY}"
+SIGN_UP_URL = f"https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={FIREBASE_WEB_API_KEY}"
+
+def sign_in_with_email(email, password):
+    """Sign in with email and password"""
+    payload = {
+        "email": email,
+        "password": password,
+        "returnSecureToken": True
+    }
+    
+    response = requests.post(SIGN_IN_URL, json=payload)
+    
+    if response.status_code == 200:
+        data = response.json()
+        id_token = data['idToken']
+        print(f'ID Token: {id_token}')
+        return id_token
+    else:
+        error_data = response.json()
+        print(f'Error: {error_data.get("error", {}).get("message", "Unknown error")}')
+        return None
+
+def register_with_email(email, password):
+    """Register new user with email and password"""
+    payload = {
+        "email": email,
+        "password": password,
+        "returnSecureToken": True
+    }
+    
+    response = requests.post(SIGN_UP_URL, json=payload)
+    
+    if response.status_code == 200:
+        data = response.json()
+        id_token = data['idToken']
+        print(f'ID Token: {id_token}')
+        return id_token
+    else:
+        error_data = response.json()
+        print(f'Error: {error_data.get("error", {}).get("message", "Unknown error")}')
+        return None
+
+# Example usage
+# id_token = sign_in_with_email("user@example.com", "password123")
+# id_token = register_with_email("newuser@example.com", "password123")`}
+                          language="python"
+                          label="Email/password authentication Python"
+                        />
+                      </div>
+                    </div>
                   </div>
 
                   <div>

@@ -928,6 +928,14 @@ def refresh_id_token(refresh_token):
                   <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-950 rounded text-xs text-amber-800 dark:text-amber-200">
                     <strong>Example:</strong> <code>/api/areas?location[latitude]=-26.2041&location[longitude]=28.0473&hasActiveBans=false</code>
                   </div>
+                  <div className="flex gap-2 mt-3">
+                    <TestButton endpoint="/api/areas" label="Test All Areas" />
+                    <TestButton 
+                      endpoint="/api/areas" 
+                      params={{ 'location[latitude]': '-26.2041', 'location[longitude]': '28.0473', 'location[radius]': '50' }}
+                      label="Test Location Filter" 
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -960,6 +968,9 @@ def refresh_id_token(refresh_token):
                     <code>/api/burn-types</code>
                   </div>
                   <p className="text-sm text-muted-foreground">Get all burn types</p>
+                  <div className="flex gap-2 mt-3">
+                    <TestButton endpoint="/api/burn-types" label="Test Burn Types" />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -992,6 +1003,9 @@ def refresh_id_token(refresh_token):
                     <code>/api/health</code>
                   </div>
                   <p className="text-sm text-muted-foreground">API health check (no auth required)</p>
+                  <div className="flex gap-2 mt-3">
+                    <TestButton endpoint="/api/health" label="Test Health Check" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -1315,6 +1329,9 @@ permits = api.get_permits({'status': 'approved'})`}
           </Card>
         </TabsContent>
       </Tabs>
+      
+      {/* Test Results Section */}
+      <TestResults />
     </div>
   );
 }

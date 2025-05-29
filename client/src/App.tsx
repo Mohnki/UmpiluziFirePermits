@@ -10,6 +10,7 @@ import AreaManager from "@/pages/AreaManager";
 import ApplyPermit from "@/pages/ApplyPermit";
 import ManageFarms from "@/pages/ManageFarms";
 import MyPermits from "@/pages/MyPermits";
+import ApiDocumentation from "@/pages/ApiDocumentation";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { AuthProvider } from "./lib/AuthContext";
 
@@ -22,6 +23,7 @@ function Router() {
       <Route path="/apply-permit" component={ApplyPermit} />
       <Route path="/my-farms" component={ManageFarms} />
       <Route path="/my-permits" component={MyPermits} />
+      <Route path="/api-docs" component={ApiDocumentation} />
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>

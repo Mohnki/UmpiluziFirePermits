@@ -6,7 +6,7 @@ export const userProfileSchema = z.object({
   email: z.string().email(),
   displayName: z.string(),
   photoURL: z.string().optional(),
-  role: z.enum(['admin', 'area-manager', 'user']),
+  role: z.enum(['admin', 'area-manager', 'user', 'api-user']),
   createdAt: z.date(),
 });
 

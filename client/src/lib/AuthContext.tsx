@@ -10,6 +10,7 @@ type AuthContextType = {
   loading: boolean;
   isAdmin: boolean;
   isAreaManager: boolean;
+  isApiUser: boolean;
   hasManagerAccess: boolean;
 };
 
@@ -53,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Compute role-based access flags
   const isAdmin = userProfile?.role === 'admin';
   const isAreaManager = userProfile?.role === 'area-manager';
+  const isApiUser = userProfile?.role === 'api-user';
   const hasManagerAccess = isAdmin || isAreaManager;
 
   return (
@@ -62,7 +64,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         userProfile, 
         loading, 
         isAdmin, 
-        isAreaManager, 
+        isAreaManager,
+        isApiUser,
         hasManagerAccess 
       }}
     >

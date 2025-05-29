@@ -162,6 +162,11 @@ export default function Header() {
                   Manage Areas
                 </Link>
               )}
+              {hasManagerAccess && (
+                <Link href="/reports" className="text-foreground hover:text-primary transition font-medium">
+                  Reports
+                </Link>
+              )}
             </>
           )}
         </nav>
@@ -222,6 +227,24 @@ export default function Header() {
                     <DropdownMenuItem className="cursor-pointer">
                       <LayoutDashboard className="mr-2 h-4 w-4" />
                       <span>Manage Areas</span>
+                    </DropdownMenuItem>
+                  </Link>
+                )}
+                
+                {hasManagerAccess && (
+                  <Link href="/reports">
+                    <DropdownMenuItem className="cursor-pointer">
+                      <BarChart3 className="mr-2 h-4 w-4" />
+                      <span>Reports</span>
+                    </DropdownMenuItem>
+                  </Link>
+                )}
+                
+                {(isAdmin || isAreaManager || isApiUser) && (
+                  <Link href="/api-docs">
+                    <DropdownMenuItem className="cursor-pointer">
+                      <Code className="mr-2 h-4 w-4" />
+                      <span>API Documentation</span>
                     </DropdownMenuItem>
                   </Link>
                 )}

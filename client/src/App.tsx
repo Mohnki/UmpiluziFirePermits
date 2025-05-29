@@ -11,6 +11,7 @@ import ApplyPermit from "@/pages/ApplyPermit";
 import ManageFarms from "@/pages/ManageFarms";
 import MyPermits from "@/pages/MyPermits";
 import ApiDocumentation from "@/pages/ApiDocumentation";
+import PermitReports from "@/pages/PermitReports";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { AuthProvider } from "./lib/AuthContext";
 
@@ -24,6 +25,7 @@ function Router() {
       <Route path="/my-farms" component={ManageFarms} />
       <Route path="/my-permits" component={MyPermits} />
       <Route path="/api-docs" component={ApiDocumentation} />
+      <Route path="/reports" component={PermitReports} />
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>

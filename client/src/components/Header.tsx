@@ -12,7 +12,9 @@ import {
   LogOut,
   HelpCircle,
   Bookmark,
-  CheckSquare
+  CheckSquare,
+  BarChart3,
+  Code
 } from "lucide-react";
 import LoginButton from "@/components/LoginButton";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -31,7 +33,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user, userProfile, isAdmin, isAreaManager, isApiUser } = useAuth();
+  const { user, userProfile, isAdmin, isAreaManager, isApiUser, hasManagerAccess } = useAuth();
   const [location, setLocation] = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
   

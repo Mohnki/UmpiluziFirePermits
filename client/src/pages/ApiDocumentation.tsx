@@ -295,39 +295,35 @@ const signInWithGoogle = async () => {
     console.error('Error signing in:', error);
   }
 };`}
-                      pythonCode={`import firebase_admin
-from firebase_admin import credentials, auth
-import requests
+                      pythonCode={`# For Python applications, use email/password authentication
+# Google OAuth in Python requires complex setup with OAuth2 libraries
+# and browser integration. Email/password is simpler and more practical.
 
-# Initialize Firebase Admin SDK (server-side)
-cred = credentials.Certificate('path/to/serviceAccountKey.json')
-firebase_admin.initialize_app(cred)
-
-# For client-side authentication, use Firebase Auth REST API
-def sign_in_with_google_oauth(oauth_token):
+# Option 1: Get ID token from browser and use in Python
+def use_token_from_browser():
     """
-    Sign in with Google OAuth token using Firebase Auth REST API
+    The easiest approach: Get your ID token from the web application
+    and use it in your Python script
     """
-    url = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithOauth"
-    payload = {
-        "requestUri": "http://localhost",
-        "postBody": f"id_token={oauth_token}&providerId=google.com",
-        "returnSecureToken": True
+    # 1. Go to ${baseUrl}/api-docs in your browser
+    # 2. Copy the ID token from the Authentication tab
+    # 3. Use it in your Python code:
+    
+    id_token = "your_id_token_from_browser"
+    
+    # Now you can make API calls
+    import requests
+    headers = {
+        'Authorization': f'Bearer {id_token}',
+        'Content-Type': 'application/json'
     }
     
-    response = requests.post(
-        f"{url}?key=AIzaSyAkU77KLYS1fW3nLuGs-VF1xok4FhQ_TEc",
-        json=payload
-    )
-    
-    if response.status_code == 200:
-        data = response.json()
-        id_token = data['idToken']
-        print(f'ID Token: {id_token}')
-        return id_token
-    else:
-        print(f'Error: {response.text}')
-        return None`}
+    response = requests.get('${baseUrl}/api/permits', headers=headers)
+    return response.json()
+
+# Option 2: Use email/password authentication (see Email/Password tab)
+print("Recommended: Use email/password authentication or copy token from browser")
+print("Google OAuth in Python requires additional OAuth2 library setup")`}
                       label="Google Authentication"
                     />
                   </div>

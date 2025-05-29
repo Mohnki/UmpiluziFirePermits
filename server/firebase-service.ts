@@ -72,6 +72,16 @@ export class PermitService {
     try {
       let permitQuery: Query = db.collection('burnPermits');
 
+      // Default to current day only unless includeHistorical is true
+      if (!query.includeHistorical) {
+        const today = new Date();
+        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
+        
+        permitQuery = permitQuery.where('startDate', '>=', Timestamp.fromDate(startOfDay))
+                                .where('startDate', '<', Timestamp.fromDate(endOfDay));
+      }
+
       // Apply filters
       if (query.userId) {
         permitQuery = permitQuery.where('userId', '==', query.userId);
@@ -82,17 +92,20 @@ export class PermitService {
       if (query.status) {
         permitQuery = permitQuery.where('status', '==', query.status);
       }
-      if (query.startDate) {
+      if (query.burnTypeId) {
+        permitQuery = permitQuery.where('burnTypeId', '==', query.burnTypeId);
+      }
+      if (query.startDate && query.includeHistorical) {
         const startDate = new Date(query.startDate);
         permitQuery = permitQuery.where('startDate', '>=', Timestamp.fromDate(startDate));
       }
-      if (query.endDate) {
+      if (query.endDate && query.includeHistorical) {
         const endDate = new Date(query.endDate);
         permitQuery = permitQuery.where('endDate', '<=', Timestamp.fromDate(endDate));
       }
 
       // Apply ordering and pagination
-      permitQuery = permitQuery.orderBy('createdAt', 'desc');
+      permitQuery = permitQuery.orderBy('startDate', 'desc');
       
       if (query.limit) {
         permitQuery = permitQuery.limit(query.limit);
@@ -102,8 +115,7 @@ export class PermitService {
       }
 
       const snapshot = await permitQuery.get();
-      
-      return snapshot.docs.map(doc => {
+      let permits = snapshot.docs.map(doc => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -115,17 +127,54 @@ export class PermitService {
           status: data.status,
           location: data.location,
           details: data.details,
-          approvedBy: data.approvedBy,
+          approvedBy: data.approvedBy || null,
           approvedAt: data.approvedAt ? convertTimestampToDate(data.approvedAt) : undefined,
           rejectionReason: data.rejectionReason,
           createdAt: convertTimestampToDate(data.createdAt),
           updatedAt: convertTimestampToDate(data.updatedAt),
         };
       });
+
+      // Apply location-based filtering if specified
+      if (query.location) {
+        permits = this.filterByLocation(permits, query.location);
+      }
+
+      return permits;
     } catch (error) {
       console.error('Error getting permits:', error);
       throw new Error('Failed to retrieve permits');
     }
+  }
+
+  private static filterByLocation(permits: BurnPermit[], locationFilter: { latitude: number; longitude: number; radius?: number }): BurnPermit[] {
+    const radius = locationFilter.radius || 10; // Default 10km radius
+    
+    return permits.filter(permit => {
+      const distance = this.calculateDistance(
+        locationFilter.latitude,
+        locationFilter.longitude,
+        permit.location.latitude,
+        permit.location.longitude
+      );
+      return distance <= radius;
+    });
+  }
+
+  private static calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = this.toRadians(lat2 - lat1);
+    const dLon = this.toRadians(lon2 - lon1);
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(this.toRadians(lat1)) * Math.cos(this.toRadians(lat2)) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
+  private static toRadians(degrees: number): number {
+    return degrees * (Math.PI/180);
   }
 
   static async getPermitById(permitId: string): Promise<BurnPermit | null> {

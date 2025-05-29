@@ -46,8 +46,49 @@ export const permitQuerySchema = z.object({
   status: permitStatusSchema.optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
+  burnTypeId: z.string().optional(),
+  location: z.object({
+    latitude: z.number(),
+    longitude: z.number(),
+    radius: z.number().optional() // radius in kilometers
+  }).optional(),
   limit: z.number().min(1).max(100).optional(),
   offset: z.number().min(0).optional(),
+  includeHistorical: z.boolean().optional(), // if false, only returns current day permits
+});
+
+export const areaQuerySchema = z.object({
+  managerId: z.string().optional(),
+  location: z.object({
+    latitude: z.number(),
+    longitude: z.number(),
+    radius: z.number().optional()
+  }).optional(),
+  hasActiveBans: z.boolean().optional(),
+  allowedBurnType: z.string().optional(),
+  limit: z.number().min(1).max(100).optional(),
+  offset: z.number().min(0).optional(),
+});
+
+export const apiUsageLogSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  endpoint: z.string(),
+  method: z.string(),
+  queryParams: z.record(z.any()).optional(),
+  timestamp: z.date(),
+  responseStatus: z.number(),
+  responseTime: z.number(), // in milliseconds
+  userAgent: z.string().optional(),
+  ipAddress: z.string().optional(),
+});
+
+export const rateLimitSchema = z.object({
+  userId: z.string(),
+  endpoint: z.string(),
+  requestCount: z.number(),
+  windowStart: z.date(),
+  windowDuration: z.number(), // in minutes
 });
 
 // Area and burn type schemas
@@ -90,6 +131,9 @@ export type UserProfile = z.infer<typeof userProfileSchema>;
 export type AuthRequest = z.infer<typeof authRequestSchema>;
 export type BurnPermit = z.infer<typeof burnPermitSchema>;
 export type PermitQuery = z.infer<typeof permitQuerySchema>;
+export type AreaQuery = z.infer<typeof areaQuerySchema>;
+export type ApiUsageLog = z.infer<typeof apiUsageLogSchema>;
+export type RateLimit = z.infer<typeof rateLimitSchema>;
 export type Area = z.infer<typeof areaSchema>;
 export type BurnType = z.infer<typeof burnTypeSchema>;
 export type ApiResponse = z.infer<typeof apiResponseSchema>;

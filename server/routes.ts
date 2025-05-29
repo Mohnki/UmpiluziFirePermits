@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { 
   authRequestSchema, 
   permitQuerySchema, 
+  areaQuerySchema,
   ApiResponse 
 } from "../shared/schema";
 import { 
@@ -14,10 +15,19 @@ import {
 import { 
   authenticateUser, 
   requireAdmin, 
-  requireManagerAccess 
+  requireManagerAccess,
+  requireApiAccess 
 } from "./auth-middleware";
+import { 
+  rateLimitMiddleware, 
+  checkRateLimit, 
+  RateLimitService 
+} from "./rate-limit-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Apply rate limiting middleware to all API routes
+  app.use('/api', rateLimitMiddleware);
+
   // Authentication routes
   app.post("/api/auth/verify", async (req: Request, res: Response) => {
     try {

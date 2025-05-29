@@ -10,7 +10,8 @@ import {
   BurnPermit, 
   Area, 
   BurnType, 
-  PermitQuery 
+  PermitQuery,
+  AreaQuery 
 } from '../shared/schema';
 
 // Initialize Firebase Admin
@@ -211,11 +212,27 @@ export class PermitService {
 
 // Area service
 export class AreaService {
-  static async getAllAreas(): Promise<Area[]> {
+  static async getAllAreas(query?: AreaQuery): Promise<Area[]> {
     try {
-      const snapshot = await db.collection('areas').get();
+      let areaQuery: Query = db.collection('areas');
       
-      return snapshot.docs.map(doc => {
+      // Apply filters
+      if (query?.managerId) {
+        areaQuery = areaQuery.where('areaManagerId', '==', query.managerId);
+      }
+      
+      // Apply ordering and pagination
+      areaQuery = areaQuery.orderBy('name', 'asc');
+      
+      if (query?.limit) {
+        areaQuery = areaQuery.limit(query.limit);
+      }
+      if (query?.offset) {
+        areaQuery = areaQuery.offset(query.offset);
+      }
+
+      const snapshot = await areaQuery.get();
+      let areas = snapshot.docs.map(doc => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -223,15 +240,101 @@ export class AreaService {
           description: data.description,
           areaManagerId: data.areaManagerId,
           location: data.location,
-          allowedBurnTypes: data.allowedBurnTypes,
+          allowedBurnTypes: data.allowedBurnTypes || {},
           createdAt: convertTimestampToDate(data.createdAt),
           createdBy: data.createdBy,
           updatedAt: convertTimestampToDate(data.updatedAt),
         };
       });
+
+      // Apply location-based filtering if specified
+      if (query?.location) {
+        areas = this.filterAreasByLocation(areas, query.location);
+      }
+
+      // Filter by allowed burn type if specified
+      if (query?.allowedBurnType) {
+        areas = areas.filter(area => 
+          area.allowedBurnTypes[query.allowedBurnType!] === true
+        );
+      }
+
+      // Filter by active bans if specified
+      if (query?.hasActiveBans !== undefined) {
+        if (query.hasActiveBans) {
+          // Only return areas that have active bans
+          const areasWithBans = await Promise.all(
+            areas.map(async area => {
+              const activeBans = await this.getActiveBansForArea(area.id);
+              return activeBans.length > 0 ? area : null;
+            })
+          );
+          areas = areasWithBans.filter(area => area !== null) as Area[];
+        } else {
+          // Only return areas without active bans
+          const areasWithoutBans = await Promise.all(
+            areas.map(async area => {
+              const activeBans = await this.getActiveBansForArea(area.id);
+              return activeBans.length === 0 ? area : null;
+            })
+          );
+          areas = areasWithoutBans.filter(area => area !== null) as Area[];
+        }
+      }
+
+      return areas;
     } catch (error) {
       console.error('Error getting areas:', error);
       throw new Error('Failed to retrieve areas');
+    }
+  }
+
+  private static filterAreasByLocation(areas: Area[], locationFilter: { latitude: number; longitude: number; radius?: number }): Area[] {
+    const radius = locationFilter.radius || 50; // Default 50km radius
+    
+    return areas.filter(area => {
+      if (!area.location) return false;
+      
+      const distance = this.calculateDistance(
+        locationFilter.latitude,
+        locationFilter.longitude,
+        area.location.latitude,
+        area.location.longitude
+      );
+      return distance <= radius;
+    });
+  }
+
+  private static calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = this.toRadians(lat2 - lat1);
+    const dLon = this.toRadians(lon2 - lon1);
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(this.toRadians(lat1)) * Math.cos(this.toRadians(lat2)) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
+  private static toRadians(degrees: number): number {
+    return degrees * (Math.PI/180);
+  }
+
+  private static async getActiveBansForArea(areaId: string): Promise<any[]> {
+    try {
+      const now = new Date();
+      const snapshot = await db.collection('burnBans')
+        .where('areaId', '==', areaId)
+        .where('isActive', '==', true)
+        .where('startDate', '<=', Timestamp.fromDate(now))
+        .where('endDate', '>=', Timestamp.fromDate(now))
+        .get();
+      
+      return snapshot.docs;
+    } catch (error) {
+      console.error('Error getting active bans for area:', areaId, error);
+      return [];
     }
   }
 

@@ -45,6 +45,9 @@ if (!admin.apps.length) {
 
 const db = getFirestore();
 
+// Export admin and db for use in other files
+export { admin, db };
+
 // Helper function to convert Firestore Timestamp to Date
 const convertTimestampToDate = (timestamp: any): Date => {
   if (timestamp && timestamp.toDate) {

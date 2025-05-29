@@ -10,9 +10,10 @@ import {
   AuthService, 
   PermitService, 
   AreaService, 
-  BurnTypeService 
+  BurnTypeService,
+  admin,
+  db
 } from "./firebase-service";
-import { db } from "./firebase-service";
 import { 
   authenticateUser, 
   requireAdmin, 
@@ -217,15 +218,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Update the permit in Firestore
-      const db = admin.firestore();
       const updateData: any = {
         status,
-        updatedAt: admin.firestore.Timestamp.now()
+        updatedAt: new Date()
       };
 
       if (status === 'approved') {
         updateData.approvedBy = req.user?.uid;
-        updateData.approvedAt = admin.firestore.Timestamp.now();
+        updateData.approvedAt = new Date();
       } else if (status === 'rejected' || status === 'cancelled') {
         updateData.rejectionReason = rejectionReason || 'No reason provided';
       }

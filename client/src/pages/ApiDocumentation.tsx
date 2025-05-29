@@ -1,19 +1,46 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../lib/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Alert, AlertDescription } from "../components/ui/alert";
-import { Copy, CheckCircle, Key, Code, Book, Shield } from "lucide-react";
+import { Copy, CheckCircle, Key, Code, Book, Shield, Eye, EyeOff } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
 
 export default function ApiDocumentation() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [idToken, setIdToken] = useState<string | null>(null);
+  const [loadingToken, setLoadingToken] = useState(true);
+  const [showToken, setShowToken] = useState(false);
   
   const baseUrl = window.location.origin;
+
+  // Get user's ID token
+  useEffect(() => {
+    const getIdToken = async () => {
+      if (user) {
+        try {
+          setLoadingToken(true);
+          const token = await user.getIdToken();
+          setIdToken(token);
+        } catch (error) {
+          console.error('Error getting ID token:', error);
+          toast({
+            title: "Token Error",
+            description: "Failed to get authentication token. Please refresh the page.",
+            variant: "destructive",
+          });
+        } finally {
+          setLoadingToken(false);
+        }
+      }
+    };
+
+    getIdToken();
+  }, [user, toast]);
   
   const copyToClipboard = async (text: string, label: string) => {
     try {
@@ -153,9 +180,66 @@ export default function ApiDocumentation() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
+                <h3 className="font-semibold mb-2">Your Firebase ID Token</h3>
+                <div className="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                      Current ID Token (click to copy)
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setShowToken(!showToken)}
+                        className="h-8 w-8 p-0"
+                      >
+                        {showToken ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                      {idToken && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => copyToClipboard(idToken, "ID Token")}
+                          className="h-8 w-8 p-0"
+                        >
+                          {copiedCode === "ID Token" ? (
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  {loadingToken ? (
+                    <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-300">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                      Loading token...
+                    </div>
+                  ) : idToken ? (
+                    <div className="bg-white dark:bg-gray-800 border rounded p-3 font-mono text-sm break-all cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                         onClick={() => copyToClipboard(idToken, "ID Token")}>
+                      {showToken ? idToken : `${idToken.substring(0, 50)}...${idToken.substring(idToken.length - 20)}`}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-red-600 dark:text-red-400">
+                      Failed to load token. Please refresh the page.
+                    </p>
+                  )}
+                  <p className="text-xs text-blue-600 dark:text-blue-300 mt-2">
+                    This token is automatically refreshed and valid for 1 hour. Use this in the Authorization header for all API requests.
+                  </p>
+                </div>
+              </div>
+
+              <div>
                 <h3 className="font-semibold mb-2">Required Headers</h3>
                 <CodeBlock 
-                  code={`Authorization: Bearer <your_firebase_id_token>
+                  code={`Authorization: Bearer ${idToken ? idToken.substring(0, 30) + '...' : '<your_firebase_id_token>'}
 Content-Type: application/json`}
                   label="Required headers"
                 />

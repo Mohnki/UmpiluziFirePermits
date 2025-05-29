@@ -246,23 +246,115 @@ Content-Type: application/json`}
               </div>
 
               <div>
-                <h3 className="font-semibold mb-2">Getting Your ID Token</h3>
-                <p className="text-sm text-muted-foreground mb-3">
-                  You can get your Firebase ID token by logging into the web application and checking the browser's developer tools.
+                <h3 className="font-semibold mb-2">Authentication Methods</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  You can authenticate using Google OAuth or email/password to get your ID token.
                 </p>
-                <CodeBlock 
-                  code={`// JavaScript example to get ID token
+
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-medium mb-2">Google Authentication</h4>
+                    <CodeBlock 
+                      code={`import { initializeApp } from 'firebase/app';
+import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAkU77KLYS1fW3nLuGs-VF1xok4FhQ_TEc",
+  authDomain: "umpiluzi-fire-permits.firebaseapp.com",
+  projectId: "umpiluzi-fire-permits"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+// Sign in with Google
+const signInWithGoogle = async () => {
+  try {
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
+    const idToken = await user.getIdToken();
+    console.log('ID Token:', idToken);
+    return idToken;
+  } catch (error) {
+    console.error('Error signing in:', error);
+  }
+};`}
+                      language="javascript"
+                      label="Google authentication"
+                    />
+                  </div>
+
+                  <div>
+                    <h4 className="font-medium mb-2">Email/Password Authentication</h4>
+                    <CodeBlock 
+                      code={`import { initializeApp } from 'firebase/app';
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAkU77KLYS1fW3nLuGs-VF1xok4FhQ_TEc",
+  authDomain: "umpiluzi-fire-permits.firebaseapp.com",
+  projectId: "umpiluzi-fire-permits"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+// Sign in with email and password
+const signInWithEmail = async (email, password) => {
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    const idToken = await user.getIdToken();
+    console.log('ID Token:', idToken);
+    return idToken;
+  } catch (error) {
+    console.error('Error signing in:', error);
+  }
+};
+
+// Register new user
+const registerWithEmail = async (email, password) => {
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    const idToken = await user.getIdToken();
+    console.log('ID Token:', idToken);
+    return idToken;
+  } catch (error) {
+    console.error('Error registering:', error);
+  }
+};`}
+                      language="javascript"
+                      label="Email/password authentication"
+                    />
+                  </div>
+
+                  <div>
+                    <h4 className="font-medium mb-2">Get Token from Current User</h4>
+                    <CodeBlock 
+                      code={`// If user is already authenticated
 import { getAuth } from 'firebase/auth';
 
 const auth = getAuth();
 const user = auth.currentUser;
+
 if (user) {
+  // Get current token
   const idToken = await user.getIdToken();
-  console.log('Your ID token:', idToken);
+  console.log('Current ID token:', idToken);
+  
+  // Force refresh token (useful if token expired)
+  const freshToken = await user.getIdToken(true);
+  console.log('Fresh ID token:', freshToken);
+} else {
+  console.log('User not authenticated');
 }`}
-                  language="javascript"
-                  label="Get ID token"
-                />
+                      language="javascript"
+                      label="Get current user token"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div>

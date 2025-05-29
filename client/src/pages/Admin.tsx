@@ -240,6 +240,44 @@ export default function AdminPage() {
     }
   }, [isAdmin, loading, toast]);
 
+  // Fetch all permits
+  useEffect(() => {
+    const fetchPermits = async () => {
+      if (user && userProfile) {
+        try {
+          setLoadingPermits(true);
+          const idToken = await user.getIdToken();
+          const response = await fetch('/api/permits', {
+            headers: {
+              'Authorization': `Bearer ${idToken}`,
+              'Content-Type': 'application/json',
+            },
+          });
+          
+          if (!response.ok) {
+            throw new Error('Failed to fetch permits');
+          }
+          
+          const data = await response.json();
+          setPermits(data.data || []);
+        } catch (error) {
+          console.error("Error fetching permits:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load permits. Please try again.",
+            variant: "destructive",
+          });
+        } finally {
+          setLoadingPermits(false);
+        }
+      }
+    };
+
+    if (!loading && user && userProfile) {
+      fetchPermits();
+    }
+  }, [user, userProfile, loading, toast]);
+
   // Handle role change
   const handleRoleChange = async (userId: string, newRole: UserRole) => {
     try {
@@ -266,6 +304,55 @@ export default function AdminPage() {
       });
     } finally {
       setSavingUserId(null);
+    }
+  };
+
+  // Handle permit cancellation
+  const handleCancelPermit = async (permitId: string) => {
+    if (!user) return;
+    
+    try {
+      setCancellingPermitId(permitId);
+      const idToken = await user.getIdToken();
+      
+      const response = await fetch(`/api/permits/${permitId}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${idToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'cancelled',
+          rejectionReason: 'Cancelled by administrator'
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to cancel permit');
+      }
+      
+      // Update local state
+      setPermits(prevPermits => 
+        prevPermits.map(permit => 
+          permit.id === permitId 
+            ? { ...permit, status: 'cancelled' as const, rejectionReason: 'Cancelled by administrator' }
+            : permit
+        )
+      );
+      
+      toast({
+        title: "Permit cancelled",
+        description: "The permit has been cancelled successfully.",
+      });
+    } catch (error) {
+      console.error("Error cancelling permit:", error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel permit. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setCancellingPermitId(null);
     }
   };
 
@@ -670,6 +757,111 @@ export default function AdminPage() {
                             </TableCell>
                           </TableRow>
                         ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </div>
+              </TabsContent>
+
+              {/* Permits Management Tab */}
+              <TabsContent value="permits">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                  <h2 className="text-xl font-semibold mb-4">Permit Management</h2>
+                  
+                  {loadingPermits ? (
+                    <div className="flex items-center justify-center py-10">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      <span className="ml-2">Loading permits...</span>
+                    </div>
+                  ) : permits.length === 0 ? (
+                    <div className="text-center py-10">
+                      <p className="text-gray-500 dark:text-gray-400">No permits found.</p>
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableCaption>List of all burn permits</TableCaption>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Permit ID</TableHead>
+                          <TableHead>User</TableHead>
+                          <TableHead>Area</TableHead>
+                          <TableHead>Burn Type</TableHead>
+                          <TableHead>Date Range</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {permits.map((permit) => {
+                          const area = areas.find(a => a.id === permit.areaId);
+                          const burnType = burnTypes.find(bt => bt.id === permit.burnTypeId);
+                          const user = users.find(u => u.uid === permit.userId);
+                          
+                          return (
+                            <TableRow key={permit.id}>
+                              <TableCell className="font-mono text-sm">
+                                {permit.id.substring(0, 8)}...
+                              </TableCell>
+                              <TableCell>
+                                {user ? user.displayName || user.email : 'Unknown User'}
+                              </TableCell>
+                              <TableCell>
+                                {area ? area.name : 'Unknown Area'}
+                              </TableCell>
+                              <TableCell>
+                                {burnType ? burnType.name : 'Unknown Type'}
+                              </TableCell>
+                              <TableCell>
+                                {new Date(permit.startDate).toLocaleDateString()} - {new Date(permit.endDate).toLocaleDateString()}
+                              </TableCell>
+                              <TableCell>
+                                <Badge 
+                                  variant={
+                                    permit.status === 'approved' ? 'default' :
+                                    permit.status === 'pending' ? 'secondary' :
+                                    permit.status === 'rejected' || permit.status === 'cancelled' ? 'destructive' :
+                                    'outline'
+                                  }
+                                >
+                                  {permit.status.charAt(0).toUpperCase() + permit.status.slice(1)}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      toast({
+                                        title: "Permit Details",
+                                        description: `Details: ${permit.details || 'No additional details'}\nLocation: ${permit.location?.address || 'No address provided'}`,
+                                      });
+                                    }}
+                                  >
+                                    View Details
+                                  </Button>
+                                  {(permit.status === 'pending' || permit.status === 'approved') && (
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
+                                      onClick={() => handleCancelPermit(permit.id)}
+                                      disabled={cancellingPermitId === permit.id}
+                                    >
+                                      {cancellingPermitId === permit.id ? (
+                                        <>
+                                          <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                                          Cancelling...
+                                        </>
+                                      ) : (
+                                        'Cancel'
+                                      )}
+                                    </Button>
+                                  )}
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   )}

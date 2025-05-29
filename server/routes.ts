@@ -12,6 +12,7 @@ import {
   AreaService, 
   BurnTypeService 
 } from "./firebase-service";
+import { db } from "./firebase-service";
 import { 
   authenticateUser, 
   requireAdmin, 
@@ -189,6 +190,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         success: false,
         error: "Failed to retrieve area permits"
+      });
+    }
+  });
+
+  // Update permit status (area managers and admins only)
+  app.patch("/api/permits/:id", authenticateUser, requireManagerAccess, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { status, rejectionReason } = req.body;
+      
+      if (!status || !['approved', 'rejected', 'cancelled'].includes(status)) {
+        return res.status(400).json({
+          success: false,
+          error: "Valid status is required (approved, rejected, cancelled)"
+        });
+      }
+
+      // Get the permit first to verify it exists
+      const permit = await PermitService.getPermitById(id);
+      if (!permit) {
+        return res.status(404).json({
+          success: false,
+          error: "Permit not found"
+        });
+      }
+
+      // Update the permit in Firestore
+      const db = admin.firestore();
+      const updateData: any = {
+        status,
+        updatedAt: admin.firestore.Timestamp.now()
+      };
+
+      if (status === 'approved') {
+        updateData.approvedBy = req.user?.uid;
+        updateData.approvedAt = admin.firestore.Timestamp.now();
+      } else if (status === 'rejected' || status === 'cancelled') {
+        updateData.rejectionReason = rejectionReason || 'No reason provided';
+      }
+
+      await db.collection('burnPermits').doc(id).update(updateData);
+      
+      const response: ApiResponse = {
+        success: true,
+        data: { id, status },
+        message: `Permit ${status} successfully`
+      };
+      
+      res.json(response);
+    } catch (error) {
+      console.error("Update permit error:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to update permit"
       });
     }
   });

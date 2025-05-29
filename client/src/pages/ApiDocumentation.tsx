@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../lib/AuthContext";
+import { logOut } from "../lib/firebase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Alert, AlertDescription } from "../components/ui/alert";
-import { Copy, CheckCircle, Key, Code, Book, Shield, Eye, EyeOff, Download, Play, AlertCircle } from "lucide-react";
+import { Copy, CheckCircle, Key, Code, Book, Shield, Eye, EyeOff, Download, Play, AlertCircle, LogOut } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
 
 export default function ApiDocumentation() {
@@ -230,6 +231,22 @@ Generated on: ${new Date().toLocaleDateString()}
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await logOut();
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out.",
+      });
+    } catch (error) {
+      toast({
+        title: "Logout failed",
+        description: "There was an error logging out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const testEndpoint = async (endpoint: string, method: string = 'GET', params?: any) => {
     if (!idToken) {
       toast({
@@ -445,6 +462,14 @@ Generated on: ${new Date().toLocaleDateString()}
                   Download Documentation
                 </>
               )}
+            </Button>
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
             </Button>
           </div>
         </div>

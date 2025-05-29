@@ -19,6 +19,7 @@ import {
   getAreaById
 } from "@/lib/area-service";
 import { Area, BurnType } from "@/lib/area-types";
+import { BurnPermit } from "@/lib/permit-types";
 
 import {
   Tabs,
@@ -134,6 +135,11 @@ export default function AdminPage() {
   const [selectedArea, setSelectedArea] = useState<Area | null>(null);
   const [burnTypePermissions, setBurnTypePermissions] = useState<{ [key: string]: boolean }>({});
   const [savingPermissions, setSavingPermissions] = useState(false);
+  
+  // Permits state
+  const [permits, setPermits] = useState<BurnPermit[]>([]);
+  const [loadingPermits, setLoadingPermits] = useState(true);
+  const [cancellingPermitId, setCancellingPermitId] = useState<string | null>(null);
 
   // Area form
   const areaForm = useForm<z.infer<typeof areaFormSchema>>({
@@ -570,6 +576,7 @@ export default function AdminPage() {
             <Tabs defaultValue="users" className="w-full">
               <TabsList className="mb-6">
                 <TabsTrigger value="users">User Management</TabsTrigger>
+                <TabsTrigger value="permits">Permit Management</TabsTrigger>
                 <TabsTrigger value="areas">Areas</TabsTrigger>
                 <TabsTrigger value="burn-types">Burn Types</TabsTrigger>
                 <TabsTrigger value="area-permissions">Area Permissions</TabsTrigger>

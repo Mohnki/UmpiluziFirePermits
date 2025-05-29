@@ -31,7 +31,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user, userProfile, isAdmin, isAreaManager } = useAuth();
+  const { user, userProfile, isAdmin, isAreaManager, isApiUser } = useAuth();
   const [location, setLocation] = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
   

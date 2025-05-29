@@ -532,6 +532,8 @@ export default function AdminPage() {
         return 'destructive';
       case 'area-manager':
         return 'secondary';
+      case 'api-user':
+        return 'default';
       default:
         return 'outline';
     }
@@ -609,7 +611,8 @@ export default function AdminPage() {
                             <TableCell>
                               <Badge variant={getRoleBadgeVariant(user.role)}>
                                 {user.role === 'admin' ? 'Admin' : 
-                                 user.role === 'area-manager' ? 'Area Manager' : 'User'}
+                                 user.role === 'area-manager' ? 'Area Manager' : 
+                                 user.role === 'api-user' ? 'API User' : 'User'}
                               </Badge>
                             </TableCell>
                             <TableCell>
@@ -625,6 +628,7 @@ export default function AdminPage() {
                                   <SelectGroup>
                                     <SelectItem value="user">User</SelectItem>
                                     <SelectItem value="area-manager">Area Manager</SelectItem>
+                                    <SelectItem value="api-user">API User</SelectItem>
                                     <SelectItem value="admin">Admin</SelectItem>
                                   </SelectGroup>
                                 </SelectContent>

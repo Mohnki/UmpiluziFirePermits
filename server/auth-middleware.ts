@@ -74,3 +74,4 @@ export const requireRole = (roles: string[]) => {
 
 export const requireAdmin = requireRole(['admin']);
 export const requireManagerAccess = requireRole(['admin', 'area-manager']);
+export const requireApiAccess = requireRole(['admin', 'area-manager', 'api-user']);

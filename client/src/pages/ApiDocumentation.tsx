@@ -61,6 +61,173 @@ export default function ApiDocumentation() {
     }
   };
 
+  const downloadDocumentation = async () => {
+    try {
+      setDownloadingPdf(true);
+      
+      const content = `Fire Permit API Documentation
+=======================================
+
+Complete REST API for the Umpiluzi Fire Protection Association permit system
+
+Base URL: ${baseUrl}/api
+
+Authentication
+-------------
+All API endpoints require Firebase authentication using ID tokens.
+Include the token in the Authorization header: Bearer <your_id_token>
+
+Rate Limiting & Query Behavior
+------------------------------
+• Default behavior: All endpoints return current day data only
+• Use includeHistorical=true to access historical data with date filters
+• Rate limits: Permits (100/hour), Areas (50/hour), Burn Types (30/hour)
+• Daily limits: API Users (1000), Area Managers (500), Admins (2000), Users (100)
+• All requests are logged and monitored for usage tracking
+• Rate limit headers: X-RateLimit-Remaining, X-RateLimit-Reset
+
+Endpoints
+---------
+
+GET /api/permits
+Get permits with advanced filtering. Returns current day permits by default.
+
+Query Parameters:
+• userId - Filter by user ID
+• areaId - Filter by area ID
+• burnTypeId - Filter by burn type ID
+• status - Filter by status (pending, approved, rejected, completed, cancelled)
+• includeHistorical - Set to true to access historical data (default: false)
+• startDate - Filter by start date (ISO format, requires includeHistorical=true)
+• endDate - Filter by end date (ISO format, requires includeHistorical=true)
+• location[latitude] - Latitude for location filtering
+• location[longitude] - Longitude for location filtering
+• location[radius] - Search radius in kilometers (default: 10km)
+• limit - Maximum number of results (1-100, default: 50)
+• offset - Number of results to skip (default: 0)
+
+Example: /api/permits?location[latitude]=-26.2041&location[longitude]=28.0473&location[radius]=5&status=approved
+
+GET /api/permits/:id
+Get a specific permit by ID
+
+GET /api/areas
+Get areas with advanced filtering options
+
+Query Parameters:
+• managerId - Filter by area manager ID
+• location[latitude] - Latitude for location filtering
+• location[longitude] - Longitude for location filtering
+• location[radius] - Search radius in kilometers (default: 50km)
+• hasActiveBans - Filter areas with/without active burn bans (true/false)
+• allowedBurnType - Filter areas that allow specific burn type ID
+• limit - Maximum number of results (1-100, default: 50)
+• offset - Number of results to skip (default: 0)
+
+Example: /api/areas?location[latitude]=-26.2041&location[longitude]=28.0473&hasActiveBans=false
+
+GET /api/areas/:id
+Get a specific area by ID
+
+GET /api/areas/:areaId/permits
+Get all permits for a specific area
+
+GET /api/burn-types
+Get all burn types
+
+GET /api/burn-types/:id
+Get a specific burn type by ID
+
+GET /api/user/profile
+Get current user profile
+
+GET /api/health
+API health check (no auth required)
+
+Response Format
+--------------
+{
+  "success": true,
+  "data": { /* response data */ },
+  "message": "Operation successful"
+}
+
+Error Format
+-----------
+{
+  "success": false,
+  "error": "Error message"
+}
+
+JavaScript Example - Get Current Day Permits
+--------------------------------------------
+const response = await fetch('${baseUrl}/api/permits', {
+  headers: {
+    'Authorization': \`Bearer \${idToken}\`,
+    'Content-Type': 'application/json'
+  }
+});
+
+const data = await response.json();
+if (data.success) {
+  console.log('Permits:', data.data);
+} else {
+  console.error('Error:', data.error);
+}
+
+Python Example - Location-Based Search
+--------------------------------------
+import requests
+
+headers = {
+    'Authorization': f'Bearer {id_token}',
+    'Content-Type': 'application/json'
+}
+
+params = {
+    'status': 'approved',
+    'location[latitude]': '-26.2041',
+    'location[longitude]': '28.0473',
+    'location[radius]': '5',
+    'limit': 20
+}
+
+response = requests.get('${baseUrl}/api/permits', headers=headers, params=params)
+data = response.json()
+
+if data['success']:
+    print(f"Found {len(data['data'])} permits within 5km")
+    for permit in data['data']:
+        print(f"Permit {permit['id']}: {permit['details']}")
+
+Generated on: ${new Date().toLocaleDateString()}
+`;
+
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `fire-permit-api-docs-${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Documentation downloaded",
+        description: "API documentation has been saved as a text file.",
+      });
+    } catch (error) {
+      toast({
+        title: "Download failed",
+        description: "Unable to download documentation. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
+
   const CodeBlock = ({ code, language = "bash", label }: { code: string; language?: string; label: string }) => (
     <div className="relative">
       <pre className="bg-gray-900 dark:bg-gray-800 text-green-400 p-4 rounded-md overflow-x-auto text-sm">
@@ -99,15 +266,37 @@ export default function ApiDocumentation() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="mb-8">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-            <Code className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+              <Code className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold">Fire Permit API Documentation</h1>
+              <p className="text-muted-foreground">
+                Complete REST API for the Umpiluzi Fire Protection Association permit system
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-bold">Fire Permit API Documentation</h1>
-            <p className="text-muted-foreground">
-              Complete REST API for the Umpiluzi Fire Protection Association permit system
-            </p>
+          <div className="flex gap-2">
+            <Button
+              onClick={downloadDocumentation}
+              disabled={downloadingPdf}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              {downloadingPdf ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4" />
+                  Download Documentation
+                </>
+              )}
+            </Button>
           </div>
         </div>
         

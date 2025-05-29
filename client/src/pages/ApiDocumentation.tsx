@@ -491,11 +491,23 @@ def refresh_id_token(refresh_token):
         </TabsContent>
 
         <TabsContent value="endpoints" className="space-y-6">
+          <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+            <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Rate Limiting & Query Behavior</h3>
+            <div className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+              <div>• <strong>Default behavior:</strong> All endpoints return current day data only</div>
+              <div>• Use <code>includeHistorical=true</code> to access historical data with date filters</div>
+              <div>• Rate limits: Permits (100/hour), Areas (50/hour), Burn Types (30/hour)</div>
+              <div>• Daily limits: API Users (1000), Area Managers (500), Admins (2000), Users (100)</div>
+              <div>• All requests are logged and monitored for usage tracking</div>
+              <div>• Rate limit headers: <code>X-RateLimit-Remaining</code>, <code>X-RateLimit-Reset</code></div>
+            </div>
+          </div>
+
           <div className="grid gap-6">
             <Card>
               <CardHeader>
                 <CardTitle>Permits</CardTitle>
-                <CardDescription>Retrieve and manage burn permits</CardDescription>
+                <CardDescription>Retrieve and manage burn permits with advanced filtering</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -503,18 +515,27 @@ def refresh_id_token(refresh_token):
                     <Badge variant="secondary">GET</Badge>
                     <code>/api/permits</code>
                   </div>
-                  <p className="text-sm text-muted-foreground">Get permits with optional filtering</p>
+                  <p className="text-sm text-muted-foreground">Get permits with advanced filtering. Returns current day permits by default.</p>
                   <details className="text-sm">
                     <summary className="cursor-pointer font-medium">Query Parameters</summary>
                     <ul className="mt-2 space-y-1 ml-4">
-                      <li><code>status</code> - Filter by status (pending, approved, rejected, completed, cancelled)</li>
+                      <li><code>userId</code> - Filter by user ID</li>
                       <li><code>areaId</code> - Filter by area ID</li>
-                      <li><code>startDate</code> - Filter by start date (ISO format)</li>
-                      <li><code>endDate</code> - Filter by end date (ISO format)</li>
-                      <li><code>limit</code> - Maximum number of results (1-100)</li>
-                      <li><code>offset</code> - Number of results to skip</li>
+                      <li><code>burnTypeId</code> - Filter by burn type ID</li>
+                      <li><code>status</code> - Filter by status (pending, approved, rejected, completed, cancelled)</li>
+                      <li><code>includeHistorical</code> - Set to true to access historical data (default: false)</li>
+                      <li><code>startDate</code> - Filter by start date (ISO format, requires includeHistorical=true)</li>
+                      <li><code>endDate</code> - Filter by end date (ISO format, requires includeHistorical=true)</li>
+                      <li><code>location[latitude]</code> - Latitude for location filtering</li>
+                      <li><code>location[longitude]</code> - Longitude for location filtering</li>
+                      <li><code>location[radius]</code> - Search radius in kilometers (default: 10km)</li>
+                      <li><code>limit</code> - Maximum number of results (1-100, default: 50)</li>
+                      <li><code>offset</code> - Number of results to skip (default: 0)</li>
                     </ul>
                   </details>
+                  <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-950 rounded text-xs text-amber-800 dark:text-amber-200">
+                    <strong>Example:</strong> <code>/api/permits?location[latitude]=-26.2041&location[longitude]=28.0473&location[radius]=5&status=approved</code>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -530,7 +551,7 @@ def refresh_id_token(refresh_token):
             <Card>
               <CardHeader>
                 <CardTitle>Areas</CardTitle>
-                <CardDescription>Geographic areas and management zones</CardDescription>
+                <CardDescription>Geographic areas and management zones with advanced filtering</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -538,7 +559,23 @@ def refresh_id_token(refresh_token):
                     <Badge variant="secondary">GET</Badge>
                     <code>/api/areas</code>
                   </div>
-                  <p className="text-sm text-muted-foreground">Get all areas</p>
+                  <p className="text-sm text-muted-foreground">Get areas with advanced filtering options</p>
+                  <details className="text-sm">
+                    <summary className="cursor-pointer font-medium">Query Parameters</summary>
+                    <ul className="mt-2 space-y-1 ml-4">
+                      <li><code>managerId</code> - Filter by area manager ID</li>
+                      <li><code>location[latitude]</code> - Latitude for location filtering</li>
+                      <li><code>location[longitude]</code> - Longitude for location filtering</li>
+                      <li><code>location[radius]</code> - Search radius in kilometers (default: 50km)</li>
+                      <li><code>hasActiveBans</code> - Filter areas with/without active burn bans (true/false)</li>
+                      <li><code>allowedBurnType</code> - Filter areas that allow specific burn type ID</li>
+                      <li><code>limit</code> - Maximum number of results (1-100, default: 50)</li>
+                      <li><code>offset</code> - Number of results to skip (default: 0)</li>
+                    </ul>
+                  </details>
+                  <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-950 rounded text-xs text-amber-800 dark:text-amber-200">
+                    <strong>Example:</strong> <code>/api/areas?location[latitude]=-26.2041&location[longitude]=28.0473&hasActiveBans=false</code>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -651,9 +688,18 @@ else:
               </div>
 
               <div>
-                <h3 className="font-semibold mb-3">Get Approved Permits with Filters</h3>
+                <h3 className="font-semibold mb-3">Location-Based Permit Search</h3>
                 <CodeTabs 
-                  jsCode={`const response = await fetch('${baseUrl}/api/permits?status=approved&limit=10&offset=0', {
+                  jsCode={`// Find approved permits within 5km of Johannesburg
+const params = new URLSearchParams({
+  'status': 'approved',
+  'location[latitude]': '-26.2041',
+  'location[longitude]': '28.0473',
+  'location[radius]': '5',
+  'limit': '20'
+});
+
+const response = await fetch(\`${baseUrl}/api/permits?\${params}\`, {
   headers: {
     'Authorization': \`Bearer \${idToken}\`,
     'Content-Type': 'application/json'
@@ -662,9 +708,12 @@ else:
 
 const data = await response.json();
 if (data.success) {
-  console.log(\`Found \${data.data.length} approved permits\`);
+  console.log(\`Found \${data.data.length} permits within 5km\`);
+  console.log('Rate limit remaining:', response.headers.get('X-RateLimit-Remaining'));
+  
   data.data.forEach(permit => {
     console.log(\`Permit \${permit.id}: \${permit.details}\`);
+    console.log(\`Location: \${permit.location.latitude}, \${permit.location.longitude}\`);
   });
 } else {
   console.error('Error:', data.error);
@@ -676,22 +725,97 @@ headers = {
     'Content-Type': 'application/json'
 }
 
+# Find approved permits within 5km of Johannesburg
 params = {
     'status': 'approved',
-    'limit': 10,
-    'offset': 0
+    'location[latitude]': '-26.2041',
+    'location[longitude]': '28.0473',
+    'location[radius]': '5',
+    'limit': 20
 }
 
 response = requests.get('${baseUrl}/api/permits', headers=headers, params=params)
 data = response.json()
 
 if data['success']:
-    print(f"Found {len(data['data'])} approved permits")
+    print(f"Found {len(data['data'])} permits within 5km")
+    print(f"Rate limit remaining: {response.headers.get('X-RateLimit-Remaining')}")
+    
     for permit in data['data']:
         print(f"Permit {permit['id']}: {permit['details']}")
+        print(f"Location: {permit['location']['latitude']}, {permit['location']['longitude']}")
 else:
     print('Error:', data['error'])`}
-                  label="Get Filtered Permits"
+                  label="Location-Based Search"
+                />
+              </div>
+
+              <div>
+                <h3 className="font-semibold mb-3">Historical Data Access</h3>
+                <CodeTabs 
+                  jsCode={`// Get historical permits from last month (requires includeHistorical=true)
+const params = new URLSearchParams({
+  'includeHistorical': 'true',
+  'startDate': '2024-12-01T00:00:00Z',
+  'endDate': '2024-12-31T23:59:59Z',
+  'status': 'completed',
+  'limit': '50'
+});
+
+const response = await fetch(\`${baseUrl}/api/permits?\${params}\`, {
+  headers: {
+    'Authorization': \`Bearer \${idToken}\`,
+    'Content-Type': 'application/json'
+  }
+});
+
+const data = await response.json();
+if (data.success) {
+  console.log(\`Found \${data.data.length} completed permits from December 2024\`);
+  
+  // Group by burn type
+  const byBurnType = data.data.reduce((acc, permit) => {
+    acc[permit.burnTypeId] = (acc[permit.burnTypeId] || 0) + 1;
+    return acc;
+  }, {});
+  
+  console.log('Permits by burn type:', byBurnType);
+} else {
+  console.error('Error:', data.error);
+}`}
+                  pythonCode={`import requests
+from datetime import datetime
+
+headers = {
+    'Authorization': f'Bearer {id_token}',
+    'Content-Type': 'application/json'
+}
+
+# Get historical permits from last month
+params = {
+    'includeHistorical': 'true',
+    'startDate': '2024-12-01T00:00:00Z',
+    'endDate': '2024-12-31T23:59:59Z',
+    'status': 'completed',
+    'limit': 50
+}
+
+response = requests.get('${baseUrl}/api/permits', headers=headers, params=params)
+data = response.json()
+
+if data['success']:
+    print(f"Found {len(data['data'])} completed permits from December 2024")
+    
+    # Group by burn type
+    by_burn_type = {}
+    for permit in data['data']:
+        burn_type = permit['burnTypeId']
+        by_burn_type[burn_type] = by_burn_type.get(burn_type, 0) + 1
+    
+    print('Permits by burn type:', by_burn_type)
+else:
+    print('Error:', data['error'])`}
+                  label="Historical Data"
                 />
               </div>
 

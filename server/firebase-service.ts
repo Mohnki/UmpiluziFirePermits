@@ -16,11 +16,31 @@ import {
 
 // Initialize Firebase Admin
 if (!admin.apps.length) {
-  // For production, you would use a service account key
-  // For development, this will use the default credentials
-  admin.initializeApp({
-    projectId: "umpiluzi-fire-permits",
-  });
+  let serviceAccount;
+  
+  try {
+    // Parse the service account key from environment variable
+    const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+    if (serviceAccountKey) {
+      serviceAccount = JSON.parse(serviceAccountKey);
+    }
+  } catch (error) {
+    console.error('Error parsing Firebase service account key:', error);
+  }
+
+  if (serviceAccount) {
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+      projectId: serviceAccount.project_id,
+    });
+    console.log('Firebase initialized with service account credentials');
+  } else {
+    // Fallback to default credentials
+    admin.initializeApp({
+      projectId: "umpiluzi-fire-permits",
+    });
+    console.log('Firebase initialized with default credentials');
+  }
 }
 
 const db = getFirestore();

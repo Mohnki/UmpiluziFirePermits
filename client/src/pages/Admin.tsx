@@ -88,7 +88,8 @@ import {
   Flame, 
   CheckCircle2, 
   XCircle, 
-  Info 
+  Info,
+  Code 
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -554,7 +555,17 @@ export default function AdminPage() {
         <Header />
         <main className="flex-grow bg-gray-50 dark:bg-gray-900">
           <div className="container mx-auto py-8 px-4">
-            <h1 className="text-2xl md:text-3xl font-bold mb-6">Admin Dashboard</h1>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+              <h1 className="text-2xl md:text-3xl font-bold mb-4 sm:mb-0">Admin Dashboard</h1>
+              <div className="flex gap-2">
+                <Button asChild variant="outline">
+                  <a href="/api-docs" target="_blank" rel="noopener noreferrer">
+                    <Code className="h-4 w-4 mr-2" />
+                    API Documentation
+                  </a>
+                </Button>
+              </div>
+            </div>
             
             <Tabs defaultValue="users" className="w-full">
               <TabsList className="mb-6">

@@ -5,7 +5,7 @@ import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Alert, AlertDescription } from "../components/ui/alert";
-import { Copy, CheckCircle, Key, Code, Book, Shield, Eye, EyeOff } from "lucide-react";
+import { Copy, CheckCircle, Key, Code, Book, Shield, Eye, EyeOff, Download } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
 
 export default function ApiDocumentation() {
@@ -15,6 +15,7 @@ export default function ApiDocumentation() {
   const [idToken, setIdToken] = useState<string | null>(null);
   const [loadingToken, setLoadingToken] = useState(true);
   const [showToken, setShowToken] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   
   const baseUrl = window.location.origin;
 

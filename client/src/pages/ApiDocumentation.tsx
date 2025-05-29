@@ -5,7 +5,7 @@ import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Alert, AlertDescription } from "../components/ui/alert";
-import { Copy, CheckCircle, Key, Code, Book, Shield, Eye, EyeOff, Download } from "lucide-react";
+import { Copy, CheckCircle, Key, Code, Book, Shield, Eye, EyeOff, Download, Play, AlertCircle } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
 
 export default function ApiDocumentation() {
@@ -16,6 +16,8 @@ export default function ApiDocumentation() {
   const [loadingToken, setLoadingToken] = useState(true);
   const [showToken, setShowToken] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [testingEndpoint, setTestingEndpoint] = useState<string | null>(null);
+  const [testResults, setTestResults] = useState<any>(null);
   
   const baseUrl = window.location.origin;
 
@@ -228,6 +230,85 @@ Generated on: ${new Date().toLocaleDateString()}
     }
   };
 
+  const testEndpoint = async (endpoint: string, method: string = 'GET', params?: any) => {
+    if (!idToken) {
+      toast({
+        title: "Authentication required",
+        description: "Please ensure you're logged in to test endpoints",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setTestingEndpoint(endpoint);
+      setTestResults(null);
+
+      let url = `${baseUrl}${endpoint}`;
+      
+      // Add query parameters if provided
+      if (params && method === 'GET') {
+        const searchParams = new URLSearchParams();
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined && value !== '') {
+            searchParams.append(key, String(value));
+          }
+        });
+        if (searchParams.toString()) {
+          url += `?${searchParams.toString()}`;
+        }
+      }
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Authorization': `Bearer ${idToken}`,
+          'Content-Type': 'application/json',
+        },
+        ...(method !== 'GET' && params ? { body: JSON.stringify(params) } : {}),
+      });
+
+      const data = await response.json();
+      
+      setTestResults({
+        status: response.status,
+        statusText: response.statusText,
+        data,
+        headers: Object.fromEntries(response.headers.entries()),
+        url,
+      });
+
+      if (data.success) {
+        toast({
+          title: "Test successful",
+          description: `${method} ${endpoint} returned ${response.status}`,
+        });
+      } else {
+        toast({
+          title: "Test completed",
+          description: `${method} ${endpoint} returned ${response.status}: ${data.error || 'Unknown error'}`,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      setTestResults({
+        status: 0,
+        statusText: 'Network Error',
+        data: { success: false, error: error instanceof Error ? error.message : 'Unknown error' },
+        headers: {},
+        url: endpoint,
+      });
+      
+      toast({
+        title: "Test failed",
+        description: "Network error occurred while testing endpoint",
+        variant: "destructive",
+      });
+    } finally {
+      setTestingEndpoint(null);
+    }
+  };
+
   const CodeBlock = ({ code, language = "bash", label }: { code: string; language?: string; label: string }) => (
     <div className="relative">
       <pre className="bg-gray-900 dark:bg-gray-800 text-green-400 p-4 rounded-md overflow-x-auto text-sm">
@@ -262,6 +343,74 @@ Generated on: ${new Date().toLocaleDateString()}
       </TabsContent>
     </Tabs>
   );
+
+  const TestButton = ({ endpoint, method = 'GET', params, label }: { 
+    endpoint: string; 
+    method?: string; 
+    params?: any; 
+    label: string; 
+  }) => (
+    <Button
+      onClick={() => testEndpoint(endpoint, method, params)}
+      disabled={testingEndpoint === endpoint || !idToken}
+      variant="outline"
+      size="sm"
+      className="flex items-center gap-2"
+    >
+      {testingEndpoint === endpoint ? (
+        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
+      ) : (
+        <Play className="h-3 w-3" />
+      )}
+      {label}
+    </Button>
+  );
+
+  const TestResults = () => {
+    if (!testResults) return null;
+
+    const isSuccess = testResults.status >= 200 && testResults.status < 300;
+    
+    return (
+      <Card className="mt-4">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            {isSuccess ? (
+              <CheckCircle className="h-5 w-5 text-green-500" />
+            ) : (
+              <AlertCircle className="h-5 w-5 text-red-500" />
+            )}
+            Test Results
+          </CardTitle>
+          <CardDescription>
+            {testResults.status} {testResults.statusText} - {testResults.url}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <h4 className="font-semibold mb-2">Response Headers</h4>
+              <div className="text-sm bg-gray-100 dark:bg-gray-800 p-2 rounded">
+                {Object.entries(testResults.headers).map(([key, value]) => (
+                  <div key={key} className="flex">
+                    <span className="font-mono text-blue-600 dark:text-blue-400 mr-2">{key}:</span>
+                    <span className="font-mono">{String(value)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold mb-2">Response Body</h4>
+              <pre className="bg-gray-900 dark:bg-gray-800 text-green-400 p-4 rounded-md overflow-x-auto text-sm">
+                <code>{JSON.stringify(testResults.data, null, 2)}</code>
+              </pre>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -725,6 +874,19 @@ def refresh_id_token(refresh_token):
                   </details>
                   <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-950 rounded text-xs text-amber-800 dark:text-amber-200">
                     <strong>Example:</strong> <code>/api/permits?location[latitude]=-26.2041&location[longitude]=28.0473&location[radius]=5&status=approved</code>
+                  </div>
+                  <div className="flex gap-2 mt-3">
+                    <TestButton endpoint="/api/permits" label="Test Current Day" />
+                    <TestButton 
+                      endpoint="/api/permits" 
+                      params={{ includeHistorical: true, status: 'approved', limit: 5 }}
+                      label="Test Historical" 
+                    />
+                    <TestButton 
+                      endpoint="/api/permits" 
+                      params={{ 'location[latitude]': '-26.2041', 'location[longitude]': '28.0473', 'location[radius]': '10' }}
+                      label="Test Location Filter" 
+                    />
                   </div>
                 </div>
 

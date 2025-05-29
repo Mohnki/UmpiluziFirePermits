@@ -52,7 +52,7 @@ export default function Contact() {
                 <div>
                   <h4 className="font-medium">Email Addresses</h4>
                   <p className="text-muted-foreground">
-                    General Inquiries: manager@ufpa.co.za
+                    General Inquiries: manager.ufpa@gmail.com
                     <br />
                   </p>
                 </div>
@@ -67,9 +67,7 @@ export default function Contact() {
                   <p className="text-muted-foreground">
                     Monday-Friday: 8:00 AM - 5:00 PM
                     <br />
-                    Saturday: 8:00 AM - 12:00 PM
-                    <br />
-                    Sunday: Closed
+                    Saturday/Sunday: Closed (Available on call during Fire Season)
                   </p>
                 </div>
               </div>

@@ -1,5 +1,17 @@
-import { Goal, MapPinIcon, ScaleIcon, Clipboard, Shield, AlertTriangle } from "lucide-react";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Goal,
+  MapPinIcon,
+  ScaleIcon,
+  Clipboard,
+  Shield,
+  AlertTriangle,
+} from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 export default function About() {
   const aims = [
@@ -7,7 +19,7 @@ export default function About() {
     "Encourage integrated fire management for private landowners and public entities.",
     "Prevent and control wildfires.",
     "Manage wildfires in natural areas in order to maintain diversity of species and ecosystems.",
-    "Manage wildfire hazards so as to minimise the risk and any adverse consequences."
+    "Manage wildfire hazards so as to minimise the risk and any adverse consequences.",
   ];
 
   const services = [
@@ -17,14 +29,14 @@ export default function About() {
     "Improve awareness on integrated fire management and prevention and empower local communities to become more aware of the risks of fire",
     "Reduce fire risk associated with the occurrence of wildfires by devising integrated fire management plans",
     "Assist members with managing any incidents of wildfire as appropriate",
-    "Represent landowners at local and provincial forums for veldfire management and report back to landowners on decisions that may impact them"
+    "Represent landowners at local and provincial forums for veldfire management and report back to landowners on decisions that may impact them",
   ];
 
   const nonServices = [
     "Provide a firefighting service",
     "Fulfil the role of the fire brigade services",
     "Get involved in structural firefighting or related issues",
-    "Enforce membership to the organisation. Membership is voluntary other than for state organisations that own land or manage land, for which membership is compulsory"
+    "Enforce membership to the organisation. Membership is voluntary other than for state organisations that own land or manage land, for which membership is compulsory",
   ];
 
   return (
@@ -36,7 +48,8 @@ export default function About() {
           </h2>
           <div className="w-20 h-1 bg-primary mx-auto mt-4 mb-6"></div>
           <p className="text-muted-foreground max-w-3xl mx-auto">
-            We provide an integrated community fire management service to members of the Association.
+            We provide an integrated community fire management service to
+            members of the Association.
           </p>
         </div>
 
@@ -49,11 +62,16 @@ export default function About() {
             <ul className="space-y-2">
               <li className="flex items-start">
                 <span className="text-primary mr-2">•</span>
-                <span>We help you to become legally compliant, as per national regulations</span>
+                <span>
+                  We help you to become legally compliant, as per national
+                  regulations
+                </span>
               </li>
               <li className="flex items-start">
                 <span className="text-primary mr-2">•</span>
-                <span>We identify high risk areas and help with risk reduction</span>
+                <span>
+                  We identify high risk areas and help with risk reduction
+                </span>
               </li>
               <li className="flex items-start">
                 <span className="text-primary mr-2">•</span>
@@ -61,11 +79,17 @@ export default function About() {
               </li>
               <li className="flex items-start">
                 <span className="text-primary mr-2">•</span>
-                <span>We facilitate fire break planning for communal areas and strategic fire breaks</span>
+                <span>
+                  We facilitate fire break planning for communal areas and
+                  strategic fire breaks
+                </span>
               </li>
               <li className="flex items-start">
                 <span className="text-primary mr-2">•</span>
-                <span>We offer advice on compliance with the law (National Veld and Forest Fire Act)</span>
+                <span>
+                  We offer advice on compliance with the law (National Veld and
+                  Forest Fire Act)
+                </span>
               </li>
               <li className="flex items-start">
                 <span className="text-primary mr-2">•</span>
@@ -73,7 +97,10 @@ export default function About() {
               </li>
               <li className="flex items-start">
                 <span className="text-primary mr-2">•</span>
-                <span>We offer advice on Integrated Fire Management (including fire breaks, fuel reduction, equipment needed, etc.)</span>
+                <span>
+                  We offer advice on Integrated Fire Management (including fire
+                  breaks, fuel reduction, equipment needed, etc.)
+                </span>
               </li>
             </ul>
           </div>
@@ -86,19 +113,23 @@ export default function About() {
             <ul className="space-y-2">
               <li className="flex items-start">
                 <span className="text-primary mr-2">•</span>
-                <span>We organise training courses (including courses on Basic Fire Suppression, Controlled Burning, Infield Simulation and more)</span>
+                <span>
+                  We organise training courses (including courses on Basic Fire
+                  Suppression, Controlled Burning, Infield Simulation and more)
+                </span>
               </li>
               <li className="flex items-start">
                 <span className="text-primary mr-2">•</span>
-                <span>We provide a daily Fire Danger Index forecast during the fire season</span>
+                <span>
+                  We provide a daily Fire Danger Index forecast during the fire
+                  season
+                </span>
               </li>
               <li className="flex items-start">
                 <span className="text-primary mr-2">•</span>
-                <span>We watch the Advanced Fire Information System (AFIS), which provides early fire detection warning</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-primary mr-2">•</span>
-                <span>We support awareness: Media, Social Media and general public</span>
+                <span>
+                  We support awareness: Media, Social Media and general public
+                </span>
               </li>
               <li className="flex items-start">
                 <span className="text-primary mr-2">•</span>
@@ -106,7 +137,12 @@ export default function About() {
               </li>
               <li className="flex items-start">
                 <span className="text-primary mr-2">•</span>
-                <span>We support stakeholder engagement (including with the Fire Brigade, Eskom, Farmers' Associations, Working on Fire, Municipalities, Forestry, Transnet, national government departments, donors, conservancies)</span>
+                <span>
+                  We support stakeholder engagement (including with the Fire
+                  Brigade, Eskom, Farmers' Associations, Working on Fire,
+                  Municipalities, Forestry, Transnet, national government
+                  departments, donors, conservancies)
+                </span>
               </li>
             </ul>
           </div>
@@ -128,7 +164,9 @@ export default function About() {
         </div>
 
         <div className="mb-10">
-          <h3 className="text-xl font-semibold mb-4 text-center">THE AIMS OF UFPA ARE TO</h3>
+          <h3 className="text-xl font-semibold mb-4 text-center">
+            THE AIMS OF UFPA ARE TO
+          </h3>
           <ul className="space-y-2 max-w-3xl mx-auto">
             {aims.map((aim, index) => (
               <li key={index} className="flex items-start">
@@ -140,7 +178,9 @@ export default function About() {
         </div>
 
         <div className="bg-muted p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-semibold mb-4 text-center">WE PROVIDE AN INTEGRATED COMMUNITY FIRE MANAGEMENT SERVICE</h3>
+          <h3 className="text-xl font-semibold mb-4 text-center">
+            WE PROVIDE AN INTEGRATED COMMUNITY FIRE MANAGEMENT SERVICE
+          </h3>
           <ul className="space-y-2">
             {services.map((service, index) => (
               <li key={index} className="flex items-start">

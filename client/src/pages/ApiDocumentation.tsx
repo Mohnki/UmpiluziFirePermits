@@ -80,6 +80,21 @@ export default function ApiDocumentation() {
     </div>
   );
 
+  const CodeTabs = ({ jsCode, pythonCode, label }: { jsCode: string; pythonCode: string; label: string }) => (
+    <Tabs defaultValue="javascript" className="w-full">
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="javascript">JavaScript</TabsTrigger>
+        <TabsTrigger value="python">Python</TabsTrigger>
+      </TabsList>
+      <TabsContent value="javascript">
+        <CodeBlock code={jsCode} language="javascript" label={`${label} JavaScript`} />
+      </TabsContent>
+      <TabsContent value="python">
+        <CodeBlock code={pythonCode} language="python" label={`${label} Python`} />
+      </TabsContent>
+    </Tabs>
+  );
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="mb-8">
@@ -254,11 +269,8 @@ Content-Type: application/json`}
                 <div className="space-y-6">
                   <div>
                     <h4 className="font-medium mb-3">Google Authentication</h4>
-                    <div className="space-y-3">
-                      <div>
-                        <p className="text-sm font-medium mb-2">JavaScript/Web</p>
-                        <CodeBlock 
-                          code={`import { initializeApp } from 'firebase/app';
+                    <CodeTabs 
+                      jsCode={`import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 const firebaseConfig = {
@@ -283,14 +295,7 @@ const signInWithGoogle = async () => {
     console.error('Error signing in:', error);
   }
 };`}
-                          language="javascript"
-                          label="Google authentication JavaScript"
-                        />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium mb-2">Python</p>
-                        <CodeBlock 
-                          code={`import firebase_admin
+                      pythonCode={`import firebase_admin
 from firebase_admin import credentials, auth
 import requests
 
@@ -323,20 +328,14 @@ def sign_in_with_google_oauth(oauth_token):
     else:
         print(f'Error: {response.text}')
         return None`}
-                          language="python"
-                          label="Google authentication Python"
-                        />
-                      </div>
-                    </div>
+                      label="Google Authentication"
+                    />
                   </div>
 
                   <div>
                     <h4 className="font-medium mb-3">Email/Password Authentication</h4>
-                    <div className="space-y-3">
-                      <div>
-                        <p className="text-sm font-medium mb-2">JavaScript/Web</p>
-                        <CodeBlock 
-                          code={`import { initializeApp } from 'firebase/app';
+                    <CodeTabs 
+                      jsCode={`import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 
 const firebaseConfig = {
@@ -373,14 +372,7 @@ const registerWithEmail = async (email, password) => {
     console.error('Error registering:', error);
   }
 };`}
-                          language="javascript"
-                          label="Email/password authentication JavaScript"
-                        />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium mb-2">Python</p>
-                        <CodeBlock 
-                          code={`import requests
+                      pythonCode={`import requests
 import json
 
 # Firebase Auth REST API endpoints
@@ -431,17 +423,14 @@ def register_with_email(email, password):
 # Example usage
 # id_token = sign_in_with_email("user@example.com", "password123")
 # id_token = register_with_email("newuser@example.com", "password123")`}
-                          language="python"
-                          label="Email/password authentication Python"
-                        />
-                      </div>
-                    </div>
+                      label="Email/Password Authentication"
+                    />
                   </div>
 
                   <div>
-                    <h4 className="font-medium mb-2">Get Token from Current User</h4>
-                    <CodeBlock 
-                      code={`// If user is already authenticated
+                    <h4 className="font-medium mb-3">Get Token from Current User</h4>
+                    <CodeTabs 
+                      jsCode={`// If user is already authenticated
 import { getAuth } from 'firebase/auth';
 
 const auth = getAuth();
@@ -458,8 +447,31 @@ if (user) {
 } else {
   console.log('User not authenticated');
 }`}
-                      language="javascript"
-                      label="Get current user token"
+                      pythonCode={`import requests
+
+# If you already have a refresh token, you can get a new ID token
+def refresh_id_token(refresh_token):
+    """Refresh ID token using refresh token"""
+    url = f"https://securetoken.googleapis.com/v1/token?key=AIzaSyAkU77KLYS1fW3nLuGs-VF1xok4FhQ_TEc"
+    payload = {
+        "grant_type": "refresh_token",
+        "refresh_token": refresh_token
+    }
+    
+    response = requests.post(url, json=payload)
+    
+    if response.status_code == 200:
+        data = response.json()
+        new_id_token = data['id_token']
+        print(f'New ID Token: {new_id_token}')
+        return new_id_token
+    else:
+        print(f'Error refreshing token: {response.text}')
+        return None
+
+# Example usage
+# new_token = refresh_id_token("your_refresh_token_here")`}
+                      label="Get Current User Token"
                     />
                   </div>
                 </div>
@@ -609,29 +621,9 @@ if (user) {
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <h3 className="font-semibold mb-2">Get All Permits</h3>
-                <CodeBlock 
-                  code={`curl -H "Authorization: Bearer YOUR_ID_TOKEN" \\
-     -H "Content-Type: application/json" \\
-     "${baseUrl}/api/permits"`}
-                  label="Get permits cURL"
-                />
-              </div>
-
-              <div>
-                <h3 className="font-semibold mb-2">Get Approved Permits</h3>
-                <CodeBlock 
-                  code={`curl -H "Authorization: Bearer YOUR_ID_TOKEN" \\
-     -H "Content-Type: application/json" \\
-     "${baseUrl}/api/permits?status=approved&limit=10"`}
-                  label="Get approved permits cURL"
-                />
-              </div>
-
-              <div>
-                <h3 className="font-semibold mb-2">JavaScript/Node.js Example</h3>
-                <CodeBlock 
-                  code={`const response = await fetch('${baseUrl}/api/permits', {
+                <h3 className="font-semibold mb-3">Get All Permits</h3>
+                <CodeTabs 
+                  jsCode={`const response = await fetch('${baseUrl}/api/permits', {
   headers: {
     'Authorization': \`Bearer \${idToken}\`,
     'Content-Type': 'application/json'
@@ -644,15 +636,7 @@ if (data.success) {
 } else {
   console.error('Error:', data.error);
 }`}
-                  language="javascript"
-                  label="JavaScript example"
-                />
-              </div>
-
-              <div>
-                <h3 className="font-semibold mb-2">Python Example</h3>
-                <CodeBlock 
-                  code={`import requests
+                  pythonCode={`import requests
 
 headers = {
     'Authorization': f'Bearer {id_token}',
@@ -666,8 +650,193 @@ if data['success']:
     print('Permits:', data['data'])
 else:
     print('Error:', data['error'])`}
-                  language="python"
-                  label="Python example"
+                  label="Get All Permits"
+                />
+              </div>
+
+              <div>
+                <h3 className="font-semibold mb-3">Get Approved Permits with Filters</h3>
+                <CodeTabs 
+                  jsCode={`const response = await fetch('${baseUrl}/api/permits?status=approved&limit=10&offset=0', {
+  headers: {
+    'Authorization': \`Bearer \${idToken}\`,
+    'Content-Type': 'application/json'
+  }
+});
+
+const data = await response.json();
+if (data.success) {
+  console.log(\`Found \${data.data.length} approved permits\`);
+  data.data.forEach(permit => {
+    console.log(\`Permit \${permit.id}: \${permit.details}\`);
+  });
+} else {
+  console.error('Error:', data.error);
+}`}
+                  pythonCode={`import requests
+
+headers = {
+    'Authorization': f'Bearer {id_token}',
+    'Content-Type': 'application/json'
+}
+
+params = {
+    'status': 'approved',
+    'limit': 10,
+    'offset': 0
+}
+
+response = requests.get('${baseUrl}/api/permits', headers=headers, params=params)
+data = response.json()
+
+if data['success']:
+    print(f"Found {len(data['data'])} approved permits")
+    for permit in data['data']:
+        print(f"Permit {permit['id']}: {permit['details']}")
+else:
+    print('Error:', data['error'])`}
+                  label="Get Filtered Permits"
+                />
+              </div>
+
+              <div>
+                <h3 className="font-semibold mb-3">Get Areas and Burn Types</h3>
+                <CodeTabs 
+                  jsCode={`// Get all areas
+const areasResponse = await fetch('${baseUrl}/api/areas', {
+  headers: {
+    'Authorization': \`Bearer \${idToken}\`,
+    'Content-Type': 'application/json'
+  }
+});
+
+// Get all burn types
+const burnTypesResponse = await fetch('${baseUrl}/api/burn-types', {
+  headers: {
+    'Authorization': \`Bearer \${idToken}\`,
+    'Content-Type': 'application/json'
+  }
+});
+
+const areas = await areasResponse.json();
+const burnTypes = await burnTypesResponse.json();
+
+if (areas.success && burnTypes.success) {
+  console.log('Areas:', areas.data);
+  console.log('Burn Types:', burnTypes.data);
+}`}
+                  pythonCode={`import requests
+
+headers = {
+    'Authorization': f'Bearer {id_token}',
+    'Content-Type': 'application/json'
+}
+
+# Get all areas
+areas_response = requests.get('${baseUrl}/api/areas', headers=headers)
+areas_data = areas_response.json()
+
+# Get all burn types
+burn_types_response = requests.get('${baseUrl}/api/burn-types', headers=headers)
+burn_types_data = burn_types_response.json()
+
+if areas_data['success'] and burn_types_data['success']:
+    print('Areas:', areas_data['data'])
+    print('Burn Types:', burn_types_data['data'])`}
+                  label="Get Areas and Burn Types"
+                />
+              </div>
+
+              <div>
+                <h3 className="font-semibold mb-3">Complete Example with Error Handling</h3>
+                <CodeTabs 
+                  jsCode={`class FirePermitAPI {
+  constructor(baseUrl, idToken) {
+    this.baseUrl = baseUrl;
+    this.idToken = idToken;
+  }
+
+  async makeRequest(endpoint, options = {}) {
+    try {
+      const response = await fetch(\`\${this.baseUrl}/api\${endpoint}\`, {
+        ...options,
+        headers: {
+          'Authorization': \`Bearer \${this.idToken}\`,
+          'Content-Type': 'application/json',
+          ...options.headers
+        }
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || \`HTTP \${response.status}\`);
+      }
+
+      return data;
+    } catch (error) {
+      console.error('API Error:', error.message);
+      throw error;
+    }
+  }
+
+  async getPermits(filters = {}) {
+    const params = new URLSearchParams(filters);
+    return this.makeRequest(\`/permits?\${params}\`);
+  }
+
+  async getPermitById(id) {
+    return this.makeRequest(\`/permits/\${id}\`);
+  }
+
+  async getAreas() {
+    return this.makeRequest('/areas');
+  }
+}
+
+// Usage
+const api = new FirePermitAPI('${baseUrl}', idToken);
+const permits = await api.getPermits({ status: 'approved' });`}
+                  pythonCode={`import requests
+from typing import Dict, Any, Optional
+
+class FirePermitAPI:
+    def __init__(self, base_url: str, id_token: str):
+        self.base_url = base_url
+        self.id_token = id_token
+        self.headers = {
+            'Authorization': f'Bearer {id_token}',
+            'Content-Type': 'application/json'
+        }
+
+    def make_request(self, endpoint: str, method: str = 'GET', params: Optional[Dict] = None) -> Dict[str, Any]:
+        try:
+            url = f"{self.base_url}/api{endpoint}"
+            response = requests.request(method, url, headers=self.headers, params=params)
+            response.raise_for_status()
+            
+            data = response.json()
+            if not data.get('success', False):
+                raise Exception(data.get('error', 'Unknown error'))
+            
+            return data
+        except requests.exceptions.RequestException as e:
+            print(f'API Error: {e}')
+            raise
+
+    def get_permits(self, filters: Optional[Dict] = None) -> Dict[str, Any]:
+        return self.make_request('/permits', params=filters)
+
+    def get_permit_by_id(self, permit_id: str) -> Dict[str, Any]:
+        return self.make_request(f'/permits/{permit_id}')
+
+    def get_areas(self) -> Dict[str, Any]:
+        return self.make_request('/areas')
+
+# Usage
+api = FirePermitAPI('${baseUrl}', id_token)
+permits = api.get_permits({'status': 'approved'})`}
+                  label="Complete API Class"
                 />
               </div>
             </CardContent>

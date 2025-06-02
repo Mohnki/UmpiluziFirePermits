@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Helmet } from "react-helmet";
-import { getPermitsByUser } from "@/lib/permit-service";
+import { getPermitsByUser, updatePermitStatus } from "@/lib/permit-service";
 import { getAllBurnTypes } from "@/lib/area-service";
 import { getAllAreas } from "@/lib/area-service";
 import { BurnPermit } from "@/lib/permit-types";
@@ -49,6 +49,7 @@ export default function MyPermits() {
   const [burnTypes, setBurnTypes] = useState<BurnType[]>([]);
   const [areas, setAreas] = useState<Area[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [completingPermit, setCompletingPermit] = useState<string | null>(null);
   
   // Fetch user's permits, areas and burn types
   useEffect(() => {
@@ -134,6 +135,37 @@ export default function MyPermits() {
   const getBurnTypeName = (burnTypeId: string) => {
     const burnType = burnTypes.find(bt => bt.id === burnTypeId);
     return burnType ? burnType.name : "Unknown Burn Type";
+  };
+
+  // Handle completing a permit
+  const handleCompletePermit = async (permitId: string) => {
+    if (!user) return;
+    
+    try {
+      setCompletingPermit(permitId);
+      await updatePermitStatus(permitId, "completed");
+      
+      // Update the local state
+      setPermits(prev => prev.map(p => 
+        p.id === permitId 
+          ? { ...p, status: "completed" as const, updatedAt: new Date() }
+          : p
+      ));
+      
+      toast({
+        title: "Permit Completed",
+        description: "Your burn permit has been marked as completed.",
+      });
+    } catch (error) {
+      console.error("Error completing permit:", error);
+      toast({
+        title: "Error",
+        description: "Failed to complete the permit. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setCompletingPermit(null);
+    }
   };
   
   // Get today's date with time set to 00:00:00
@@ -270,7 +302,7 @@ export default function MyPermits() {
                             <TableHead>Area</TableHead>
                             <TableHead>Date</TableHead>
                             <TableHead>Status</TableHead>
-                            <TableHead>Details</TableHead>
+                            <TableHead>Actions</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -287,16 +319,32 @@ export default function MyPermits() {
                                 </Badge>
                               </TableCell>
                               <TableCell>
-                                <Button 
-                                  size="sm" 
-                                  variant="default"
-                                  onClick={() => {
-                                    // Display more details in a modal if needed
-                                    alert(`Permit details: ${permit.details || "No additional details"}`);
-                                  }}
-                                >
-                                  View
-                                </Button>
+                                <div className="flex space-x-2">
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => {
+                                      alert(`Permit details: ${permit.details || "No additional details"}`);
+                                    }}
+                                  >
+                                    View
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="default"
+                                    onClick={() => handleCompletePermit(permit.id)}
+                                    disabled={completingPermit === permit.id}
+                                  >
+                                    {completingPermit === permit.id ? (
+                                      <>
+                                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                        Completing...
+                                      </>
+                                    ) : (
+                                      "Complete"
+                                    )}
+                                  </Button>
+                                </div>
                               </TableCell>
                             </TableRow>
                           ))}

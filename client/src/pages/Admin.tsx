@@ -920,7 +920,20 @@ export default function AdminPage() {
                           const allActivePermits = permits.filter(p => {
                             const startDate = new Date(p.startDate);
                             const endDate = new Date(p.endDate);
-                            const isActiveToday = startDate <= today && endDate >= today && p.status === 'approved';
+                            
+                            // Normalize dates to just the date part (no time)
+                            const normalizeDate = (date: Date): Date => {
+                              return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                            };
+                            
+                            const normalizedStart = normalizeDate(startDate);
+                            const normalizedEnd = normalizeDate(endDate);
+                            const normalizedToday = normalizeDate(today);
+                            
+                            const isActiveToday = normalizedStart <= normalizedToday && normalizedEnd >= normalizedToday && p.status === 'approved';
+                            
+                            console.log(`Permit ${p.id.substring(0, 8)}: start=${normalizedStart.toISOString()}, end=${normalizedEnd.toISOString()}, today=${normalizedToday.toISOString()}, status=${p.status}, active=${isActiveToday}`);
+                            
                             return isActiveToday;
                           });
                           

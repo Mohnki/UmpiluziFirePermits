@@ -37,7 +37,8 @@ import {
   Loader2, 
   MapPin, 
   Info,
-  FileText
+  FileText,
+  Share2
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -165,6 +166,67 @@ export default function MyPermits() {
       });
     } finally {
       setCompletingPermit(null);
+    }
+  };
+
+  // Handle sharing a permit
+  const handleSharePermit = async (permit: BurnPermit) => {
+    const permitNumber = permit.id.substring(0, 8);
+    const burnTypeName = getBurnTypeName(permit.burnTypeId);
+    const areaName = getAreaName(permit.areaId);
+    const startDate = format(new Date(permit.startDate), "MMM d, yyyy");
+    const endDate = format(new Date(permit.endDate), "MMM d, yyyy");
+    
+    const message = `🔥 BURN PERMIT ACTIVE 🔥
+
+📋 Permit #${permitNumber}
+👤 Permit Holder: ${user?.displayName || user?.email}
+🔥 Burn Type: ${burnTypeName}
+📍 Area: ${areaName}
+📅 Valid: ${startDate} - ${endDate}
+✅ Status: ${permit.status.toUpperCase()}
+
+⚠️ Please follow all fire safety regulations and monitor weather conditions.
+
+#UmpiluziFPA #BurnPermit #FireSafety`;
+
+    try {
+      if (navigator.share) {
+        // Use native share API if available
+        await navigator.share({
+          title: `Burn Permit #${permitNumber}`,
+          text: message,
+        });
+      } else {
+        // Fallback: copy to clipboard and show WhatsApp link
+        await navigator.clipboard.writeText(message);
+        
+        // Create WhatsApp share URL
+        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+        
+        toast({
+          title: "Message Copied",
+          description: "Permit details copied to clipboard and WhatsApp opened.",
+        });
+      }
+    } catch (error) {
+      console.error("Error sharing permit:", error);
+      
+      // Final fallback: just copy to clipboard
+      try {
+        await navigator.clipboard.writeText(message);
+        toast({
+          title: "Copied to Clipboard",
+          description: "Permit details copied. You can paste and share manually.",
+        });
+      } catch (clipboardError) {
+        toast({
+          title: "Share Not Available",
+          description: "Unable to share or copy permit details.",
+          variant: "destructive",
+        });
+      }
     }
   };
   
@@ -328,6 +390,14 @@ export default function MyPermits() {
                                     }}
                                   >
                                     View
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="secondary"
+                                    onClick={() => handleSharePermit(permit)}
+                                  >
+                                    <Share2 className="h-4 w-4 mr-1" />
+                                    Share
                                   </Button>
                                   <Button 
                                     size="sm" 

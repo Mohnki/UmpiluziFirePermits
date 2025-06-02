@@ -42,7 +42,7 @@ export default function Footer() {
 
         <div className="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400 text-sm">
           <p>&copy; {new Date().getFullYear()} Umpiluzi Fire Protection Association. All rights reserved.</p>
-          <p className="mt-1">A registered non-profit organization dedicated to wildfire prevention and management.</p>
+          <p className="mt-1">Site built and Maintained by Firehawk</p>
         </div>
       </div>
     </footer>

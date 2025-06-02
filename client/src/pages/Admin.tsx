@@ -108,6 +108,26 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
+// Create custom marker icons for different permit statuses
+const createMarkerIcon = (color: string) => {
+  return new L.Icon({
+    iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`,
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  });
+};
+
+const markerIcons = {
+  approved: createMarkerIcon('orange'),
+  completed: createMarkerIcon('blue'),
+  cancelled: createMarkerIcon('red'),
+  rejected: createMarkerIcon('red'),
+  pending: createMarkerIcon('yellow')
+};
+
 // Form schemas
 const areaFormSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
@@ -895,7 +915,17 @@ export default function AdminPage() {
                         today.setHours(0, 0, 0, 0);
                         const startDate = new Date(p.startDate);
                         const endDate = new Date(p.endDate);
-                        const isActiveToday = startDate <= today && endDate >= today && p.status === 'approved';
+                        
+                        // Use same normalization logic as the map
+                        const normalizeDate = (date: Date): Date => {
+                          return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                        };
+                        
+                        const normalizedStart = normalizeDate(startDate);
+                        const normalizedEnd = normalizeDate(endDate);
+                        const normalizedToday = normalizeDate(today);
+                        
+                        const isActiveToday = normalizedStart <= normalizedToday && normalizedEnd >= normalizedToday && p.status === 'approved';
                         return isActiveToday;
                       }).length} Active Today
                     </Badge>
@@ -917,7 +947,7 @@ export default function AdminPage() {
                           // Debug: Log all permits to see what we have
                           console.log('All permits:', permits);
                           
-                          const allActivePermits = permits.filter(p => {
+                          const allTodaysPermits = permits.filter(p => {
                             const startDate = new Date(p.startDate);
                             const endDate = new Date(p.endDate);
                             
@@ -930,22 +960,23 @@ export default function AdminPage() {
                             const normalizedEnd = normalizeDate(endDate);
                             const normalizedToday = normalizeDate(today);
                             
-                            const isActiveToday = normalizedStart <= normalizedToday && normalizedEnd >= normalizedToday && p.status === 'approved';
+                            // Include all permits for today, regardless of status
+                            const isForToday = normalizedStart <= normalizedToday && normalizedEnd >= normalizedToday;
                             
-                            console.log(`Permit ${p.id.substring(0, 8)}: start=${normalizedStart.toISOString()}, end=${normalizedEnd.toISOString()}, today=${normalizedToday.toISOString()}, status=${p.status}, active=${isActiveToday}`);
+                            console.log(`Permit ${p.id.substring(0, 8)}: start=${normalizedStart.toISOString()}, end=${normalizedEnd.toISOString()}, today=${normalizedToday.toISOString()}, status=${p.status}, forToday=${isForToday}`);
                             
-                            return isActiveToday;
+                            return isForToday;
                           });
                           
-                          console.log('Active permits today:', allActivePermits);
+                          console.log('All todays permits:', allTodaysPermits);
                           
-                          const todaysPermits = allActivePermits.filter(p => 
+                          const todaysPermits = allTodaysPermits.filter(p => 
                             p.location?.latitude && p.location?.longitude
                           );
                           
-                          console.log('Active permits with location:', todaysPermits);
+                          console.log('Todays permits with location:', todaysPermits);
 
-                          if (allActivePermits.length === 0) {
+                          if (allTodaysPermits.length === 0) {
                             return (
                               <div className="flex items-center justify-center h-full bg-gray-50 dark:bg-gray-700">
                                 <div className="text-center">
@@ -970,11 +1001,11 @@ export default function AdminPage() {
                                     Active Permits Without Location Data
                                   </h3>
                                   <p className="text-gray-500 dark:text-gray-400 mb-4">
-                                    There are {allActivePermits.length} active permit(s) today, but none have location data for mapping.
+                                    There are {allTodaysPermits.length} permit(s) today, but none have location data for mapping.
                                   </p>
                                   <div className="text-left bg-white dark:bg-gray-800 p-4 rounded-md shadow-sm">
-                                    <h4 className="font-medium mb-2">Active Permits Today:</h4>
-                                    {allActivePermits.map(permit => {
+                                    <h4 className="font-medium mb-2">Today's Permits:</h4>
+                                    {allTodaysPermits.map(permit => {
                                       const area = areas.find(a => a.id === permit.areaId);
                                       const burnType = burnTypes.find(bt => bt.id === permit.burnTypeId);
                                       const user = users.find(u => u.uid === permit.userId);
@@ -1021,6 +1052,7 @@ export default function AdminPage() {
                                   <Marker
                                     key={permit.id}
                                     position={[permit.location!.latitude, permit.location!.longitude]}
+                                    icon={markerIcons[permit.status] || markerIcons.approved}
                                   >
                                     <Popup>
                                       <div className="p-2 min-w-[200px]">
@@ -1056,8 +1088,28 @@ export default function AdminPage() {
                     </div>
                   )}
                   
-                  <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-                    <p>This map shows all approved burn permits that are active today. Click on markers to view permit details.</p>
+                  <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      <p>This map shows all burn permits for today. Click on markers to view permit details.</p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-4 text-sm">
+                      <div className="flex items-center gap-1">
+                        <div className="w-4 h-4 bg-orange-500 rounded-full"></div>
+                        <span>Active</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
+                        <span>Completed</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-4 h-4 bg-red-500 rounded-full"></div>
+                        <span>Cancelled/Rejected</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-4 h-4 bg-yellow-500 rounded-full"></div>
+                        <span>Pending</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </TabsContent>

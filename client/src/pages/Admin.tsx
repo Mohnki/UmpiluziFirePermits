@@ -914,14 +914,25 @@ export default function AdminPage() {
                           const today = new Date();
                           today.setHours(0, 0, 0, 0);
                           
-                          const todaysPermits = permits.filter(p => {
+                          // Debug: Log all permits to see what we have
+                          console.log('All permits:', permits);
+                          
+                          const allActivePermits = permits.filter(p => {
                             const startDate = new Date(p.startDate);
                             const endDate = new Date(p.endDate);
                             const isActiveToday = startDate <= today && endDate >= today && p.status === 'approved';
-                            return isActiveToday && p.location?.latitude && p.location?.longitude;
+                            return isActiveToday;
                           });
+                          
+                          console.log('Active permits today:', allActivePermits);
+                          
+                          const todaysPermits = allActivePermits.filter(p => 
+                            p.location?.latitude && p.location?.longitude
+                          );
+                          
+                          console.log('Active permits with location:', todaysPermits);
 
-                          if (todaysPermits.length === 0) {
+                          if (allActivePermits.length === 0) {
                             return (
                               <div className="flex items-center justify-center h-full bg-gray-50 dark:bg-gray-700">
                                 <div className="text-center">
@@ -930,8 +941,40 @@ export default function AdminPage() {
                                     No Active Permits Today
                                   </h3>
                                   <p className="text-gray-500 dark:text-gray-400">
-                                    There are no approved permits with location data for today.
+                                    There are no approved permits for today.
                                   </p>
+                                </div>
+                              </div>
+                            );
+                          }
+                          
+                          if (todaysPermits.length === 0) {
+                            return (
+                              <div className="flex items-center justify-center h-full bg-gray-50 dark:bg-gray-700">
+                                <div className="text-center">
+                                  <MapPin className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                                    Active Permits Without Location Data
+                                  </h3>
+                                  <p className="text-gray-500 dark:text-gray-400 mb-4">
+                                    There are {allActivePermits.length} active permit(s) today, but none have location data for mapping.
+                                  </p>
+                                  <div className="text-left bg-white dark:bg-gray-800 p-4 rounded-md shadow-sm">
+                                    <h4 className="font-medium mb-2">Active Permits Today:</h4>
+                                    {allActivePermits.map(permit => {
+                                      const area = areas.find(a => a.id === permit.areaId);
+                                      const burnType = burnTypes.find(bt => bt.id === permit.burnTypeId);
+                                      const user = users.find(u => u.uid === permit.userId);
+                                      return (
+                                        <div key={permit.id} className="mb-2 p-2 border rounded text-sm">
+                                          <div><strong>#{permit.id.substring(0, 8)}</strong></div>
+                                          <div>User: {user?.displayName || user?.email || 'Unknown'}</div>
+                                          <div>Type: {burnType?.name || 'Unknown'}</div>
+                                          <div>Area: {area?.name || 'Unknown'}</div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
                                 </div>
                               </div>
                             );

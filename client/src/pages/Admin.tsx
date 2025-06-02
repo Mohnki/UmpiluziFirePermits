@@ -90,11 +90,23 @@ import {
   CheckCircle2, 
   XCircle, 
   Info,
-  Code 
+  Code,
+  Map
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Fix for default markers in react-leaflet
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 // Form schemas
 const areaFormSchema = z.object({
@@ -664,6 +676,7 @@ export default function AdminPage() {
               <TabsList className="mb-6">
                 <TabsTrigger value="users">User Management</TabsTrigger>
                 <TabsTrigger value="permits">Permit Management</TabsTrigger>
+                <TabsTrigger value="todays-permits">Today's Permits</TabsTrigger>
                 <TabsTrigger value="areas">Areas</TabsTrigger>
                 <TabsTrigger value="burn-types">Burn Types</TabsTrigger>
                 <TabsTrigger value="area-permissions">Area Permissions</TabsTrigger>
@@ -865,6 +878,131 @@ export default function AdminPage() {
                       </TableBody>
                     </Table>
                   )}
+                </div>
+              </TabsContent>
+
+              {/* Today's Permits Map Tab */}
+              <TabsContent value="todays-permits">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center">
+                      <Map className="h-6 w-6 mr-2 text-primary" />
+                      <h2 className="text-xl font-semibold">Today's Active Permits Map</h2>
+                    </div>
+                    <Badge variant="secondary" className="text-sm">
+                      {permits.filter(p => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const startDate = new Date(p.startDate);
+                        const endDate = new Date(p.endDate);
+                        const isActiveToday = startDate <= today && endDate >= today && p.status === 'approved';
+                        return isActiveToday;
+                      }).length} Active Today
+                    </Badge>
+                  </div>
+                  
+                  {loadingPermits ? (
+                    <div className="flex items-center justify-center py-20">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      <span className="ml-2">Loading permits map...</span>
+                    </div>
+                  ) : (
+                    <div className="rounded-lg overflow-hidden border">
+                      <div style={{ height: '600px', width: '100%' }}>
+                        {(() => {
+                          // Filter today's active permits
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          
+                          const todaysPermits = permits.filter(p => {
+                            const startDate = new Date(p.startDate);
+                            const endDate = new Date(p.endDate);
+                            const isActiveToday = startDate <= today && endDate >= today && p.status === 'approved';
+                            return isActiveToday && p.location?.latitude && p.location?.longitude;
+                          });
+
+                          if (todaysPermits.length === 0) {
+                            return (
+                              <div className="flex items-center justify-center h-full bg-gray-50 dark:bg-gray-700">
+                                <div className="text-center">
+                                  <MapPin className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                                    No Active Permits Today
+                                  </h3>
+                                  <p className="text-gray-500 dark:text-gray-400">
+                                    There are no approved permits with location data for today.
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          }
+
+                          // Calculate map bounds to fit all permits
+                          const latitudes = todaysPermits.map(p => p.location!.latitude);
+                          const longitudes = todaysPermits.map(p => p.location!.longitude);
+                          
+                          const centerLat = latitudes.reduce((a, b) => a + b, 0) / latitudes.length;
+                          const centerLng = longitudes.reduce((a, b) => a + b, 0) / longitudes.length;
+
+                          return (
+                            <MapContainer
+                              center={[centerLat, centerLng]}
+                              zoom={10}
+                              style={{ height: '100%', width: '100%' }}
+                              bounds={todaysPermits.map(p => [p.location!.latitude, p.location!.longitude])}
+                              boundsOptions={{ padding: [20, 20] }}
+                            >
+                              <TileLayer
+                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                              />
+                              {todaysPermits.map((permit) => {
+                                const area = areas.find(a => a.id === permit.areaId);
+                                const burnType = burnTypes.find(bt => bt.id === permit.burnTypeId);
+                                const user = users.find(u => u.uid === permit.userId);
+                                
+                                return (
+                                  <Marker
+                                    key={permit.id}
+                                    position={[permit.location!.latitude, permit.location!.longitude]}
+                                  >
+                                    <Popup>
+                                      <div className="p-2 min-w-[200px]">
+                                        <div className="font-semibold text-lg mb-2">
+                                          Permit #{permit.id.substring(0, 8)}
+                                        </div>
+                                        <div className="space-y-1 text-sm">
+                                          <div><strong>Permit Holder:</strong> {user?.displayName || user?.email || 'Unknown'}</div>
+                                          <div><strong>Burn Type:</strong> {burnType?.name || 'Unknown Type'}</div>
+                                          <div><strong>Area:</strong> {area?.name || 'Unknown Area'}</div>
+                                          <div><strong>Valid:</strong> {new Date(permit.startDate).toLocaleDateString()} - {new Date(permit.endDate).toLocaleDateString()}</div>
+                                          <div><strong>Status:</strong> 
+                                            <Badge variant="default" className="ml-1 text-xs">
+                                              {permit.status.toUpperCase()}
+                                            </Badge>
+                                          </div>
+                                          {permit.details && (
+                                            <div><strong>Details:</strong> {permit.details}</div>
+                                          )}
+                                          {permit.location?.address && (
+                                            <div><strong>Address:</strong> {permit.location.address}</div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </Popup>
+                                  </Marker>
+                                );
+                              })}
+                            </MapContainer>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+                    <p>This map shows all approved burn permits that are active today. Click on markers to view permit details.</p>
+                  </div>
                 </div>
               </TabsContent>
               

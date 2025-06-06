@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { CalendarIcon, Download, Filter, BarChart3, Loader2 } from "lucide-react";
+import { CalendarIcon, Download, Filter, BarChart3, Loader2, Search, RotateCcw } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -62,7 +62,9 @@ export default function PermitReports() {
   const [areas, setAreas] = useState<Area[]>([]);
   const [burnTypes, setBurnTypes] = useState<BurnType[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
-  const [loadingData, setLoadingData] = useState(true);
+  const [loadingData, setLoadingData] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [hasGeneratedReport, setHasGeneratedReport] = useState(false);
   
   // Filter state
   const [selectedArea, setSelectedArea] = useState<string>("all");
@@ -85,26 +87,12 @@ export default function PermitReports() {
     return <Redirect to="/admin" />;
   }
 
-  // Fetch data
+  // Fetch initial data (areas and burn types only)
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchInitialData = async () => {
       if (user && userProfile && hasManagerAccess) {
         try {
-          setLoadingData(true);
-          
-          // Fetch permits
-          const idToken = await user.getIdToken();
-          const permitResponse = await fetch('/api/permits', {
-            headers: {
-              'Authorization': `Bearer ${idToken}`,
-              'Content-Type': 'application/json',
-            },
-          });
-          
-          if (permitResponse.ok) {
-            const permitData = await permitResponse.json();
-            setPermits(permitData.data || []);
-          }
+          setInitialLoading(true);
           
           // Fetch areas and burn types
           const [areasData, burnTypesData] = await Promise.all([
@@ -116,20 +104,76 @@ export default function PermitReports() {
           setBurnTypes(burnTypesData);
           
         } catch (error) {
-          console.error("Error fetching data:", error);
+          console.error("Error fetching initial data:", error);
           toast({
             title: "Error",
-            description: "Failed to load report data. Please try again.",
+            description: "Failed to load areas and burn types. Please try again.",
             variant: "destructive",
           });
         } finally {
-          setLoadingData(false);
+          setInitialLoading(false);
         }
       }
     };
 
-    fetchData();
+    fetchInitialData();
   }, [user, userProfile, hasManagerAccess, toast]);
+
+  // Generate report function
+  const generateReport = async () => {
+    if (!user || !userProfile || !hasManagerAccess) return;
+    
+    try {
+      setLoadingData(true);
+      
+      // Fetch permits
+      const idToken = await user.getIdToken();
+      const permitResponse = await fetch('/api/permits', {
+        headers: {
+          'Authorization': `Bearer ${idToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (permitResponse.ok) {
+        const permitData = await permitResponse.json();
+        setPermits(permitData.data || []);
+        setHasGeneratedReport(true);
+        toast({
+          title: "Success",
+          description: "Report generated successfully!",
+        });
+      } else {
+        throw new Error('Failed to fetch permits');
+      }
+      
+    } catch (error) {
+      console.error("Error generating report:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate report. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
+  // Reset filters and data
+  const resetReport = () => {
+    setSelectedArea("all");
+    setSelectedBurnType("all");
+    setSelectedStatus("all");
+    setDateFrom(undefined);
+    setDateTo(undefined);
+    setDateRange("30");
+    setPermits([]);
+    setHasGeneratedReport(false);
+    toast({
+      title: "Reset Complete",
+      description: "All filters have been cleared and data reset.",
+    });
+  };
 
   // Filter permits based on selected criteria
   const filteredPermits = permits.filter(permit => {
@@ -203,14 +247,7 @@ export default function PermitReports() {
     };
   });
 
-  const clearFilters = () => {
-    setSelectedArea("all");
-    setSelectedBurnType("all");
-    setSelectedStatus("all");
-    setDateFrom(undefined);
-    setDateTo(undefined);
-    setDateRange("30");
-  };
+
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -304,7 +341,7 @@ export default function PermitReports() {
               </div>
             </div>
 
-            <div className="flex gap-4 items-end">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
               <div>
                 <label className="text-sm font-medium mb-2 block">From Date</label>
                 <Popover>
@@ -312,7 +349,7 @@ export default function PermitReports() {
                     <Button
                       variant="outline"
                       className={cn(
-                        "w-[240px] justify-start text-left font-normal",
+                        "w-full justify-start text-left font-normal",
                         !dateFrom && "text-muted-foreground"
                       )}
                     >
@@ -338,7 +375,7 @@ export default function PermitReports() {
                     <Button
                       variant="outline"
                       className={cn(
-                        "w-[240px] justify-start text-left font-normal",
+                        "w-full justify-start text-left font-normal",
                         !dateTo && "text-muted-foreground"
                       )}
                     >
@@ -357,17 +394,60 @@ export default function PermitReports() {
                 </Popover>
               </div>
 
-              <Button onClick={clearFilters} variant="outline">
-                Clear Filters
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={generateReport} 
+                  disabled={loadingData || initialLoading}
+                  className="flex-1"
+                >
+                  {loadingData ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Search className="mr-2 h-4 w-4" />
+                      Generate Report
+                    </>
+                  )}
+                </Button>
+                <Button 
+                  onClick={resetReport} 
+                  variant="outline"
+                  disabled={loadingData || initialLoading}
+                >
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Reset
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        {loadingData ? (
+        {initialLoading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <span className="ml-2">Loading report data...</span>
+            <span className="ml-2">Loading areas and burn types...</span>
+          </div>
+        ) : loadingData ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="ml-2">Generating report...</span>
+          </div>
+        ) : !hasGeneratedReport ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <BarChart3 className="h-16 w-16 text-gray-400 mb-4" />
+            <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              No Report Generated
+            </h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-4 max-w-md">
+              Configure your filters above and click "Generate Report" to view permit analytics and insights.
+            </p>
+            <Button onClick={generateReport} disabled={loadingData}>
+              <Search className="mr-2 h-4 w-4" />
+              Generate Your First Report
+            </Button>
           </div>
         ) : (
           <>

@@ -143,7 +143,7 @@ const burnTypeFormSchema = z.object({
 });
 
 export default function AdminPage() {
-  const { user, userProfile, isAdmin, loading } = useAuth();
+  const { user, userProfile, isAdmin, isAreaManager, loading } = useAuth();
   const { toast } = useToast();
   
   // Users state
@@ -647,8 +647,8 @@ export default function AdminPage() {
     );
   }
 
-  // Redirect if not admin
-  if (!loading && !isAdmin) {
+  // Redirect if not admin or area manager
+  if (!loading && !isAdmin && !isAreaManager) {
     return <Redirect to="/" />;
   }
 
@@ -673,15 +673,15 @@ export default function AdminPage() {
   return (
     <>
       <Helmet>
-        <title>Admin Dashboard - Umpiluzi Fire Protection Association</title>
-        <meta name="description" content="Administrative dashboard for managing users and roles" />
+        <title>{isAdmin ? 'Admin Dashboard' : 'Manager Dashboard'} - Umpiluzi Fire Protection Association</title>
+        <meta name="description" content={isAdmin ? "Administrative dashboard for managing users and roles" : "Manager dashboard for permit oversight"} />
       </Helmet>
       <div className="flex flex-col min-h-screen">
         <Header />
         <main className="flex-grow bg-gray-50 dark:bg-gray-900">
           <div className="container mx-auto py-8 px-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-              <h1 className="text-2xl md:text-3xl font-bold mb-4 sm:mb-0">Admin Dashboard</h1>
+              <h1 className="text-2xl md:text-3xl font-bold mb-4 sm:mb-0">{isAdmin ? 'Admin Dashboard' : 'Manager Dashboard'}</h1>
               <div className="flex gap-2">
                 <Button asChild variant="outline">
                   <a href="/api-docs" target="_blank" rel="noopener noreferrer">
@@ -692,14 +692,14 @@ export default function AdminPage() {
               </div>
             </div>
             
-            <Tabs defaultValue="users" className="w-full">
+            <Tabs defaultValue={isAdmin ? "users" : "todays-permits"} className="w-full">
               <TabsList className="mb-6">
-                <TabsTrigger value="users">User Management</TabsTrigger>
-                <TabsTrigger value="permits">Permit Management</TabsTrigger>
+                {isAdmin && <TabsTrigger value="users">User Management</TabsTrigger>}
+                {isAdmin && <TabsTrigger value="permits">Permit Management</TabsTrigger>}
                 <TabsTrigger value="todays-permits">Today's Permits</TabsTrigger>
-                <TabsTrigger value="areas">Areas</TabsTrigger>
-                <TabsTrigger value="burn-types">Burn Types</TabsTrigger>
-                <TabsTrigger value="area-permissions">Area Permissions</TabsTrigger>
+                {isAdmin && <TabsTrigger value="areas">Areas</TabsTrigger>}
+                {isAdmin && <TabsTrigger value="burn-types">Burn Types</TabsTrigger>}
+                {isAdmin && <TabsTrigger value="area-permissions">Area Permissions</TabsTrigger>}
               </TabsList>
               
               {/* User Management Tab */}
@@ -963,9 +963,16 @@ export default function AdminPage() {
                             // Include all permits for today, regardless of status
                             const isForToday = normalizedStart <= normalizedToday && normalizedEnd >= normalizedToday;
                             
-                            console.log(`Permit ${p.id.substring(0, 8)}: start=${normalizedStart.toISOString()}, end=${normalizedEnd.toISOString()}, today=${normalizedToday.toISOString()}, status=${p.status}, forToday=${isForToday}`);
+                            // Filter by area if user is area manager
+                            let hasAreaAccess = true;
+                            if (isAreaManager && !isAdmin && userProfile) {
+                              const userManagedAreas = areas.filter(area => area.areaManagerId === userProfile.uid);
+                              hasAreaAccess = userManagedAreas.some(area => area.id === p.areaId);
+                            }
                             
-                            return isForToday;
+                            console.log(`Permit ${p.id.substring(0, 8)}: start=${normalizedStart.toISOString()}, end=${normalizedEnd.toISOString()}, today=${normalizedToday.toISOString()}, status=${p.status}, forToday=${isForToday}, hasAreaAccess=${hasAreaAccess}`);
+                            
+                            return isForToday && hasAreaAccess;
                           });
                           
                           console.log('All todays permits:', allTodaysPermits);

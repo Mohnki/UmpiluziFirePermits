@@ -28,6 +28,7 @@ export const burnPermitSchema = z.object({
   userId: z.string(),
   burnTypeId: z.string(),
   areaId: z.string(),
+  farmId: z.string(),
   startDate: z.date(),
   endDate: z.date(),
   status: permitStatusSchema,

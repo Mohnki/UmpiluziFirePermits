@@ -8,8 +8,10 @@ import { Helmet } from "react-helmet";
 import { getPermitsByUser, updatePermitStatus } from "@/lib/permit-service";
 import { getAllBurnTypes } from "@/lib/area-service";
 import { getAllAreas } from "@/lib/area-service";
+import { getFarmsByUser } from "@/lib/farm-service";
 import { BurnPermit } from "@/lib/permit-types";
 import { BurnType, Area } from "@/lib/area-types";
+import { Farm } from "@/lib/area-types";
 import {
   Card,
   CardContent,
@@ -49,6 +51,7 @@ export default function MyPermits() {
   const [permits, setPermits] = useState<BurnPermit[]>([]);
   const [burnTypes, setBurnTypes] = useState<BurnType[]>([]);
   const [areas, setAreas] = useState<Area[]>([]);
+  const [farms, setFarms] = useState<Farm[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [completingPermit, setCompletingPermit] = useState<string | null>(null);
 
@@ -64,15 +67,17 @@ export default function MyPermits() {
         const userPermits = await getPermitsByUser(user.uid);
         setPermits(userPermits);
 
-        // Then fetch burn types and areas for displaying names
+        // Then fetch burn types, areas, and farms for displaying names
         try {
-          const [allBurnTypes, allAreas] = await Promise.all([
+          const [allBurnTypes, allAreas, userFarms] = await Promise.all([
             getAllBurnTypes(),
             getAllAreas(),
+            getFarmsByUser(user.uid)
           ]);
 
           setBurnTypes(allBurnTypes);
           setAreas(allAreas);
+          setFarms(userFarms);
         } catch (secondaryError) {
           console.error("Error fetching secondary data:", secondaryError);
           toast({

@@ -7,6 +7,7 @@ export interface BurnPermit {
   userId: string; // User who requested the permit
   burnTypeId: string; // Type of burn
   areaId: string; // Area where burn will happen
+  farmId: string; // Farm where burn will happen
   startDate: Date; // When the burn will start
   endDate: Date; // When the burn will end
   status: PermitStatus;

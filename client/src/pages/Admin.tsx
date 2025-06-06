@@ -926,7 +926,15 @@ export default function AdminPage() {
                         const normalizedToday = normalizeDate(today);
                         
                         const isActiveToday = normalizedStart <= normalizedToday && normalizedEnd >= normalizedToday && p.status === 'approved';
-                        return isActiveToday;
+                        
+                        // Filter by area if user is area manager
+                        let hasAreaAccess = true;
+                        if (isAreaManager && !isAdmin && userProfile) {
+                          const userManagedAreas = areas.filter(area => area.areaManagerId === userProfile.uid);
+                          hasAreaAccess = userManagedAreas.some(area => area.id === p.areaId);
+                        }
+                        
+                        return isActiveToday && hasAreaAccess;
                       }).length} Active Today
                     </Badge>
                   </div>

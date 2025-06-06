@@ -144,6 +144,12 @@ export default function MyPermits() {
     return burnType ? burnType.name : "Unknown Burn Type";
   };
 
+  // Get farm name by ID
+  const getFarmName = (farmId: string) => {
+    const farm = farms.find((f) => f.id === farmId);
+    return farm ? farm.name : "Unknown Farm";
+  };
+
   // Handle completing a permit
   const handleCompletePermit = async (permitId: string) => {
     if (!user) return;
@@ -182,6 +188,7 @@ export default function MyPermits() {
     const permitNumber = permit.id.substring(0, 8);
     const burnTypeName = getBurnTypeName(permit.burnTypeId);
     const areaName = getAreaName(permit.areaId);
+    const farmName = getFarmName(permit.farmId);
     const startDate = format(new Date(permit.startDate), "MMM d, yyyy");
     const endDate = format(new Date(permit.endDate), "MMM d, yyyy");
 
@@ -189,12 +196,15 @@ export default function MyPermits() {
 
 📋 Permit #: ${permitNumber}
 👤 Permit Holder: ${user?.displayName || user?.email}
+🏡 Farm: ${farmName}
 🔥 Burn Type: ${burnTypeName}
 📍 Area: ${areaName}
-📅 Valid: ${startDate}
+📅 Valid: ${startDate} - ${endDate}
 ✅ Status: ${permit.status.toUpperCase()}
 
-⚠️ Please follow all fire safety regulations and monitor weather conditions.`;
+⚠️ Please follow all fire safety regulations and monitor weather conditions.
+
+#UmpiluziFPA #BurnPermit #FireSafety`;
 
     try {
       if (navigator.share) {

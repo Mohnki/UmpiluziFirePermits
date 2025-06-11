@@ -330,6 +330,7 @@ export default function ApplyPermitPage() {
         userId: user.uid,
         burnTypeId: values.burnTypeId,
         areaId: selectedFarm.areaId, // Use the farm's area ID
+        farmId: values.farmId, // Include the farmId
         startDate: today,
         endDate: today, // Same as start date for single-day permits
         location: values.location,

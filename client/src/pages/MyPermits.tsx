@@ -146,7 +146,10 @@ export default function MyPermits() {
 
   // Get farm name by ID
   const getFarmName = (farmId: string) => {
+    console.log("Looking for farm with ID:", farmId);
+    console.log("Available farms:", farms);
     const farm = farms.find((f) => f.id === farmId);
+    console.log("Found farm:", farm);
     return farm ? farm.name : "Unknown Farm";
   };
 
@@ -185,10 +188,12 @@ export default function MyPermits() {
 
   // Handle sharing a permit
   const handleSharePermit = async (permit: BurnPermit) => {
+    console.log("Sharing permit:", permit);
+    console.log("Permit farmId:", permit.farmId);
     const permitNumber = permit.id.substring(0, 8);
     const burnTypeName = getBurnTypeName(permit.burnTypeId);
     const areaName = getAreaName(permit.areaId);
-    const farmName = getFarmName(permit.farmId);
+    const farmName = permit.farmId ? getFarmName(permit.farmId) : "No Farm Specified";
     const startDate = format(new Date(permit.startDate), "MMM d, yyyy");
     const endDate = format(new Date(permit.endDate), "MMM d, yyyy");
 

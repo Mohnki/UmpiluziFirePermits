@@ -195,6 +195,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Complete permit by owner
+  app.patch("/api/permits/:id/complete", authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      
+      // Get the permit first to verify ownership
+      const permit = await PermitService.getPermitById(id);
+      if (!permit) {
+        return res.status(404).json({
+          success: false,
+          error: "Permit not found"
+        });
+      }
+
+      // Check if user owns this permit
+      if (permit.userId !== req.user!.uid) {
+        return res.status(403).json({
+          success: false,
+          error: "You can only complete your own permits"
+        });
+      }
+
+      // Check if permit is in a valid state to be completed
+      if (permit.status !== 'approved') {
+        return res.status(400).json({
+          success: false,
+          error: "Only approved permits can be completed"
+        });
+      }
+
+      // Update the permit to completed status
+      const updateData = {
+        status: 'completed',
+        updatedAt: new Date()
+      };
+
+      await db.collection('burnPermits').doc(id).update(updateData);
+      
+      const response: ApiResponse = {
+        success: true,
+        data: { id, status: 'completed' },
+        message: "Permit completed successfully"
+      };
+      
+      res.json(response);
+    } catch (error) {
+      console.error("Complete permit error:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to complete permit"
+      });
+    }
+  });
+
   // Update permit status (area managers and admins only)
   app.patch("/api/permits/:id", authenticateUser, requireManagerAccess, async (req: Request, res: Response) => {
     try {

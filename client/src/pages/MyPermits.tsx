@@ -156,7 +156,21 @@ export default function MyPermits() {
 
     try {
       setCompletingPermit(permitId);
-      await updatePermitStatus(permitId, "completed");
+      
+      // Call the new API endpoint for completing permits
+      const idToken = await user.getIdToken();
+      const response = await fetch(`/api/permits/${permitId}/complete`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${idToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to complete permit');
+      }
 
       // Update the local state
       setPermits((prev) =>
@@ -171,11 +185,11 @@ export default function MyPermits() {
         title: "Permit Completed",
         description: "Your burn permit has been marked as completed.",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error completing permit:", error);
       toast({
         title: "Error",
-        description: "Failed to complete the permit. Please try again.",
+        description: error.message || "Failed to complete the permit. Please try again.",
         variant: "destructive",
       });
     } finally {

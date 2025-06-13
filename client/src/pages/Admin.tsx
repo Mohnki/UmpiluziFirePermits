@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/AuthContext";
-import { Redirect } from "wouter";
+import { Redirect, useLocation } from "wouter";
 import { getAllUsers, updateUserRole, UserProfile } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
@@ -145,6 +145,12 @@ const burnTypeFormSchema = z.object({
 export default function AdminPage() {
   const { user, userProfile, isAdmin, isAreaManager, loading } = useAuth();
   const { toast } = useToast();
+  const [location] = useLocation();
+  
+  // Get tab from URL parameter
+  const urlParams = new URLSearchParams(window.location.search);
+  const tabFromUrl = urlParams.get('tab');
+  const defaultTab = tabFromUrl || (isAdmin ? "users" : "todays-permits");
   
   // Users state
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -692,7 +698,7 @@ export default function AdminPage() {
               </div>
             </div>
             
-            <Tabs defaultValue={isAdmin ? "users" : "todays-permits"} className="w-full">
+            <Tabs defaultValue={defaultTab} className="w-full">
               <TabsList className="mb-6">
                 {isAdmin && <TabsTrigger value="users">User Management</TabsTrigger>}
                 {isAdmin && <TabsTrigger value="permits">Permit Management</TabsTrigger>}

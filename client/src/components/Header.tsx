@@ -165,6 +165,11 @@ export default function Header() {
                 </Link>
               )}
               {hasManagerAccess && (
+                <Link href="/admin?tab=todays-permits" className="text-foreground hover:text-primary transition font-medium">
+                  Today's Permits Map
+                </Link>
+              )}
+              {hasManagerAccess && (
                 <Link href="/reports" className="text-foreground hover:text-primary transition font-medium">
                   Reports
                 </Link>
@@ -229,6 +234,15 @@ export default function Header() {
                     <DropdownMenuItem className="cursor-pointer">
                       <LayoutDashboard className="mr-2 h-4 w-4" />
                       <span>Manage Areas</span>
+                    </DropdownMenuItem>
+                  </Link>
+                )}
+                
+                {hasManagerAccess && (
+                  <Link href="/admin?tab=todays-permits">
+                    <DropdownMenuItem className="cursor-pointer">
+                      <MapPin className="mr-2 h-4 w-4" />
+                      <span>Today's Permits Map</span>
                     </DropdownMenuItem>
                   </Link>
                 )}

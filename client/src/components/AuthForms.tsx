@@ -181,14 +181,20 @@ export function AuthForms({ onClose }: { onClose?: () => void }) {
         title: "Welcome!",
         description: "You have successfully signed in with Google.",
       });
+      setRetryCount(0); // Reset retry count on success
       if (onClose) onClose();
     } catch (error: any) {
       console.error("Google sign-in error details:", error);
-      toast({
-        title: "Google sign in failed",
-        description: getAuthErrorMessage(error),
-        variant: "destructive",
-      });
+      
+      if (isNetworkError(error) && retryCount < 3) {
+        showRetryToast(error, () => handleGoogleSignIn());
+      } else {
+        toast({
+          title: "Google sign in failed",
+          description: getAuthErrorMessage(error),
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }

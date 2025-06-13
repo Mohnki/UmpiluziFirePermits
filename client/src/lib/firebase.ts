@@ -213,12 +213,16 @@ export const getAuthErrorMessage = (error: AuthError) => {
     'auth/internal-error': 'An internal error occurred. Please try again later.'
   };
   
-  // Log the error for debugging
-  console.error('Firebase Auth Error:', {
-    code: error.code,
-    message: error.message,
-    stack: error.stack
-  });
+  // Log the error for debugging with timestamp
+  const timestamp = new Date().toISOString();
+  console.group(`🔥 Firebase Auth Error - ${timestamp}`);
+  console.error('Error Code:', error.code);
+  console.error('Error Message:', error.message);
+  console.error('Full Error:', error);
+  if (error.stack) {
+    console.error('Stack Trace:', error.stack);
+  }
+  console.groupEnd();
   
   const userMessage = errorMap[error.code];
   if (userMessage) {

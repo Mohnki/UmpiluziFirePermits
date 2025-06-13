@@ -171,18 +171,62 @@ export const logOut = async () => {
 // Get readable error message from Firebase Auth errors
 export const getAuthErrorMessage = (error: AuthError) => {
   const errorMap: Record<string, string> = {
-    'auth/email-already-in-use': 'Email address is already in use.',
-    'auth/invalid-email': 'Email address is invalid.',
-    'auth/weak-password': 'Password is too weak. It should be at least 6 characters.',
-    'auth/user-not-found': 'No account found with this email address.',
-    'auth/wrong-password': 'Incorrect password.',
-    'auth/too-many-requests': 'Too many unsuccessful login attempts. Please try again later.',
-    'auth/user-disabled': 'This account has been disabled.',
-    'auth/operation-not-allowed': 'Operation not allowed.',
-    'auth/popup-closed-by-user': 'Login popup was closed before completion.'
+    // Email/Password errors
+    'auth/email-already-in-use': 'This email address is already registered. Please sign in instead or use a different email.',
+    'auth/invalid-email': 'Please enter a valid email address.',
+    'auth/weak-password': 'Password must be at least 6 characters long.',
+    'auth/user-not-found': 'No account found with this email address. Please check your email or create a new account.',
+    'auth/wrong-password': 'Incorrect password. Please try again.',
+    'auth/invalid-credential': 'Invalid email or password. Please check your credentials and try again.',
+    'auth/invalid-login-credentials': 'Invalid email or password. Please check your credentials and try again.',
+    
+    // Account status errors
+    'auth/user-disabled': 'This account has been disabled. Please contact support for assistance.',
+    'auth/account-exists-with-different-credential': 'An account already exists with this email but different sign-in method.',
+    
+    // Rate limiting and security
+    'auth/too-many-requests': 'Too many failed login attempts. Please wait a few minutes before trying again.',
+    'auth/operation-not-allowed': 'This sign-in method is not enabled. Please contact support.',
+    
+    // Network and connection errors
+    'auth/network-request-failed': 'Network error. Please check your internet connection and try again.',
+    'auth/timeout': 'Request timed out. Please try again.',
+    
+    // Google Sign-in specific
+    'auth/popup-closed-by-user': 'Sign-in was cancelled. Please try again.',
+    'auth/popup-blocked': 'Pop-up blocked by browser. Please allow pop-ups and try again.',
+    'auth/cancelled-popup-request': 'Sign-in was cancelled. Please try again.',
+    
+    // Configuration errors
+    'auth/unauthorized-domain': 'This domain is not authorized for authentication.',
+    'auth/app-not-authorized': 'App not authorized to use Firebase Authentication.',
+    
+    // Token errors
+    'auth/expired-action-code': 'The action code has expired. Please request a new one.',
+    'auth/invalid-action-code': 'The action code is invalid. Please check and try again.',
+    
+    // Missing email
+    'auth/missing-email': 'Please enter your email address.',
+    'auth/missing-password': 'Please enter your password.',
+    
+    // Internal errors
+    'auth/internal-error': 'An internal error occurred. Please try again later.'
   };
   
-  return errorMap[error.code] || 'An unknown error occurred. Please try again.';
+  // Log the error for debugging
+  console.error('Firebase Auth Error:', {
+    code: error.code,
+    message: error.message,
+    stack: error.stack
+  });
+  
+  const userMessage = errorMap[error.code];
+  if (userMessage) {
+    return userMessage;
+  }
+  
+  // If we don't have a specific message, provide the error code for debugging
+  return `Authentication failed (${error.code}). Please try again or contact support if the problem persists.`;
 };
 
 // Listen to auth state changes

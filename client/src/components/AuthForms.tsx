@@ -63,6 +63,7 @@ const registerSchema = z.object({
 
 export function AuthForms({ onClose }: { onClose?: () => void }) {
   const [isLoading, setIsLoading] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>("login");
 
@@ -86,22 +87,58 @@ export function AuthForms({ onClose }: { onClose?: () => void }) {
     },
   });
 
+  // Helper function to check if error is network-related
+  const isNetworkError = (error: any) => {
+    return error?.code === 'auth/network-request-failed' || 
+           error?.code === 'auth/timeout' ||
+           error?.message?.toLowerCase().includes('network') ||
+           error?.message?.toLowerCase().includes('fetch');
+  };
+
+  // Helper function to show retry option for network errors
+  const showRetryToast = (originalError: any, retryFn: () => void) => {
+    toast({
+      title: "Connection issue",
+      description: "Network error occurred. Would you like to try again?",
+      variant: "destructive",
+      action: (
+        <Button 
+          size="sm" 
+          onClick={() => {
+            setRetryCount(prev => prev + 1);
+            retryFn();
+          }}
+          disabled={isLoading}
+        >
+          Retry
+        </Button>
+      ),
+    });
+  };
+
   // Handle login with email/password
   const onLoginSubmit = async (values: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
     try {
       await signInWithEmailPassword(values.email, values.password);
       toast({
-        title: "Success!",
+        title: "Welcome back!",
         description: "You have successfully signed in.",
       });
+      setRetryCount(0); // Reset retry count on success
       if (onClose) onClose();
     } catch (error: any) {
-      toast({
-        title: "Sign in failed",
-        description: getAuthErrorMessage(error),
-        variant: "destructive",
-      });
+      console.error("Login error details:", error);
+      
+      if (isNetworkError(error) && retryCount < 3) {
+        showRetryToast(error, () => onLoginSubmit(values));
+      } else {
+        toast({
+          title: "Sign in failed",
+          description: getAuthErrorMessage(error),
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -113,16 +150,23 @@ export function AuthForms({ onClose }: { onClose?: () => void }) {
     try {
       await registerWithEmailPassword(values.email, values.password, values.name);
       toast({
-        title: "Account created!",
-        description: "Your account has been created and you are now signed in.",
+        title: "Welcome!",
+        description: "Your account has been created successfully and you are now signed in.",
       });
+      setRetryCount(0); // Reset retry count on success
       if (onClose) onClose();
     } catch (error: any) {
-      toast({
-        title: "Registration failed",
-        description: getAuthErrorMessage(error),
-        variant: "destructive",
-      });
+      console.error("Registration error details:", error);
+      
+      if (isNetworkError(error) && retryCount < 3) {
+        showRetryToast(error, () => onRegisterSubmit(values));
+      } else {
+        toast({
+          title: "Registration failed",
+          description: getAuthErrorMessage(error),
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -134,11 +178,12 @@ export function AuthForms({ onClose }: { onClose?: () => void }) {
     try {
       await signInWithGoogle();
       toast({
-        title: "Success!",
+        title: "Welcome!",
         description: "You have successfully signed in with Google.",
       });
       if (onClose) onClose();
     } catch (error: any) {
+      console.error("Google sign-in error details:", error);
       toast({
         title: "Google sign in failed",
         description: getAuthErrorMessage(error),

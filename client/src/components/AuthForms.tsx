@@ -351,10 +351,13 @@ export function AuthForms({ onClose }: { onClose?: () => void }) {
             </button>
           </div>
           
-          <div className="flex items-center my-4">
-            <Separator className="flex-grow" />
-            <span className="mx-2 text-sm text-muted-foreground">OR</span>
-            <Separator className="flex-grow" />
+          <div className="relative flex items-center justify-center my-4">
+            <div className="absolute inset-0 flex items-center">
+              <Separator className="w-full" />
+            </div>
+            <div className="relative bg-white dark:bg-gray-950 px-2">
+              <span className="text-sm text-muted-foreground">OR</span>
+            </div>
           </div>
           
           <Button 
@@ -443,10 +446,13 @@ export function AuthForms({ onClose }: { onClose?: () => void }) {
             </form>
           </Form>
           
-          <div className="flex items-center my-4">
-            <Separator className="flex-grow" />
-            <span className="mx-2 text-sm text-muted-foreground">OR</span>
-            <Separator className="flex-grow" />
+          <div className="relative flex items-center justify-center my-4">
+            <div className="absolute inset-0 flex items-center">
+              <Separator className="w-full" />
+            </div>
+            <div className="relative bg-white dark:bg-gray-950 px-2">
+              <span className="text-sm text-muted-foreground">OR</span>
+            </div>
           </div>
           
           <Button 

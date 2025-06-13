@@ -7,6 +7,7 @@ import {
   onAuthStateChanged, 
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  sendPasswordResetEmail,
   updateProfile,
   type User,
   AuthError
@@ -154,6 +155,16 @@ export const signInWithEmailPassword = async (email: string, password: string) =
     return userCredential.user;
   } catch (error) {
     console.error("Error signing in with email/password:", error);
+    throw error;
+  }
+};
+
+// Send password reset email
+export const sendPasswordReset = async (email: string) => {
+  try {
+    await sendPasswordResetEmail(auth, email);
+  } catch (error) {
+    console.error("Error sending password reset email:", error);
     throw error;
   }
 };

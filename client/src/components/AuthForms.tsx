@@ -7,6 +7,7 @@ import {
   signInWithGoogle, 
   signInWithEmailPassword, 
   registerWithEmailPassword,
+  sendPasswordReset,
   getAuthErrorMessage
 } from "@/lib/firebase";
 
@@ -61,9 +62,15 @@ const registerSchema = z.object({
   path: ["confirmPassword"],
 });
 
+// Password reset form validation schema
+const resetPasswordSchema = z.object({
+  email: z.string().email({ message: "Please enter a valid email address" }),
+});
+
 export function AuthForms({ onClose }: { onClose?: () => void }) {
   const [isLoading, setIsLoading] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>("login");
 
@@ -84,6 +91,14 @@ export function AuthForms({ onClose }: { onClose?: () => void }) {
       email: "",
       password: "",
       confirmPassword: "",
+    },
+  });
+
+  // Password reset form
+  const resetPasswordForm = useForm<z.infer<typeof resetPasswordSchema>>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      email: "",
     },
   });
 

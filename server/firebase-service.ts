@@ -94,49 +94,24 @@ export class AuthService {
 export class PermitService {
   static async getPermits(query: PermitQuery): Promise<BurnPermit[]> {
     try {
+      // Use a simple query to avoid complex index requirements
       let permitQuery: Query = db.collection('burnPermits');
-
-      // Default to current day only unless includeHistorical is true
-      if (!query.includeHistorical) {
-        const today = new Date();
-        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
-        
-        permitQuery = permitQuery.where('startDate', '>=', Timestamp.fromDate(startOfDay))
-                                .where('startDate', '<', Timestamp.fromDate(endOfDay));
-      }
-
-      // Apply filters
+      
+      // Apply only one filter at a time to avoid complex indexes
       if (query.userId) {
         permitQuery = permitQuery.where('userId', '==', query.userId);
-      }
-      if (query.areaId) {
+      } else if (query.areaId) {
         permitQuery = permitQuery.where('areaId', '==', query.areaId);
-      }
-      if (query.status) {
+      } else if (query.status) {
         permitQuery = permitQuery.where('status', '==', query.status);
       }
-      if (query.burnTypeId) {
-        permitQuery = permitQuery.where('burnTypeId', '==', query.burnTypeId);
-      }
-      if (query.startDate && query.includeHistorical) {
-        const startDate = new Date(query.startDate);
-        permitQuery = permitQuery.where('startDate', '>=', Timestamp.fromDate(startDate));
-      }
-      if (query.endDate && query.includeHistorical) {
-        const endDate = new Date(query.endDate);
-        permitQuery = permitQuery.where('endDate', '<=', Timestamp.fromDate(endDate));
-      }
 
-      // Apply ordering and pagination
-      permitQuery = permitQuery.orderBy('startDate', 'desc');
+      // Order by createdAt which should have a simple index
+      permitQuery = permitQuery.orderBy('createdAt', 'desc');
       
-      if (query.limit) {
-        permitQuery = permitQuery.limit(query.limit);
-      }
-      if (query.offset) {
-        permitQuery = permitQuery.offset(query.offset);
-      }
+      // Get more documents than needed to account for filtering
+      const limit = query.limit || 100;
+      permitQuery = permitQuery.limit(limit * 3);
 
       const snapshot = await permitQuery.get();
       let permits = snapshot.docs.map(doc => {
@@ -144,6 +119,7 @@ export class PermitService {
         return {
           id: doc.id,
           userId: data.userId,
+          farmId: data.farmId || '',
           burnTypeId: data.burnTypeId,
           areaId: data.areaId,
           startDate: convertTimestampToDate(data.startDate),
@@ -151,7 +127,7 @@ export class PermitService {
           status: data.status,
           location: data.location,
           details: data.details,
-          approvedBy: data.approvedBy || null,
+          approvedBy: data.approvedBy,
           approvedAt: data.approvedAt ? convertTimestampToDate(data.approvedAt) : undefined,
           rejectionReason: data.rejectionReason,
           createdAt: convertTimestampToDate(data.createdAt),
@@ -159,9 +135,52 @@ export class PermitService {
         };
       });
 
+      // Apply filters in memory to avoid complex Firestore indexes
+      permits = permits.filter(permit => {
+        // Apply date filters
+        if (!query.includeHistorical) {
+          const today = new Date();
+          const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+          const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
+          
+          if (permit.startDate < startOfDay || permit.startDate >= endOfDay) {
+            return false;
+          }
+        }
+
+        // Apply other filters
+        if (query.userId && permit.userId !== query.userId) return false;
+        if (query.areaId && permit.areaId !== query.areaId) return false;
+        if (query.status && permit.status !== query.status) return false;
+        if (query.burnTypeId && permit.burnTypeId !== query.burnTypeId) return false;
+        
+        if (query.startDate && query.includeHistorical) {
+          const startDate = new Date(query.startDate);
+          if (permit.startDate < startDate) return false;
+        }
+        
+        if (query.endDate && query.includeHistorical) {
+          const endDate = new Date(query.endDate);
+          if (permit.endDate > endDate) return false;
+        }
+
+        return true;
+      });
+
+      // Sort by startDate descending
+      permits.sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
+
       // Apply location-based filtering if specified
       if (query.location) {
         permits = this.filterByLocation(permits, query.location);
+      }
+
+      // Apply pagination
+      if (query.offset) {
+        permits = permits.slice(query.offset);
+      }
+      if (query.limit) {
+        permits = permits.slice(0, query.limit);
       }
 
       return permits;
@@ -213,6 +232,7 @@ export class PermitService {
       return {
         id: permitDoc.id,
         userId: data.userId,
+        farmId: data.farmId || '',
         burnTypeId: data.burnTypeId,
         areaId: data.areaId,
         startDate: convertTimestampToDate(data.startDate),

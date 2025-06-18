@@ -154,6 +154,9 @@ export default function Header() {
               <Link href="/my-farms" className="text-foreground hover:text-primary transition font-medium">
                 My Farms
               </Link>
+              <Link href="/todays-permits" className="text-foreground hover:text-primary transition font-medium">
+                Today's Permits Map
+              </Link>
               {isAdmin && (
                 <Link href="/admin" className="text-foreground hover:text-primary transition font-medium">
                   Admin Panel
@@ -162,11 +165,6 @@ export default function Header() {
               {isAreaManager && (
                 <Link href="/area-manager" className="text-foreground hover:text-primary transition font-medium">
                   Manage Areas
-                </Link>
-              )}
-              {hasManagerAccess && (
-                <Link href="/admin?tab=todays-permits" className="text-foreground hover:text-primary transition font-medium">
-                  Today's Permits Map
                 </Link>
               )}
               {hasManagerAccess && (
@@ -220,6 +218,13 @@ export default function Header() {
                   </DropdownMenuItem>
                 </Link>
                 
+                <Link href="/todays-permits">
+                  <DropdownMenuItem className="cursor-pointer">
+                    <MapPin className="mr-2 h-4 w-4" />
+                    <span>Today's Permits Map</span>
+                  </DropdownMenuItem>
+                </Link>
+                
                 {isAdmin && (
                   <Link href="/admin">
                     <DropdownMenuItem className="cursor-pointer">
@@ -234,15 +239,6 @@ export default function Header() {
                     <DropdownMenuItem className="cursor-pointer">
                       <LayoutDashboard className="mr-2 h-4 w-4" />
                       <span>Manage Areas</span>
-                    </DropdownMenuItem>
-                  </Link>
-                )}
-                
-                {hasManagerAccess && (
-                  <Link href="/admin?tab=todays-permits">
-                    <DropdownMenuItem className="cursor-pointer">
-                      <MapPin className="mr-2 h-4 w-4" />
-                      <span>Today's Permits Map</span>
                     </DropdownMenuItem>
                   </Link>
                 )}
@@ -387,6 +383,14 @@ export default function Header() {
                 >
                   <MapPin className="h-4 w-4 mr-2" />
                   My Farms
+                </Link>
+                
+                <Link href="/todays-permits" 
+                  className="text-foreground hover:text-primary transition py-2 border-b border-gray-100 dark:border-gray-700 flex items-center"
+                  onClick={closeMobileMenu}
+                >
+                  <MapPin className="h-4 w-4 mr-2" />
+                  Today's Permits Map
                 </Link>
                 
                 {isAdmin && (

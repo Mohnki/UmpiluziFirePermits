@@ -14,7 +14,8 @@ import {
   Bookmark,
   CheckSquare,
   BarChart3,
-  Code
+  Code,
+  Shield
 } from "lucide-react";
 import LoginButton from "@/components/LoginButton";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -145,6 +146,9 @@ export default function Header() {
               <Link href="/" className="text-foreground hover:text-primary transition font-medium">
                 Home
               </Link>
+              <Link href="/safety" className="text-foreground hover:text-primary transition font-medium">
+                Safety Hub
+              </Link>
               <Link href="/my-permits" className="text-foreground hover:text-primary transition font-medium">
                 My Permits
               </Link>
@@ -197,6 +201,13 @@ export default function Header() {
                 
                 <DropdownMenuSeparator />
                 
+                <Link href="/safety">
+                  <DropdownMenuItem className="cursor-pointer">
+                    <Shield className="mr-2 h-4 w-4" />
+                    <span>Safety Hub</span>
+                  </DropdownMenuItem>
+                </Link>
+
                 <Link href="/my-permits">
                   <DropdownMenuItem className="cursor-pointer">
                     <Bookmark className="mr-2 h-4 w-4" />
@@ -358,6 +369,14 @@ export default function Header() {
                 </a>
               </>
             )}
+            
+            <Link href="/safety" 
+              className="text-foreground hover:text-primary transition py-2 border-b border-gray-100 dark:border-gray-700 flex items-center"
+              onClick={closeMobileMenu}
+            >
+              <Shield className="h-4 w-4 mr-2" />
+              Safety Hub
+            </Link>
             
             {user && (
               <>

@@ -13,6 +13,7 @@ import MyPermits from "@/pages/MyPermits";
 import TodaysPermits from "@/pages/TodaysPermits";
 import ApiDocumentation from "@/pages/ApiDocumentation";
 import PermitReports from "@/pages/PermitReports";
+import Safety from "@/pages/Safety";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { AuthProvider } from "./lib/AuthContext";
 
@@ -28,6 +29,7 @@ function Router() {
       <Route path="/todays-permits" component={TodaysPermits} />
       <Route path="/api-docs" component={ApiDocumentation} />
       <Route path="/reports" component={PermitReports} />
+      <Route path="/safety" component={Safety} />
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>

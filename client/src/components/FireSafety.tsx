@@ -1,4 +1,5 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Shield } from "lucide-react";
+import { Link } from "wouter";
 
 export default function FireSafety() {
   const resources = [

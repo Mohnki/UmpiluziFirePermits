@@ -1,0 +1,54 @@
+area-service.ts:130 Error getting areas by manager: FirebaseError: Missing or insufficient permissions.
+overrideMethod @ hook.js:608
+getAreasByManager @ area-service.ts:130
+await in getAreasByManager
+fetchAreas @ AreaManager.tsx:84
+(anonymous) @ AreaManager.tsx:105
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=c1266dd9:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=c1266dd9:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=c1266dd9:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=c1266dd9:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=c1266dd9:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=c1266dd9:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=c1266dd9:19447
+commitRootImpl @ chunk-RPCDYKBN.js?v=c1266dd9:19416
+commitRoot @ chunk-RPCDYKBN.js?v=c1266dd9:19277
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=c1266dd9:18895
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=c1266dd9:9119
+(anonymous) @ chunk-RPCDYKBN.js?v=c1266dd9:18627Understand this error
+AreaManager.tsx:92 Error fetching areas: FirebaseError: Missing or insufficient permissions.
+overrideMethod @ hook.js:608
+fetchAreas @ AreaManager.tsx:92
+await in fetchAreas
+(anonymous) @ AreaManager.tsx:105
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=c1266dd9:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=c1266dd9:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=c1266dd9:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=c1266dd9:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=c1266dd9:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=c1266dd9:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=c1266dd9:19447
+commitRootImpl @ chunk-RPCDYKBN.js?v=c1266dd9:19416
+commitRoot @ chunk-RPCDYKBN.js?v=c1266dd9:19277
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=c1266dd9:18895
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=c1266dd9:9119
+(anonymous) @ chunk-RPCDYKBN.js?v=c1266dd9:18627Understand this error
+area-service.ts:231 Error getting all burn types: FirebaseError: Missing or insufficient permissions.
+overrideMethod @ hook.js:608
+getAllBurnTypes @ area-service.ts:231
+await in getAllBurnTypes
+fetchBurnTypes @ AreaManager.tsx:115
+(anonymous) @ AreaManager.tsx:131
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=c1266dd9:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=c1266dd9:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=c1266dd9:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=c1266dd9:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=c1266dd9:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=c1266dd9:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=c1266dd9:19447
+commitRootImpl @ chunk-RPCDYKBN.js?v=c1266dd9:19416
+commitRoot @ chunk-RPCDYKBN.js?v=c1266dd9:19277
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=c1266dd9:18895
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=c1266dd9:9119
+(anonymous) @ chunk-RPCDYKBN.js?v=c1266dd9:18627Understand this error
+AreaManager.tsx:118 Error fetching burn types: FirebaseError: Missing or insufficient permissions.

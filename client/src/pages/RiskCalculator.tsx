@@ -206,7 +206,8 @@ export default function RiskCalculator() {
   };
 
   const riskLevel = getRiskLevel(totalScore);
-  const categories = Array.from(new Set(riskItems.map(item => item.category)));
+  const uniqueCategories = new Set(riskItems.map(item => item.category));
+  const categories = ["Defensible Space", "Roof & Structure", "Preparedness"].filter(cat => uniqueCategories.has(cat));
 
   return (
     <>

@@ -300,10 +300,13 @@ export default function RiskCalculator() {
                       </CardHeader>
                       <CardContent className="space-y-4">
                         {categoryItems.map(item => (
-                          <div key={item.id} className="border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                          <div 
+                            key={item.id} 
+                            className="border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+                            onClick={() => handleItemToggle(item.id)}
+                          >
                             <div className="flex items-start space-x-3">
-                              <button
-                                onClick={() => handleItemToggle(item.id)}
+                              <div
                                 className={`mt-1 rounded border-2 p-1 transition-colors ${
                                   item.checked 
                                     ? 'bg-red-500 border-red-500 text-white' 
@@ -311,7 +314,7 @@ export default function RiskCalculator() {
                                 }`}
                               >
                                 {item.checked && <CheckCircle className="h-4 w-4" />}
-                              </button>
+                              </div>
                               <div className="flex-1">
                                 <div className="flex items-center justify-between mb-2">
                                   <h4 className="font-medium text-foreground">{item.question}</h4>

@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import shp from 'shpjs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Loader2 } from 'lucide-react';
 
@@ -32,15 +31,18 @@ export default function UmpiluziFMUMap({ className }: UmpiluziFMUMapProps) {
         setLoading(true);
         setError(null);
 
-        // Try to load the shapefile using the main shp function
-        const geojson = await shp('/attached_assets/Umpiluzi FMU_1750684429695.shp');
+        // Fetch GeoJSON data from the server endpoint
+        const response = await fetch('/api/umpiluzi-fmu-geojson');
+        const result = await response.json();
         
-        setGeoData(geojson);
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || 'Failed to load shapefile data');
+        }
+        
+        setGeoData(result.data);
       } catch (err) {
         console.error('Error loading shapefile:', err);
         setError('Unable to load the Umpiluzi FMU shapefile. The map will show without boundary data.');
-        
-        // Set to null so the map still renders without the shapefile
         setGeoData(null);
       } finally {
         setLoading(false);
@@ -133,44 +135,6 @@ export default function UmpiluziFMUMap({ className }: UmpiluziFMUMapProps) {
             </div>
           </CardContent>
         </Card>
-
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-            <div className="w-12 h-12 bg-green-100 dark:bg-green-800 rounded-full flex items-center justify-center mx-auto mb-4">
-              <MapPin className="w-6 h-6 text-green-600 dark:text-green-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              Protected Areas
-            </h3>
-            <p className="text-gray-600 dark:text-gray-300">
-              View the boundaries of our fire management zones
-            </p>
-          </div>
-          
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center mx-auto mb-4">
-              <MapPin className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              Interactive Features
-            </h3>
-            <p className="text-gray-600 dark:text-gray-300">
-              Click on the map areas to see detailed information
-            </p>
-          </div>
-          
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-            <div className="w-12 h-12 bg-orange-100 dark:bg-orange-800 rounded-full flex items-center justify-center mx-auto mb-4">
-              <MapPin className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              Real-time Data
-            </h3>
-            <p className="text-gray-600 dark:text-gray-300">
-              Access current fire management information
-            </p>
-          </div>
-        </div>
       </div>
     </section>
   );

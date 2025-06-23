@@ -407,6 +407,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Umpiluzi FMU GeoJSON endpoint
+  app.get("/api/umpiluzi-fmu-geojson", async (req: Request, res: Response) => {
+    try {
+      const shp = require('shpjs');
+      const fs = require('fs');
+      const path = require('path');
+      
+      // Path to the shapefile
+      const shpPath = path.join(process.cwd(), 'public/attached_assets/Umpiluzi FMU_1750684429695.shp');
+      
+      if (!fs.existsSync(shpPath)) {
+        return res.status(404).json({ 
+          success: false,
+          error: 'Shapefile not found' 
+        });
+      }
+      
+      // Convert shapefile to GeoJSON
+      const geojson = await shp(shpPath);
+      
+      res.json({
+        success: true,
+        data: geojson
+      });
+    } catch (error) {
+      console.error('Error converting shapefile:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to convert shapefile to GeoJSON' 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

@@ -5,7 +5,9 @@ import {
   Clipboard,
   Shield,
   AlertTriangle,
+  ArrowRight,
 } from "lucide-react";
+import { Link } from "wouter";
 import {
   Accordion,
   AccordionContent,
@@ -189,6 +191,26 @@ export default function About() {
               </li>
             ))}
           </ul>
+        </div>
+
+        {/* Member Benefits Call to Action */}
+        <div className="text-center mt-12">
+          <div className="bg-gradient-to-r from-primary/10 to-orange-500/10 rounded-lg p-8 max-w-4xl mx-auto border border-primary/20">
+            <div className="flex justify-center mb-4">
+              <Shield className="h-12 w-12 text-primary" />
+            </div>
+            <h3 className="text-2xl font-bold text-foreground mb-4">Discover Your Member Benefits</h3>
+            <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
+              From legal protection and training opportunities to fire danger forecasts and expert advice - 
+              explore the comprehensive benefits of UFPA membership.
+            </p>
+            <Link href="/safety">
+              <button className="bg-primary text-primary-foreground hover:bg-primary/90 transition px-6 py-3 rounded-lg font-medium inline-flex items-center">
+                View All Benefits
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </button>
+            </Link>
+          </div>
         </div>
       </div>
     </section>

@@ -56,6 +56,26 @@ export default function FireSafety() {
             </div>
           ))}
         </div>
+
+        {/* Call to Action for Safety Hub */}
+        <div className="text-center mt-12">
+          <div className="bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/20 dark:to-orange-950/20 rounded-lg p-8 max-w-4xl mx-auto">
+            <div className="flex justify-center mb-4">
+              <Shield className="h-12 w-12 text-primary" />
+            </div>
+            <h3 className="text-2xl font-bold text-foreground mb-4">Complete Fire Safety Training & Resources</h3>
+            <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
+              Access comprehensive firefighting protocols, member benefits, standard orders, and safety frameworks 
+              developed by fire protection experts.
+            </p>
+            <Link href="/safety">
+              <button className="bg-primary text-primary-foreground hover:bg-primary/90 transition px-6 py-3 rounded-lg font-medium inline-flex items-center">
+                Explore Safety Hub
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </button>
+            </Link>
+          </div>
+        </div>
       </div>
     </section>
   );

@@ -1,6 +1,6 @@
 import { Helmet } from "react-helmet";
-import { useState } from "react";
-import { Shield, AlertTriangle, CheckCircle, Home, Trees, Flame, Car, Droplets, Calculator } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Shield, AlertTriangle, CheckCircle, Home, Trees, Flame, Car, Droplets, Calculator, ChevronUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -187,6 +187,31 @@ export default function RiskCalculator() {
     }
   ]);
 
+  const [showStickyBar, setShowStickyBar] = useState(false);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scoreSection = document.getElementById('score-section');
+      const scrollPosition = window.scrollY;
+      
+      if (scoreSection) {
+        const scoreSectionBottom = scoreSection.offsetTop + scoreSection.offsetHeight;
+        setShowStickyBar(scrollPosition > scoreSectionBottom);
+      }
+      
+      // Show back to top button when scrolled down significantly
+      setShowBackToTop(scrollPosition > 800);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleItemToggle = (id: string) => {
     setRiskItems(items => 
       items.map(item => 
@@ -241,7 +266,7 @@ export default function RiskCalculator() {
           </section>
 
           {/* Risk Score Display */}
-          <section className="py-8 bg-gray-50 dark:bg-gray-800">
+          <section id="score-section" className="py-8 bg-gray-50 dark:bg-gray-800">
             <div className="container mx-auto px-4">
               <div className="max-w-4xl mx-auto">
                 <Card className="mb-8">
@@ -265,8 +290,34 @@ export default function RiskCalculator() {
             </div>
           </section>
 
+          {/* Sticky Progress Bar */}
+          {showStickyBar && (
+            <div className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-900 shadow-md border-b z-50 py-3">
+              <div className="container mx-auto px-4">
+                <div className="flex items-center justify-between max-w-4xl mx-auto">
+                  <div className="flex items-center space-x-4">
+                    <Calculator className="h-5 w-5 text-primary" />
+                    <span className="font-medium">Risk Score:</span>
+                    <div className={`text-2xl font-bold ${riskLevel.color}`}>
+                      {totalScore}
+                    </div>
+                    <Badge className={`${riskLevel.bgColor} ${riskLevel.color} border-0`}>
+                      {riskLevel.level}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Progress value={(totalScore / maxScore) * 100} className="h-2 w-32" />
+                    <span className="text-sm text-muted-foreground">
+                      {totalScore}/{maxScore}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Assessment Checklist */}
-          <section className="py-12 bg-white dark:bg-gray-900">
+          <section className={`py-12 bg-white dark:bg-gray-900 ${showStickyBar ? 'pt-20' : ''}`}>
             <div className="container mx-auto px-4">
               <div className="max-w-4xl mx-auto">
                 <div className="text-center mb-8">
@@ -391,6 +442,17 @@ export default function RiskCalculator() {
             </div>
           </section>
         </main>
+
+        {/* Back to Top Button */}
+        {showBackToTop && (
+          <button
+            onClick={scrollToTop}
+            className="fixed bottom-6 right-6 bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 rounded-full p-3 shadow-lg z-50 animate-bounce"
+            aria-label="Back to top"
+          >
+            <ChevronUp className="h-6 w-6" />
+          </button>
+        )}
 
         <Footer />
       </div>

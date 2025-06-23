@@ -1,5 +1,5 @@
 import { Helmet } from "react-helmet";
-import { Shield, AlertTriangle, Eye, Radio, Route, MapPin, Clock, Users, BookOpen, Award } from "lucide-react";
+import { Shield, AlertTriangle, Eye, Radio, Route, MapPin, Clock, Users, BookOpen, Award, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -317,6 +317,12 @@ export default function Safety() {
               <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
                 Comprehensive fire protection resources, training materials, and safety protocols
               </p>
+              <div className="flex justify-center mb-8">
+                <a href="/risk-calculator" className="bg-white text-red-600 hover:bg-gray-100 transition px-8 py-3 rounded-lg font-semibold text-lg inline-flex items-center shadow-lg">
+                  Assess Your Property Risk
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </a>
+              </div>
               <div className="w-20 h-1 bg-white mx-auto"></div>
             </div>
           </section>

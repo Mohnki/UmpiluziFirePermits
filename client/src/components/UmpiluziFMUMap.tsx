@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import * as shp from 'shpjs';
+import shp from 'shpjs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Loader2 } from 'lucide-react';
 
@@ -32,20 +32,16 @@ export default function UmpiluziFMUMap({ className }: UmpiluziFMUMapProps) {
         setLoading(true);
         setError(null);
 
-        // Load the shapefile from attached assets
-        const shpUrl = '/attached_assets/Umpiluzi FMU_1750684429695.shp';
-        const dbfUrl = '/attached_assets/Umpiluzi FMU_1750684429693.dbf';
+        // Try to load the shapefile using the main shp function
+        const geojson = await shp('/attached_assets/Umpiluzi FMU_1750684429695.shp');
         
-        // Convert shapefile to GeoJSON
-        const geojson = await shp.combine([
-          shp.parseShp(await fetch(shpUrl).then(r => r.arrayBuffer())),
-          shp.parseDbf(await fetch(dbfUrl).then(r => r.arrayBuffer()))
-        ]);
-
         setGeoData(geojson);
       } catch (err) {
         console.error('Error loading shapefile:', err);
-        setError('Failed to load map data. Please check that the shapefile is accessible.');
+        setError('Unable to load the Umpiluzi FMU shapefile. The map will show without boundary data.');
+        
+        // Set to null so the map still renders without the shapefile
+        setGeoData(null);
       } finally {
         setLoading(false);
       }

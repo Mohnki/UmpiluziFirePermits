@@ -123,6 +123,9 @@ export default function Header() {
             <>
               <a href="#" className="text-foreground hover:text-primary transition font-medium">Home</a>
               <a href="#about" className="text-foreground hover:text-primary transition font-medium">About Us</a>
+              <Link href="/safety" className="text-foreground hover:text-primary transition font-medium">
+                Safety Hub
+              </Link>
               {user ? (
                 <Link href="/apply-permit" className="text-foreground hover:text-primary transition font-medium">
                   Fire Permits
@@ -357,6 +360,14 @@ export default function Header() {
                 >
                   About Us
                 </a>
+                <Link 
+                  href="/safety" 
+                  className="text-foreground hover:text-primary transition py-2 border-b border-gray-100 dark:border-gray-700 flex items-center"
+                  onClick={closeMobileMenu}
+                >
+                  <Shield className="h-4 w-4 mr-2" />
+                  Safety Hub
+                </Link>
                 <a 
                   href="#permits" 
                   className="text-foreground hover:text-primary transition py-2 border-b border-gray-100 dark:border-gray-700"

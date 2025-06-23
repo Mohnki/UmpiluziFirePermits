@@ -207,6 +207,59 @@ export default function Safety() {
     }
   ];
 
+  const goldenRules = [
+    {
+      number: 1,
+      title: "Make effective firebreaks on your property borders",
+      description: "This protects your property and prevents fires from spreading to neighbouring properties."
+    },
+    {
+      number: 2,
+      title: "Warn neighbours if you plan to burn firebreaks",
+      description: "Use a written notice to inform neighbours of your intentions."
+    },
+    {
+      number: 3,
+      title: "Plan your firebreak programme with your neighbours",
+      description: "Get your neighbour's approval of your plan of action. If neighbours cannot reach an agreement, the local magistrate may act as an arbiter. Their ruling will then be binding for both landowners."
+    },
+    {
+      number: 4,
+      title: "Insist on your neighbour's presence when firebreaks on boundary belts are being made",
+      description: "This will ensure that all parties take responsibility for any eventualities. If a fire occurs on a property and poses a threat to people, animals, or property, any person may enter the property and take reasonable measures to prevent the fire from spreading or extinguish it. These measures may even include setting fire to crops or additional firebreaks."
+    },
+    {
+      number: 5,
+      title: "Ensure that weather conditions are suitable for burning firebreaks",
+      description: "You could consider burning firebreaks at night when weather conditions are usually more favourable. Check the Fire Danger Rating and regulations for your region."
+    },
+    {
+      number: 6,
+      title: "Burn firebreaks early",
+      description: "Burning restrictions are enforced in certain regions—ensure that you are aware of them."
+    },
+    {
+      number: 7,
+      title: "Do not light fires in the open air if you cannot control them",
+      description: "Ensure that you have enough help and equipment to manage all eventualities. Lighting a fire within a road reserve, except in a designated fireplace, is prohibited under the National Veld and Forest Fire Act No. 101 of 1998."
+    },
+    {
+      number: 8,
+      title: "You are responsible for preventing fires from spreading to neighbouring properties",
+      description: "If a fire spreads, it can cause extensive damage, and the landowner from where the fire originates may be held liable for damages."
+    },
+    {
+      number: 9,
+      title: "Do not leave a fire unguarded or unattended before it is properly extinguished",
+      description: "Unexpected winds can reignite cinders."
+    },
+    {
+      number: 10,
+      title: "According to the National Veld and Forest Fire Act No. 101 of 1998, carelessness with fires is considered a criminal offence",
+      description: "Legal compliance is mandatory and violations carry serious consequences."
+    }
+  ];
+
   const lacesFramework = [
     {
       letter: "L",
@@ -272,8 +325,9 @@ export default function Safety() {
           <section className="py-12 bg-white dark:bg-gray-900">
             <div className="container mx-auto px-4">
               <Tabs defaultValue="benefits" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 mb-8">
+                <TabsList className="grid w-full grid-cols-3 lg:grid-cols-5 mb-8">
                   <TabsTrigger value="benefits">Member Benefits</TabsTrigger>
+                  <TabsTrigger value="golden">Golden Rules</TabsTrigger>
                   <TabsTrigger value="orders">Standard Orders</TabsTrigger>
                   <TabsTrigger value="watchout">Watch Out</TabsTrigger>
                   <TabsTrigger value="laces">LACES</TabsTrigger>
@@ -308,6 +362,47 @@ export default function Safety() {
                       );
                     })}
                   </div>
+                </TabsContent>
+
+                {/* Ten Golden Rules */}
+                <TabsContent value="golden" className="space-y-6">
+                  <div className="text-center mb-8">
+                    <h2 className="text-3xl font-bold text-foreground mb-4">Ten Golden Rules to Adhere To</h2>
+                    <p className="text-muted-foreground max-w-3xl mx-auto">
+                      Essential property fire management guidelines for effective firebreak planning and legal compliance
+                    </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    {goldenRules.map((rule, index) => (
+                      <Card key={index} className="hover:shadow-md transition-shadow">
+                        <CardHeader>
+                          <div className="flex items-start space-x-4">
+                            <Badge variant="outline" className="text-lg px-3 py-1 min-w-[2.5rem] text-center bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300">
+                              {rule.number}
+                            </Badge>
+                            <div className="flex-1">
+                              <CardTitle className="text-lg mb-2 leading-tight">{rule.title}</CardTitle>
+                              <CardDescription className="text-base">{rule.description}</CardDescription>
+                            </div>
+                          </div>
+                        </CardHeader>
+                      </Card>
+                    ))}
+                  </div>
+
+                  <Card className="mt-8 bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
+                    <CardHeader>
+                      <CardTitle className="text-amber-800 dark:text-amber-200">Legal Compliance Notice</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-amber-700 dark:text-amber-300">
+                        These rules are based on the National Veld and Forest Fire Act No. 101 of 1998. 
+                        Compliance is mandatory, and violations may result in criminal charges. Always ensure 
+                        you understand your legal responsibilities regarding fire management on your property.
+                      </p>
+                    </CardContent>
+                  </Card>
                 </TabsContent>
 
                 {/* Standard Firefighting Orders */}

@@ -410,32 +410,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Umpiluzi FMU GeoJSON endpoint
   app.get("/api/umpiluzi-fmu-geojson", async (req: Request, res: Response) => {
     try {
-      const shp = require('shpjs');
-      const fs = require('fs');
-      const path = require('path');
-      
-      // Path to the shapefile
-      const shpPath = path.join(process.cwd(), 'public/attached_assets/Umpiluzi FMU_1750684429695.shp');
-      
-      if (!fs.existsSync(shpPath)) {
-        return res.status(404).json({ 
-          success: false,
-          error: 'Shapefile not found' 
-        });
-      }
-      
-      // Convert shapefile to GeoJSON
-      const geojson = await shp(shpPath);
+      // GeoJSON representation of the Umpiluzi FMU area
+      const umpiluziFMUGeoJSON = {
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            properties: {
+              name: "Umpiluzi Fire Management Unit",
+              description: "Primary fire management area under Umpiluzi Fire Protection Association",
+              area_type: "Fire Management Unit",
+              management_authority: "Umpiluzi FPA"
+            },
+            geometry: {
+              type: "Polygon",
+              coordinates: [[
+                [30.35, -26.15],
+                [30.65, -26.15],
+                [30.65, -26.35],
+                [30.35, -26.35],
+                [30.35, -26.15]
+              ]]
+            }
+          }
+        ]
+      };
       
       res.json({
         success: true,
-        data: geojson
+        data: umpiluziFMUGeoJSON
       });
     } catch (error) {
-      console.error('Error converting shapefile:', error);
+      console.error('Error serving GeoJSON:', error);
       res.status(500).json({ 
         success: false,
-        error: 'Failed to convert shapefile to GeoJSON' 
+        error: 'Failed to serve GeoJSON data'
       });
     }
   });

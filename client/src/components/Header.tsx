@@ -149,18 +149,22 @@ export default function Header() {
               <Link href="/safety" className="text-foreground hover:text-primary transition font-medium">
                 Safety Hub
               </Link>
-              <Link href="/my-permits" className="text-foreground hover:text-primary transition font-medium">
-                My Permits
-              </Link>
-              <Link href="/apply-permit" className="text-foreground hover:text-primary transition font-medium">
-                Apply for Permit
-              </Link>
-              <Link href="/my-farms" className="text-foreground hover:text-primary transition font-medium">
-                My Farms
-              </Link>
-              <Link href="/todays-permits" className="text-foreground hover:text-primary transition font-medium">
-                Today's Permits Map
-              </Link>
+              {user && (
+                <>
+                  <Link href="/my-permits" className="text-foreground hover:text-primary transition font-medium">
+                    My Permits
+                  </Link>
+                  <Link href="/apply-permit" className="text-foreground hover:text-primary transition font-medium">
+                    Apply for Permit
+                  </Link>
+                  <Link href="/my-farms" className="text-foreground hover:text-primary transition font-medium">
+                    My Farms
+                  </Link>
+                  <Link href="/todays-permits" className="text-foreground hover:text-primary transition font-medium">
+                    Today's Permits Map
+                  </Link>
+                </>
+              )}
               {isAdmin && (
                 <Link href="/admin" className="text-foreground hover:text-primary transition font-medium">
                   Admin Panel

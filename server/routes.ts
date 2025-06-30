@@ -85,12 +85,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Permit routes
   app.get("/api/permits", authenticateUser, async (req: Request, res: Response) => {
     try {
-      const queryParams = permitQuerySchema.parse(req.query);
+      // Convert string query params to proper types before validation
+      const processedQuery = {
+        ...req.query,
+        includeHistorical: req.query.includeHistorical === 'true' ? true : undefined
+      };
       
-      // For reports page, include historical data
-      if (req.query.includeHistorical === 'true') {
-        queryParams.includeHistorical = true;
-      }
+      const queryParams = permitQuerySchema.parse(processedQuery);
       
       // Regular users can only see their own permits
       if (req.user!.role === 'user') {

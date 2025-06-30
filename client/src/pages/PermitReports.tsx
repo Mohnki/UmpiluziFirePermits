@@ -167,9 +167,9 @@ export default function PermitReports() {
     const permitDate = new Date(permit.createdAt);
     const now = new Date();
     
-    // Normalize dates to start of day for accurate comparison
-    const normalizedPermitDate = new Date(permitDate.getFullYear(), permitDate.getMonth(), permitDate.getDate());
-    const normalizedNow = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    // Normalize dates to start of day for accurate comparison (using UTC to avoid timezone issues)
+    const normalizedPermitDate = new Date(Date.UTC(permitDate.getUTCFullYear(), permitDate.getUTCMonth(), permitDate.getUTCDate()));
+    const normalizedNow = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
     
     // Date range filter
     if (dateRange !== "all") {
@@ -179,11 +179,11 @@ export default function PermitReports() {
     
     // Custom date range filter
     if (dateFrom) {
-      const normalizedDateFrom = new Date(dateFrom.getFullYear(), dateFrom.getMonth(), dateFrom.getDate());
+      const normalizedDateFrom = new Date(Date.UTC(dateFrom.getUTCFullYear(), dateFrom.getUTCMonth(), dateFrom.getUTCDate()));
       if (normalizedPermitDate < normalizedDateFrom) return false;
     }
     if (dateTo) {
-      const normalizedDateTo = new Date(dateTo.getFullYear(), dateTo.getMonth(), dateTo.getDate());
+      const normalizedDateTo = new Date(Date.UTC(dateTo.getUTCFullYear(), dateTo.getUTCMonth(), dateTo.getUTCDate()));
       if (normalizedPermitDate > normalizedDateTo) return false;
     }
     
@@ -260,18 +260,7 @@ export default function PermitReports() {
 
   const { startDate, days } = getTimeRange();
 
-  // Debug: Log permit dates to understand the data
-  console.log('Debug - Filtered permits and their dates:', filteredPermits.map(p => ({
-    id: p.id.substring(0, 8),
-    createdAt: p.createdAt,
-    parsedDate: new Date(p.createdAt).toISOString()
-  })));
-  
-  console.log('Debug - Chart date range:', {
-    startDate: startDate.toISOString(),
-    days,
-    endDate: new Date(startDate.getTime() + (days - 1) * 24 * 60 * 60 * 1000).toISOString()
-  });
+
 
   // Permits over time based on selected range
   const timeData = Array.from({ length: days }, (_, i) => {
@@ -280,23 +269,10 @@ export default function PermitReports() {
     
     const dayPermits = filteredPermits.filter(p => {
       const permitDate = new Date(p.createdAt);
-      const normalizedPermitDate = new Date(permitDate.getFullYear(), permitDate.getMonth(), permitDate.getDate());
-      const normalizedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const normalizedPermitDate = new Date(Date.UTC(permitDate.getUTCFullYear(), permitDate.getUTCMonth(), permitDate.getUTCDate()));
+      const normalizedDate = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
       
-      // Debug: Log date comparison for first few iterations
-      if (i < 5) {
-        console.log(`Debug - Day ${i} (${date.toLocaleDateString()}):`, {
-          permitDate: permitDate.toISOString(),
-          normalizedPermitDate: normalizedPermitDate.toISOString(),
-          normalizedDate: normalizedDate.toISOString(),
-          matches: normalizedPermitDate.getTime() === normalizedDate.getTime(),
-          dayPermitsCount: filteredPermits.filter(fp => {
-            const fpDate = new Date(fp.createdAt);
-            const fpNormalized = new Date(fpDate.getFullYear(), fpDate.getMonth(), fpDate.getDate());
-            return fpNormalized.getTime() === normalizedDate.getTime();
-          }).length
-        });
-      }
+
       
       return normalizedPermitDate.getTime() === normalizedDate.getTime();
     });

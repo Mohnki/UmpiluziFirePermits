@@ -631,23 +631,31 @@ export default function PermitReports() {
                 </CardHeader>
                 <CardContent>
                   {burnTypeData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={burnTypeData} layout="horizontal" margin={{ left: 20, right: 30, top: 20, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" />
-                        <YAxis 
-                          dataKey="name" 
-                          type="category" 
-                          width={150}
-                          tick={{ fontSize: 12 }}
-                        />
-                        <Tooltip 
-                          formatter={(value, name) => [value, 'Permits']}
-                          labelFormatter={(label) => `${label}`}
-                        />
-                        <Bar dataKey="permits" fill="#00C49F" />
-                      </BarChart>
-                    </ResponsiveContainer>
+                    <div>
+                      <p className="text-sm text-gray-600 mb-2">Data: {JSON.stringify(burnTypeData)}</p>
+                      <ResponsiveContainer width="100%" height={400}>
+                        <BarChart 
+                          data={burnTypeData} 
+                          margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis 
+                            dataKey="name" 
+                            angle={-45}
+                            textAnchor="end"
+                            height={80}
+                            tick={{ fontSize: 10 }}
+                          />
+                          <YAxis />
+                          <Tooltip />
+                          <Bar 
+                            dataKey="permits" 
+                            fill="#00C49F"
+                            name="Permits"
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
                   ) : (
                     <div className="flex items-center justify-center h-[300px] text-gray-500">
                       <div className="text-center">

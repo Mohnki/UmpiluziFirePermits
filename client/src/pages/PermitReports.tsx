@@ -260,7 +260,16 @@ export default function PermitReports() {
 
   const { startDate, days } = getTimeRange();
 
-
+  // Debug the actual date range being used
+  console.log('Chart range debug:', {
+    startDate: startDate.toISOString(),
+    days,
+    sampleDates: Array.from({ length: Math.min(5, days) }, (_, i) => {
+      const d = new Date(startDate);
+      d.setDate(startDate.getDate() + i);
+      return d.toISOString();
+    })
+  });
 
   // Permits over time based on selected range
   const timeData = Array.from({ length: days }, (_, i) => {
@@ -272,10 +281,22 @@ export default function PermitReports() {
       const normalizedPermitDate = new Date(Date.UTC(permitDate.getUTCFullYear(), permitDate.getUTCMonth(), permitDate.getUTCDate()));
       const normalizedDate = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
       
-
-      
       return normalizedPermitDate.getTime() === normalizedDate.getTime();
     });
+    
+    // Debug the last day (today) to see what's happening
+    if (i === days - 1) {
+      console.log('Today\'s data debug:', {
+        chartDate: date.toISOString(),
+        normalizedChartDate: new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())).toISOString(),
+        totalFilteredPermits: filteredPermits.length,
+        dayPermitsCount: dayPermits.length,
+        firstPermit: filteredPermits[0] ? {
+          createdAt: filteredPermits[0].createdAt,
+          normalized: new Date(Date.UTC(new Date(filteredPermits[0].createdAt).getUTCFullYear(), new Date(filteredPermits[0].createdAt).getUTCMonth(), new Date(filteredPermits[0].createdAt).getUTCDate())).toISOString()
+        } : null
+      });
+    }
     
     return {
       date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),

@@ -221,10 +221,30 @@ export default function PermitReports() {
   })).filter(item => item.permits > 0);
 
   // Permits by burn type - show all burn types, even with zero permits
-  const burnTypeData = burnTypes.map(burnType => ({
-    name: burnType.name,
-    permits: filteredPermits.filter(p => p.burnTypeId === burnType.id).length
-  }));
+  const burnTypeData = burnTypes.map(burnType => {
+    const matchingPermits = filteredPermits.filter(p => p.burnTypeId === burnType.id);
+    return {
+      name: burnType.name,
+      permits: matchingPermits.length
+    };
+  });
+
+  // Debug burn type chart data
+  console.log('=== BURN TYPE CHART DEBUG ===');
+  console.log('Total burn types loaded:', burnTypes.length);
+  console.log('Burn types:', burnTypes.map(bt => ({ id: bt.id, name: bt.name })));
+  console.log('Total filtered permits:', filteredPermits.length);
+  console.log('Permit burn type IDs:', filteredPermits.map(p => p.burnTypeId));
+  console.log('Unique permit burn type IDs:', [...new Set(filteredPermits.map(p => p.burnTypeId))]);
+  console.log('Chart data for burn types:', burnTypeData);
+  console.log('Chart data with permits > 0:', burnTypeData.filter(d => d.permits > 0));
+  console.log('Sample permit data:', filteredPermits.slice(0, 3).map(p => ({
+    id: p.id.substring(0, 8),
+    burnTypeId: p.burnTypeId,
+    status: p.status,
+    createdAt: p.createdAt
+  })));
+  console.log('================================');
 
   // Calculate time range for chart
   const getTimeRange = () => {

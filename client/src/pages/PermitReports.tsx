@@ -162,6 +162,25 @@ export default function PermitReports() {
     });
   };
 
+  // Debug permit filtering
+  console.log('=== PERMIT FILTERING DEBUG ===');
+  console.log('Total raw permits:', permits.length);
+  console.log('Filter settings:', {
+    dateRange,
+    dateFrom: dateFrom?.toISOString(),
+    dateTo: dateTo?.toISOString(),
+    selectedArea,
+    selectedBurnType,
+    selectedStatus
+  });
+  console.log('Sample raw permits:', permits.slice(0, 3).map(p => ({
+    id: p.id.substring(0, 8),
+    createdAt: p.createdAt,
+    areaId: p.areaId,
+    burnTypeId: p.burnTypeId,
+    status: p.status
+  })));
+
   // Filter permits based on selected criteria
   const filteredPermits = permits.filter(permit => {
     const permitDate = new Date(permit.createdAt);
@@ -198,6 +217,9 @@ export default function PermitReports() {
     
     return true;
   });
+
+  console.log('Permits after filtering:', filteredPermits.length);
+  console.log('=================================');
 
   // Calculate statistics
   const totalPermits = filteredPermits.length;

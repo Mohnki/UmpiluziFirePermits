@@ -226,6 +226,15 @@ export default function PermitReports() {
     permits: filteredPermits.filter(p => p.burnTypeId === burnType.id).length
   }));
 
+  // Debug data
+  console.log('Chart Data Debug:', {
+    burnTypesCount: burnTypes.length,
+    filteredPermitsCount: filteredPermits.length,
+    burnTypeData,
+    sampleBurnType: burnTypes[0],
+    samplePermit: filteredPermits[0]
+  });
+
   // Calculate time range for chart
   const getTimeRange = () => {
     const now = new Date();

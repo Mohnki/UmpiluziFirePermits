@@ -220,24 +220,11 @@ export default function PermitReports() {
     permits: filteredPermits.filter(p => p.areaId === area.id).length
   })).filter(item => item.permits > 0);
 
-  // Permits by burn type
+  // Permits by burn type - show all burn types, even with zero permits
   const burnTypeData = burnTypes.map(burnType => ({
     name: burnType.name,
     permits: filteredPermits.filter(p => p.burnTypeId === burnType.id).length
-  })).filter(item => item.permits > 0);
-
-  // Debug burn type data
-  console.log('Burn Type Debug:', {
-    totalBurnTypes: burnTypes.length,
-    burnTypeNames: burnTypes.map(bt => bt.name),
-    burnTypeIds: burnTypes.map(bt => bt.id),
-    permitBurnTypeIds: [...new Set(filteredPermits.map(p => p.burnTypeId))],
-    burnTypeData,
-    samplePermit: filteredPermits[0] ? {
-      id: filteredPermits[0].id.substring(0, 8),
-      burnTypeId: filteredPermits[0].burnTypeId
-    } : null
-  });
+  }));
 
   // Calculate time range for chart
   const getTimeRange = () => {

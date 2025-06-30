@@ -226,15 +226,6 @@ export default function PermitReports() {
     permits: filteredPermits.filter(p => p.burnTypeId === burnType.id).length
   }));
 
-  // Debug data
-  console.log('Chart Data Debug:', {
-    burnTypesCount: burnTypes.length,
-    filteredPermitsCount: filteredPermits.length,
-    burnTypeData,
-    sampleBurnType: burnTypes[0],
-    samplePermit: filteredPermits[0]
-  });
-
   // Calculate time range for chart
   const getTimeRange = () => {
     const now = new Date();
@@ -630,15 +621,32 @@ export default function PermitReports() {
                   <CardTitle>Permits by Burn Type</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={burnTypeData} layout="horizontal">
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis type="number" />
-                      <YAxis dataKey="name" type="category" width={100} />
-                      <Tooltip />
-                      <Bar dataKey="permits" fill="#00C49F" />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  {burnTypeData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={burnTypeData} layout="horizontal" margin={{ left: 20, right: 30, top: 20, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis type="number" />
+                        <YAxis 
+                          dataKey="name" 
+                          type="category" 
+                          width={150}
+                          tick={{ fontSize: 12 }}
+                        />
+                        <Tooltip 
+                          formatter={(value, name) => [value, 'Permits']}
+                          labelFormatter={(label) => `${label}`}
+                        />
+                        <Bar dataKey="permits" fill="#00C49F" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex items-center justify-center h-[300px] text-gray-500">
+                      <div className="text-center">
+                        <BarChart3 className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p>No burn type data available for the selected period</p>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 

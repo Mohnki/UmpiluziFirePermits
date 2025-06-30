@@ -110,8 +110,9 @@ export class PermitService {
       permitQuery = permitQuery.orderBy('createdAt', 'desc');
       
       // Get more documents than needed to account for filtering
-      const limit = query.limit || 100;
-      permitQuery = permitQuery.limit(limit * 3);
+      // For reports, increase the limit to fetch historical data
+      const limit = query.limit || (query.includeHistorical ? 1000 : 100);
+      permitQuery = permitQuery.limit(limit);
 
       const snapshot = await permitQuery.get();
       let permits = snapshot.docs.map(doc => {

@@ -87,6 +87,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const queryParams = permitQuerySchema.parse(req.query);
       
+      // For reports page, include historical data
+      if (req.query.includeHistorical === 'true') {
+        queryParams.includeHistorical = true;
+      }
+      
       // Regular users can only see their own permits
       if (req.user!.role === 'user') {
         queryParams.userId = req.user!.uid;

@@ -74,19 +74,6 @@ export default function PermitReports() {
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [dateRange, setDateRange] = useState<string>("30");
 
-  // Redirect if not authorized
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (!user || !userProfile || !hasManagerAccess) {
-    return <Redirect to="/admin" />;
-  }
-
   // Fetch initial data (areas and burn types only)
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -305,6 +292,19 @@ export default function PermitReports() {
       return `Permits Over Time (All Time - ${days} day${days === 1 ? '' : 's'} shown)`;
     }
   };
+
+  // Redirect if not authorized - moved after all hooks
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user || !userProfile || !hasManagerAccess) {
+    return <Redirect to="/admin" />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">

@@ -180,15 +180,25 @@ export default function PermitReports() {
     const permitDate = new Date(permit.createdAt);
     const now = new Date();
     
+    // Normalize dates to start of day for accurate comparison
+    const normalizedPermitDate = new Date(permitDate.getFullYear(), permitDate.getMonth(), permitDate.getDate());
+    const normalizedNow = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
     // Date range filter
     if (dateRange !== "all") {
-      const daysAgo = new Date(now.getTime() - parseInt(dateRange) * 24 * 60 * 60 * 1000);
-      if (permitDate < daysAgo) return false;
+      const daysAgo = new Date(normalizedNow.getTime() - parseInt(dateRange) * 24 * 60 * 60 * 1000);
+      if (normalizedPermitDate < daysAgo) return false;
     }
     
     // Custom date range filter
-    if (dateFrom && permitDate < dateFrom) return false;
-    if (dateTo && permitDate > dateTo) return false;
+    if (dateFrom) {
+      const normalizedDateFrom = new Date(dateFrom.getFullYear(), dateFrom.getMonth(), dateFrom.getDate());
+      if (normalizedPermitDate < normalizedDateFrom) return false;
+    }
+    if (dateTo) {
+      const normalizedDateTo = new Date(dateTo.getFullYear(), dateTo.getMonth(), dateTo.getDate());
+      if (normalizedPermitDate > normalizedDateTo) return false;
+    }
     
     // Area filter
     if (selectedArea !== "all" && permit.areaId !== selectedArea) return false;
@@ -229,17 +239,54 @@ export default function PermitReports() {
     permits: filteredPermits.filter(p => p.burnTypeId === burnType.id).length
   })).filter(item => item.permits > 0);
 
-  // Permits over time (last 30 days)
-  const timeData = Array.from({ length: 30 }, (_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() - (29 - i));
+  // Calculate time range for chart
+  const getTimeRange = () => {
+    const now = new Date();
+    let startDate = new Date();
+    let days = 30; // default
+    
+    if (dateFrom && dateTo) {
+      // Use custom date range
+      startDate = new Date(dateFrom);
+      const endDate = new Date(dateTo);
+      days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    } else if (dateRange !== "all") {
+      // Use preset date range
+      days = parseInt(dateRange);
+      startDate = new Date(now.getTime() - (days - 1) * 24 * 60 * 60 * 1000);
+    } else {
+      // For "all time", show last 30 days or date range of permits
+      if (filteredPermits.length > 0) {
+        const oldestPermit = filteredPermits.reduce((oldest, permit) => {
+          const permitDate = new Date(permit.createdAt);
+          return permitDate < oldest ? permitDate : oldest;
+        }, new Date());
+        
+        const daysDiff = Math.ceil((now.getTime() - oldestPermit.getTime()) / (1000 * 60 * 60 * 24));
+        days = Math.min(daysDiff + 1, 90); // Cap at 90 days for performance
+        startDate = new Date(now.getTime() - (days - 1) * 24 * 60 * 60 * 1000);
+      }
+    }
+    
+    return { startDate, days: Math.max(1, days) };
+  };
+
+  const { startDate, days } = getTimeRange();
+
+  // Permits over time based on selected range
+  const timeData = Array.from({ length: days }, (_, i) => {
+    const date = new Date(startDate);
+    date.setDate(startDate.getDate() + i);
+    
     const dayPermits = filteredPermits.filter(p => {
       const permitDate = new Date(p.createdAt);
-      return permitDate.toDateString() === date.toDateString();
+      const normalizedPermitDate = new Date(permitDate.getFullYear(), permitDate.getMonth(), permitDate.getDate());
+      const normalizedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      return normalizedPermitDate.getTime() === normalizedDate.getTime();
     });
     
     return {
-      date: date.toLocaleDateString(),
+      date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       permits: dayPermits.length,
       approved: dayPermits.filter(p => p.status === 'approved').length,
       pending: dayPermits.filter(p => p.status === 'pending').length,
@@ -247,7 +294,17 @@ export default function PermitReports() {
     };
   });
 
-
+  // Generate dynamic chart title based on date range
+  const getChartTitle = () => {
+    if (dateFrom && dateTo) {
+      return `Permits Over Time (${format(dateFrom, "MMM d")} - ${format(dateTo, "MMM d, yyyy")})`;
+    } else if (dateRange !== "all") {
+      const dayCount = parseInt(dateRange);
+      return `Permits Over Time (Last ${dayCount} day${dayCount === 1 ? '' : 's'})`;
+    } else {
+      return `Permits Over Time (All Time - ${days} day${days === 1 ? '' : 's'} shown)`;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -574,7 +631,7 @@ export default function PermitReports() {
               {/* Permits Over Time */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Permits Over Time (Last 30 Days)</CardTitle>
+                  <CardTitle>{getChartTitle()}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -598,7 +655,7 @@ export default function PermitReports() {
               <CardHeader>
                 <CardTitle>Permit Trend Analysis</CardTitle>
                 <CardDescription>
-                  Daily permit submissions and approvals over the last 30 days
+                  Daily permit submissions and approvals over the selected time period
                 </CardDescription>
               </CardHeader>
               <CardContent>

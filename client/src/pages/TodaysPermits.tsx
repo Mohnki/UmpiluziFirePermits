@@ -264,6 +264,9 @@ export default function TodaysPermits() {
                                       {permit.location?.address && (
                                         <div><strong>Location:</strong> {permit.location.address}</div>
                                       )}
+                                      {permit.compartment && (
+                                        <div><strong>Compartment:</strong> {permit.compartment}</div>
+                                      )}
                                       {/* Only show permit holder details to admins and area managers */}
                                       {(isAdmin || isAreaManager) && permit.details && (
                                         <div><strong>Details:</strong> {permit.details}</div>

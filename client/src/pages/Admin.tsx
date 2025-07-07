@@ -1090,6 +1090,9 @@ export default function AdminPage() {
                                               {permit.status.toUpperCase()}
                                             </Badge>
                                           </div>
+                                          {permit.compartment && (
+                                            <div><strong>Compartment:</strong> {permit.compartment}</div>
+                                          )}
                                           {permit.details && (
                                             <div><strong>Details:</strong> {permit.details}</div>
                                           )}

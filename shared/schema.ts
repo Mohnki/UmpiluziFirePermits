@@ -34,6 +34,7 @@ export const burnPermitSchema = z.object({
   status: permitStatusSchema,
   location: locationSchema.optional(),
   details: z.string().optional(),
+  compartment: z.string().optional(),
   approvedBy: z.string().optional(),
   approvedAt: z.date().optional(),
   rejectionReason: z.string().optional(),

@@ -68,7 +68,8 @@ import {
   Info,
   Loader2,
   CheckCircle2,
-  XCircle as XCircleIcon
+  XCircle as XCircleIcon,
+  Building
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -788,6 +789,16 @@ export default function PermitManagement({
                     User ID: {selectedPermit.userId.substring(0, 10)}...
                   </p>
                 </div>
+                
+                {selectedPermit.compartment && (
+                  <div>
+                    <h4 className="text-sm font-medium mb-1">Compartment</h4>
+                    <p className="flex items-center text-sm text-muted-foreground">
+                      <Building className="h-4 w-4 mr-1" />
+                      {selectedPermit.compartment}
+                    </p>
+                  </div>
+                )}
               </div>
               
               {selectedPermit.details && (

@@ -68,6 +68,7 @@ const permitFormSchema = z.object({
     address: z.string().optional(),
   }),
   details: z.string().optional(),
+  compartment: z.string().optional(),
   acceptDisclaimer: z.boolean().refine(val => val === true, {
     message: "You must accept the disclaimer before proceeding",
   }),
@@ -153,6 +154,7 @@ export default function ApplyPermitPage() {
       burnTypeId: "",
       farmId: "",
       details: "",
+      compartment: "",
       location: {
         latitude: 0,
         longitude: 0,
@@ -335,6 +337,7 @@ export default function ApplyPermitPage() {
         endDate: today, // Same as start date for single-day permits
         location: values.location,
         details: values.details || "", // Use empty string if details are not provided
+        compartment: values.compartment || "", // Use empty string if compartment is not provided
       });
       
       toast({
@@ -477,6 +480,26 @@ export default function ApplyPermitPage() {
                             )}
                           />
                         </div>
+                        
+                        <FormField
+                          control={form.control}
+                          name="compartment"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Compartment</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="Enter compartment name or number (optional)" 
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                Optional: Specify the compartment within the farm where the burn will take place
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                         
                         <div className="p-4 bg-orange-50 dark:bg-orange-950/30 border border-orange-100 dark:border-orange-900 rounded-lg mb-4">
                           <p className="text-sm flex items-start gap-2">

@@ -49,6 +49,7 @@ export const permitQuerySchema = z.object({
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   burnTypeId: z.string().optional(),
+  compartment: z.string().optional(), // filter by compartment number or section
   location: z.object({
     latitude: z.number(),
     longitude: z.number(),

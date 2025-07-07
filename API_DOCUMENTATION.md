@@ -88,15 +88,68 @@ Get permits based on user role and query parameters.
 **Query Parameters:**
 - `userId` (string, optional) - Filter by user ID (admin/manager only)
 - `areaId` (string, optional) - Filter by area ID
+- `compartment` (string, optional) - **Filter by compartment number or section identifier**
 - `status` (string, optional) - Filter by status: pending, approved, rejected, completed, cancelled
 - `startDate` (string, optional) - Filter permits starting from this date (ISO format)
 - `endDate` (string, optional) - Filter permits ending before this date (ISO format)
 - `limit` (number, optional) - Maximum number of permits to return (1-100)
 - `offset` (number, optional) - Number of permits to skip
 
-**Example:**
+**Examples:**
 ```
 GET /api/permits?status=approved&limit=10&offset=0
+GET /api/permits?compartment=C-14B&status=approved
+GET /api/permits?areaId=umpiluzi_section_a&compartment=C-*
+```
+
+**Response Structure:**
+Each permit object contains the following fields:
+- `id` - Unique permit identifier
+- `userId` - ID of the user who applied for the permit
+- `burnTypeId` - Type of burn being requested
+- `areaId` - Geographic area where burn will take place
+- `farmId` - Farm identification
+- `compartment` - **Compartment number or section within the farm/area where the burn will occur**
+- `startDate` - Planned start date for the burn (ISO format)
+- `endDate` - Planned end date for the burn (ISO format)
+- `status` - Current permit status (pending, approved, rejected, completed, cancelled)
+- `location` - Optional GPS coordinates object with latitude, longitude, and address
+- `details` - Additional details or notes about the burn
+- `approvedBy` - User ID who approved the permit (if approved)
+- `approvedAt` - Date when permit was approved (ISO format)
+- `rejectionReason` - Reason for rejection (if rejected)
+- `createdAt` - Date when permit was created (ISO format)
+- `updatedAt` - Date when permit was last modified (ISO format)
+
+**Example Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "permit_12345",
+      "userId": "user_67890",
+      "burnTypeId": "controlled_burn",
+      "areaId": "umpiluzi_section_a",
+      "farmId": "farm_001",
+      "compartment": "C-14B",
+      "startDate": "2024-07-15T06:00:00.000Z",
+      "endDate": "2024-07-15T18:00:00.000Z",
+      "status": "approved",
+      "location": {
+        "latitude": -26.2041,
+        "longitude": 28.0473,
+        "address": "Umpiluzi FMU, Section A"
+      },
+      "details": "Controlled burn of grass areas",
+      "approvedBy": "manager_001",
+      "approvedAt": "2024-07-14T10:30:00.000Z",
+      "createdAt": "2024-07-13T14:20:00.000Z",
+      "updatedAt": "2024-07-14T10:30:00.000Z"
+    }
+  ],
+  "message": "Retrieved 1 permits"
+}
 ```
 
 #### Get Permit by ID

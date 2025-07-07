@@ -137,6 +137,25 @@ The `.replit` file configures the project to run in the Replit environment with 
 5. Run `npm run dev` to start the development server
 6. Access the application at the provided URL
 
+## Recent Changes
+
+### Compartment API Enhancement (July 2025)
+- **Added compartment field support** to the Fire Permit API and documentation
+- **Enhanced API filtering** with compartment parameter for all permit endpoints  
+- **Updated comprehensive documentation** including response structure examples
+- **Implemented compartment filtering** in Firebase service with case-insensitive search
+- **Enhanced API documentation** with interactive testing capabilities for compartment filtering
+
+The compartment field allows users to specify and filter permits by specific sections within farms or areas where burns will occur (e.g., "C-14B", "Section A", etc.).
+
+## API Documentation Updates
+
+The API now fully supports compartment filtering through:
+- Query parameter: `compartment` - Filter by compartment number or section identifier
+- Response field: `compartment` - Compartment number or section within the farm/area
+- Interactive testing buttons in the web documentation
+- Comprehensive examples in both web and markdown documentation
+
 ## Next Steps for Development
 
 1. Implement the API routes for user registration and authentication

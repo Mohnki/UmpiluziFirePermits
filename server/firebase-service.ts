@@ -155,6 +155,7 @@ export class PermitService {
         if (query.areaId && permit.areaId !== query.areaId) return false;
         if (query.status && permit.status !== query.status) return false;
         if (query.burnTypeId && permit.burnTypeId !== query.burnTypeId) return false;
+        if (query.compartment && permit.compartment && !permit.compartment.toLowerCase().includes(query.compartment.toLowerCase())) return false;
         
         if (query.startDate && query.includeHistorical) {
           const startDate = new Date(query.startDate);

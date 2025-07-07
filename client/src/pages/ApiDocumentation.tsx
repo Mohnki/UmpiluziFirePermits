@@ -98,6 +98,7 @@ Get permits with advanced filtering. Returns current day permits by default.
 Query Parameters:
 • userId - Filter by user ID
 • areaId - Filter by area ID
+• compartment - Filter by compartment number or section identifier
 • burnTypeId - Filter by burn type ID
 • status - Filter by status (pending, approved, rejected, completed, cancelled)
 • includeHistorical - Set to true to access historical data (default: false)
@@ -886,6 +887,7 @@ def refresh_id_token(refresh_token):
                       <li><code>userId</code> - Filter by user ID</li>
                       <li><code>areaId</code> - Filter by area ID</li>
                       <li><code>burnTypeId</code> - Filter by burn type ID</li>
+                      <li><code>compartment</code> - <strong>Filter by compartment number or section identifier</strong></li>
                       <li><code>status</code> - Filter by status (pending, approved, rejected, completed, cancelled)</li>
                       <li><code>includeHistorical</code> - Set to true to access historical data (default: false)</li>
                       <li><code>startDate</code> - Filter by start date (ISO format, requires includeHistorical=true)</li>
@@ -898,9 +900,12 @@ def refresh_id_token(refresh_token):
                     </ul>
                   </details>
                   <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-950 rounded text-xs text-amber-800 dark:text-amber-200">
-                    <strong>Example:</strong> <code>/api/permits?location[latitude]=-26.2041&location[longitude]=28.0473&location[radius]=5&status=approved</code>
+                    <strong>Examples:</strong><br/>
+                    <code>/api/permits?location[latitude]=-26.2041&location[longitude]=28.0473&location[radius]=5&status=approved</code><br/>
+                    <code>/api/permits?compartment=C-14B&status=approved</code><br/>
+                    <code>/api/permits?areaId=umpiluzi_section_a&compartment=C-*&includeHistorical=true</code>
                   </div>
-                  <div className="flex gap-2 mt-3">
+                  <div className="flex gap-2 mt-3 flex-wrap">
                     <TestButton endpoint="/api/permits" label="Test Current Day" />
                     <TestButton 
                       endpoint="/api/permits" 
@@ -912,6 +917,11 @@ def refresh_id_token(refresh_token):
                       params={{ 'location[latitude]': '-26.2041', 'location[longitude]': '28.0473', 'location[radius]': '10' }}
                       label="Test Location Filter" 
                     />
+                    <TestButton 
+                      endpoint="/api/permits" 
+                      params={{ compartment: 'C-14B', status: 'approved' }}
+                      label="Test Compartment Filter" 
+                    />
                   </div>
                 </div>
 
@@ -921,6 +931,59 @@ def refresh_id_token(refresh_token):
                     <code>/api/permits/:id</code>
                   </div>
                   <p className="text-sm text-muted-foreground">Get a specific permit by ID</p>
+                </div>
+
+                <div className="space-y-2 mt-4">
+                  <h4 className="font-medium">Response Data Structure</h4>
+                  <details className="text-sm">
+                    <summary className="cursor-pointer font-medium">Permit Object Fields</summary>
+                    <div className="mt-2 space-y-1 ml-4 text-xs">
+                      <div><code>id</code> - Unique permit identifier</div>
+                      <div><code>userId</code> - ID of the user who applied for the permit</div>
+                      <div><code>burnTypeId</code> - Type of burn being requested</div>
+                      <div><code>areaId</code> - Geographic area where burn will take place</div>
+                      <div><code>farmId</code> - Farm identification</div>
+                      <div><code>compartment</code> - <strong>Compartment number or section within the farm/area where the burn will occur</strong></div>
+                      <div><code>startDate</code> - Planned start date for the burn (ISO format)</div>
+                      <div><code>endDate</code> - Planned end date for the burn (ISO format)</div>
+                      <div><code>status</code> - Current permit status (pending, approved, rejected, completed, cancelled)</div>
+                      <div><code>location</code> - Optional GPS coordinates object with latitude, longitude, and address</div>
+                      <div><code>details</code> - Additional details or notes about the burn</div>
+                      <div><code>approvedBy</code> - User ID who approved the permit (if approved)</div>
+                      <div><code>approvedAt</code> - Date when permit was approved (ISO format)</div>
+                      <div><code>rejectionReason</code> - Reason for rejection (if rejected)</div>
+                      <div><code>createdAt</code> - Date when permit was created (ISO format)</div>
+                      <div><code>updatedAt</code> - Date when permit was last modified (ISO format)</div>
+                    </div>
+                  </details>
+                  <div className="mt-2 p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded text-xs">
+                    <strong>Example Response:</strong>
+                    <pre className="mt-1 text-green-800 dark:text-green-200">{`{
+  "success": true,
+  "data": {
+    "id": "permit_12345",
+    "userId": "user_67890",
+    "burnTypeId": "controlled_burn",
+    "areaId": "umpiluzi_section_a",
+    "farmId": "farm_001",
+    "compartment": "C-14B",
+    "startDate": "2024-07-15T06:00:00.000Z",
+    "endDate": "2024-07-15T18:00:00.000Z",
+    "status": "approved",
+    "location": {
+      "latitude": -26.2041,
+      "longitude": 28.0473,
+      "address": "Umpiluzi FMU, Section A"
+    },
+    "details": "Controlled burn of grass areas",
+    "approvedBy": "manager_001",
+    "approvedAt": "2024-07-14T10:30:00.000Z",
+    "createdAt": "2024-07-13T14:20:00.000Z",
+    "updatedAt": "2024-07-14T10:30:00.000Z"
+  },
+  "message": "Permit retrieved successfully"
+}`}</pre>
+                  </div>
                 </div>
               </CardContent>
             </Card>

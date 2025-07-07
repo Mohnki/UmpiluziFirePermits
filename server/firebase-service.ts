@@ -10,6 +10,7 @@ import {
   BurnPermit, 
   Area, 
   BurnType, 
+  Document,
   PermitQuery,
   AreaQuery 
 } from '../shared/schema';
@@ -459,6 +460,152 @@ export class BurnTypeService {
     } catch (error) {
       console.error('Error getting burn type by ID:', error);
       throw new Error('Failed to retrieve burn type');
+    }
+  }
+}
+
+// Document service
+export class DocumentService {
+  static async getAllDocuments(): Promise<Document[]> {
+    try {
+      const snapshot = await db.collection('documents')
+        .orderBy('uploadedAt', 'desc')
+        .get();
+      
+      return snapshot.docs.map(doc => {
+        const data = doc.data();
+        
+        return {
+          id: doc.id,
+          title: data.title,
+          description: data.description,
+          fileName: data.fileName,
+          fileSize: data.fileSize,
+          fileType: data.fileType,
+          uploadedBy: data.uploadedBy,
+          uploadedAt: convertTimestampToDate(data.uploadedAt),
+          isPublic: data.isPublic || false,
+          downloadCount: data.downloadCount || 0,
+        };
+      });
+    } catch (error) {
+      console.error('Error getting documents:', error);
+      throw new Error('Failed to retrieve documents');
+    }
+  }
+
+  static async getPublicDocuments(): Promise<Document[]> {
+    try {
+      const snapshot = await db.collection('documents')
+        .where('isPublic', '==', true)
+        .orderBy('uploadedAt', 'desc')
+        .get();
+      
+      return snapshot.docs.map(doc => {
+        const data = doc.data();
+        
+        return {
+          id: doc.id,
+          title: data.title,
+          description: data.description,
+          fileName: data.fileName,
+          fileSize: data.fileSize,
+          fileType: data.fileType,
+          uploadedBy: data.uploadedBy,
+          uploadedAt: convertTimestampToDate(data.uploadedAt),
+          isPublic: data.isPublic || false,
+          downloadCount: data.downloadCount || 0,
+        };
+      });
+    } catch (error) {
+      console.error('Error getting public documents:', error);
+      throw new Error('Failed to retrieve public documents');
+    }
+  }
+
+  static async getDocumentById(documentId: string): Promise<Document | null> {
+    try {
+      const doc = await db.collection('documents').doc(documentId).get();
+      
+      if (!doc.exists) {
+        return null;
+      }
+      
+      const data = doc.data()!;
+      
+      return {
+        id: doc.id,
+        title: data.title,
+        description: data.description,
+        fileName: data.fileName,
+        fileSize: data.fileSize,
+        fileType: data.fileType,
+        uploadedBy: data.uploadedBy,
+        uploadedAt: convertTimestampToDate(data.uploadedAt),
+        isPublic: data.isPublic || false,
+        downloadCount: data.downloadCount || 0,
+      };
+    } catch (error) {
+      console.error('Error getting document:', error);
+      throw new Error('Failed to retrieve document');
+    }
+  }
+
+  static async createDocument(document: Omit<Document, 'id' | 'uploadedAt' | 'downloadCount'>): Promise<Document> {
+    try {
+      const docRef = await db.collection('documents').add({
+        ...document,
+        uploadedAt: admin.firestore.FieldValue.serverTimestamp(),
+        downloadCount: 0,
+      });
+      
+      const doc = await docRef.get();
+      const data = doc.data()!;
+      
+      return {
+        id: doc.id,
+        title: data.title,
+        description: data.description,
+        fileName: data.fileName,
+        fileSize: data.fileSize,
+        fileType: data.fileType,
+        uploadedBy: data.uploadedBy,
+        uploadedAt: convertTimestampToDate(data.uploadedAt),
+        isPublic: data.isPublic || false,
+        downloadCount: data.downloadCount || 0,
+      };
+    } catch (error) {
+      console.error('Error creating document:', error);
+      throw new Error('Failed to create document');
+    }
+  }
+
+  static async updateDocument(documentId: string, updates: Partial<Omit<Document, 'id' | 'uploadedAt' | 'uploadedBy'>>): Promise<void> {
+    try {
+      await db.collection('documents').doc(documentId).update(updates);
+    } catch (error) {
+      console.error('Error updating document:', error);
+      throw new Error('Failed to update document');
+    }
+  }
+
+  static async deleteDocument(documentId: string): Promise<void> {
+    try {
+      await db.collection('documents').doc(documentId).delete();
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      throw new Error('Failed to delete document');
+    }
+  }
+
+  static async incrementDownloadCount(documentId: string): Promise<void> {
+    try {
+      await db.collection('documents').doc(documentId).update({
+        downloadCount: admin.firestore.FieldValue.increment(1)
+      });
+    } catch (error) {
+      console.error('Error incrementing download count:', error);
+      throw new Error('Failed to increment download count');
     }
   }
 }

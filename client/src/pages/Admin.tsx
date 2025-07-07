@@ -20,6 +20,7 @@ import {
 } from "@/lib/area-service";
 import { Area, BurnType } from "@/lib/area-types";
 import { BurnPermit } from "@/lib/permit-types";
+import { Document } from "@/shared/schema";
 
 import {
   Tabs,
@@ -92,7 +93,12 @@ import {
   Info,
   Code,
   Map,
-  Building
+  Building,
+  FileText,
+  Upload,
+  Download,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -143,6 +149,12 @@ const burnTypeFormSchema = z.object({
   requiresPermit: z.boolean().default(true),
 });
 
+const documentFormSchema = z.object({
+  title: z.string().min(3, "Title must be at least 3 characters"),
+  description: z.string().optional(),
+  isPublic: z.boolean().default(true),
+});
+
 export default function AdminPage() {
   const { user, userProfile, isAdmin, isAreaManager, loading } = useAuth();
   const { toast } = useToast();
@@ -182,6 +194,13 @@ export default function AdminPage() {
   const [selectedPermit, setSelectedPermit] = useState<BurnPermit | null>(null);
   const [permitDetailsOpen, setPermitDetailsOpen] = useState(false);
 
+  // Documents state
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [loadingDocuments, setLoadingDocuments] = useState(true);
+  const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
+  const [editingDocumentId, setEditingDocumentId] = useState<string | null>(null);
+  const [uploadingDocument, setUploadingDocument] = useState(false);
+
   // Area form
   const areaForm = useForm<z.infer<typeof areaFormSchema>>({
     resolver: zodResolver(areaFormSchema),
@@ -200,6 +219,16 @@ export default function AdminPage() {
       description: "",
       defaultAllowed: false,
       requiresPermit: true,
+    },
+  });
+
+  // Document form
+  const documentForm = useForm<z.infer<typeof documentFormSchema>>({
+    resolver: zodResolver(documentFormSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      isPublic: true,
     },
   });
 
@@ -318,6 +347,44 @@ export default function AdminPage() {
       fetchPermits();
     }
   }, [user, userProfile, loading, toast]);
+
+  // Fetch all documents
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      if (user && userProfile && isAdmin) {
+        try {
+          setLoadingDocuments(true);
+          const idToken = await user.getIdToken();
+          const response = await fetch('/api/documents', {
+            headers: {
+              'Authorization': `Bearer ${idToken}`,
+              'Content-Type': 'application/json',
+            },
+          });
+          
+          if (!response.ok) {
+            throw new Error('Failed to fetch documents');
+          }
+          
+          const data = await response.json();
+          setDocuments(data.data || []);
+        } catch (error) {
+          console.error("Error fetching documents:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load documents. Please try again.",
+            variant: "destructive",
+          });
+        } finally {
+          setLoadingDocuments(false);
+        }
+      }
+    };
+
+    if (!loading && user && userProfile && isAdmin) {
+      fetchDocuments();
+    }
+  }, [user, userProfile, loading, toast, isAdmin]);
 
   // Handle role change
   const handleRoleChange = async (userId: string, newRole: UserRole) => {
@@ -709,6 +776,7 @@ export default function AdminPage() {
                 {isAdmin && <TabsTrigger value="areas">Areas</TabsTrigger>}
                 {isAdmin && <TabsTrigger value="burn-types">Burn Types</TabsTrigger>}
                 {isAdmin && <TabsTrigger value="area-permissions">Area Permissions</TabsTrigger>}
+                {isAdmin && <TabsTrigger value="documents">Documents</TabsTrigger>}
               </TabsList>
               
               {/* User Management Tab */}
@@ -1701,6 +1769,225 @@ export default function AdminPage() {
                           </div>
                         )}
                       </div>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+
+              {/* Documents Management Tab */}
+              <TabsContent value="documents">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-semibold">Document Management</h2>
+                    <Dialog open={documentDialogOpen} onOpenChange={setDocumentDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button onClick={() => {
+                          setEditingDocumentId(null);
+                          documentForm.reset({
+                            title: "",
+                            description: "",
+                            isPublic: true,
+                          });
+                        }}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Upload Document
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>
+                            {editingDocumentId ? "Edit Document" : "Upload New Document"}
+                          </DialogTitle>
+                          <DialogDescription>
+                            {editingDocumentId ? "Update document information" : "Upload a document for members to access"}
+                          </DialogDescription>
+                        </DialogHeader>
+                        
+                        <Form {...documentForm}>
+                          <form onSubmit={documentForm.handleSubmit((values) => {
+                            // Document form submission will be handled here
+                            console.log("Document form values:", values);
+                          })} className="space-y-4">
+                            <FormField
+                              control={documentForm.control}
+                              name="title"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Title</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="Document title" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            
+                            <FormField
+                              control={documentForm.control}
+                              name="description"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Description</FormLabel>
+                                  <FormControl>
+                                    <Textarea 
+                                      placeholder="Brief description of the document" 
+                                      {...field} 
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            {!editingDocumentId && (
+                              <div className="space-y-2">
+                                <Label htmlFor="file-upload">File</Label>
+                                <Input
+                                  id="file-upload"
+                                  type="file"
+                                  accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
+                                  className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                  Supported formats: PDF, DOC, DOCX, TXT, JPG, JPEG, PNG (Max 10MB)
+                                </p>
+                              </div>
+                            )}
+                            
+                            <FormField
+                              control={documentForm.control}
+                              name="isPublic"
+                              render={({ field }) => (
+                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                  <div className="space-y-0.5">
+                                    <FormLabel>Public Document</FormLabel>
+                                    <FormDescription>
+                                      Make this document available to all members
+                                    </FormDescription>
+                                  </div>
+                                  <FormControl>
+                                    <Switch
+                                      checked={field.value}
+                                      onCheckedChange={field.onChange}
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            
+                            <DialogFooter>
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                onClick={() => setDocumentDialogOpen(false)}
+                              >
+                                Cancel
+                              </Button>
+                              <Button type="submit" disabled={uploadingDocument}>
+                                {uploadingDocument && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                                {editingDocumentId ? "Update" : "Upload"}
+                              </Button>
+                            </DialogFooter>
+                          </form>
+                        </Form>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                  
+                  {loadingDocuments ? (
+                    <div className="flex items-center justify-center py-10">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      <span className="ml-2">Loading documents...</span>
+                    </div>
+                  ) : documents.length === 0 ? (
+                    <div className="text-center py-10">
+                      <FileText className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No documents yet</h3>
+                      <p className="text-gray-500 dark:text-gray-400 mb-4">Upload your first document to get started.</p>
+                    </div>
+                  ) : (
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                      {documents.map((document) => {
+                        const uploadedByUser = users.find(u => u.uid === document.uploadedBy);
+                        return (
+                          <Card key={document.id} className="hover:shadow-md transition-shadow">
+                            <CardHeader className="pb-3">
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <CardTitle className="text-lg line-clamp-1">{document.title}</CardTitle>
+                                  <CardDescription className="line-clamp-2 mt-1">
+                                    {document.description || "No description provided"}
+                                  </CardDescription>
+                                </div>
+                                <div className="flex items-center space-x-1 ml-2">
+                                  {document.isPublic ? (
+                                    <Badge variant="default" className="text-xs">
+                                      <Eye className="h-3 w-3 mr-1" />
+                                      Public
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="secondary" className="text-xs">
+                                      <EyeOff className="h-3 w-3 mr-1" />
+                                      Private
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="pt-0 pb-3">
+                              <div className="space-y-2 text-sm text-muted-foreground">
+                                <div className="flex items-center">
+                                  <FileText className="h-4 w-4 mr-2" />
+                                  <span>{document.fileName}</span>
+                                </div>
+                                <div className="flex items-center">
+                                  <Upload className="h-4 w-4 mr-2" />
+                                  <span>
+                                    {uploadedByUser ? uploadedByUser.displayName || uploadedByUser.email : 'Unknown User'}
+                                  </span>
+                                </div>
+                                <div className="flex items-center">
+                                  <Calendar className="h-4 w-4 mr-2" />
+                                  <span>{new Date(document.uploadedAt).toLocaleDateString()}</span>
+                                </div>
+                                <div className="flex items-center">
+                                  <Download className="h-4 w-4 mr-2" />
+                                  <span>{document.downloadCount} downloads</span>
+                                </div>
+                              </div>
+                            </CardContent>
+                            <CardFooter className="pt-0 flex gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="flex-1"
+                                onClick={() => {
+                                  setEditingDocumentId(document.id);
+                                  documentForm.reset({
+                                    title: document.title,
+                                    description: document.description || "",
+                                    isPublic: document.isPublic,
+                                  });
+                                  setDocumentDialogOpen(true);
+                                }}
+                              >
+                                <Pencil className="h-4 w-4 mr-1" />
+                                Edit
+                              </Button>
+                              <Button 
+                                variant="destructive" 
+                                size="sm"
+                                onClick={() => {
+                                  // Document deletion will be implemented
+                                  console.log("Delete document:", document.id);
+                                }}
+                              >
+                                <Trash className="h-4 w-4" />
+                              </Button>
+                            </CardFooter>
+                          </Card>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

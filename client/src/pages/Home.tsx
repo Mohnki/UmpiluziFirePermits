@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import About from "@/components/About";
 import PermitsInfo from "@/components/PermitsInfo";
+import Documents from "@/components/Documents";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
 import { Helmet } from "react-helmet";
@@ -51,6 +52,7 @@ export default function Home() {
           <Hero />
           <About />
           <PermitsInfo />
+          <Documents />
           <Contact />
         </main>
         <Footer />

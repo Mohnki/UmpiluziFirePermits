@@ -139,6 +139,15 @@ The `.replit` file configures the project to run in the Replit environment with 
 
 ## Recent Changes
 
+### Document Management System (July 2025)
+- **Added comprehensive document management** with admin upload functionality and member download access
+- **Created document schema** with support for title, description, file metadata, visibility controls, and download tracking
+- **Implemented Firebase document service** with full CRUD operations and public/private document filtering
+- **Added document API endpoints** with proper authentication, role-based access control, and download tracking
+- **Created admin document management tab** with upload forms, file validation, visibility controls, and document editing
+- **Added public documents section** to home page for member access with download functionality and authentication checks
+- **Enhanced admin panel** with dedicated Documents tab for file upload, metadata management, and visibility controls
+
 ### Compartment API Enhancement (July 2025)
 - **Added compartment field support** to the Fire Permit API and documentation
 - **Enhanced API filtering** with compartment parameter for all permit endpoints  
@@ -154,7 +163,7 @@ The `.replit` file configures the project to run in the Replit environment with 
 - **Updated User Profile API documentation** with complete authentication and profile response examples
 - **Added Health Check API documentation** with example responses
 
-The compartment field allows users to specify and filter permits by specific sections within farms or areas where burns will occur (e.g., "C-14B", "Section A", etc.).
+The document management system allows administrators to upload and manage documents that can be made available to all members for download. The system includes proper file metadata tracking, download counts, and visibility controls.
 
 ## API Documentation Updates
 

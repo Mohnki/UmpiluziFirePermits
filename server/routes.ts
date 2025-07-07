@@ -11,6 +11,7 @@ import {
   PermitService, 
   AreaService, 
   BurnTypeService,
+  DocumentService,
   admin,
   db
 } from "./firebase-service";
@@ -472,6 +473,188 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         success: false,
         error: 'Failed to serve GeoJSON data'
+      });
+    }
+  });
+
+  // Document routes
+  app.get("/api/documents", authenticateUser, async (req: Request, res: Response) => {
+    try {
+      let documents;
+      
+      // Admins can see all documents, others only see public ones
+      if (req.user?.role === 'admin') {
+        documents = await DocumentService.getAllDocuments();
+      } else {
+        documents = await DocumentService.getPublicDocuments();
+      }
+      
+      const response: ApiResponse = {
+        success: true,
+        data: documents,
+        message: `Retrieved ${documents.length} documents`
+      };
+      
+      res.json(response);
+    } catch (error) {
+      console.error("Get documents error:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to retrieve documents"
+      });
+    }
+  });
+
+  app.get("/api/documents/:id", authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const document = await DocumentService.getDocumentById(id);
+      
+      if (!document) {
+        return res.status(404).json({
+          success: false,
+          error: "Document not found"
+        });
+      }
+
+      // Check if user can access this document
+      if (!document.isPublic && req.user?.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          error: "Access denied"
+        });
+      }
+
+      const response: ApiResponse = {
+        success: true,
+        data: document
+      };
+      
+      res.json(response);
+    } catch (error) {
+      console.error("Get document error:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to retrieve document"
+      });
+    }
+  });
+
+  app.post("/api/documents", authenticateUser, requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const documentData = {
+        title: req.body.title,
+        description: req.body.description,
+        fileName: req.body.fileName,
+        fileSize: req.body.fileSize,
+        fileType: req.body.fileType,
+        isPublic: req.body.isPublic || false,
+        uploadedBy: req.user!.uid,
+      };
+
+      const document = await DocumentService.createDocument(documentData);
+      
+      const response: ApiResponse = {
+        success: true,
+        data: document,
+        message: "Document created successfully"
+      };
+      
+      res.json(response);
+    } catch (error) {
+      console.error("Create document error:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to create document"
+      });
+    }
+  });
+
+  app.patch("/api/documents/:id", authenticateUser, requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const updates = {
+        title: req.body.title,
+        description: req.body.description,
+        isPublic: req.body.isPublic,
+      };
+
+      // Remove undefined values
+      Object.keys(updates).forEach(key => 
+        updates[key as keyof typeof updates] === undefined && delete updates[key as keyof typeof updates]
+      );
+
+      await DocumentService.updateDocument(id, updates);
+      
+      const response: ApiResponse = {
+        success: true,
+        message: "Document updated successfully"
+      };
+      
+      res.json(response);
+    } catch (error) {
+      console.error("Update document error:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to update document"
+      });
+    }
+  });
+
+  app.delete("/api/documents/:id", authenticateUser, requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      await DocumentService.deleteDocument(id);
+      
+      const response: ApiResponse = {
+        success: true,
+        message: "Document deleted successfully"
+      };
+      
+      res.json(response);
+    } catch (error) {
+      console.error("Delete document error:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to delete document"
+      });
+    }
+  });
+
+  app.post("/api/documents/:id/download", authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const document = await DocumentService.getDocumentById(id);
+      
+      if (!document) {
+        return res.status(404).json({
+          success: false,
+          error: "Document not found"
+        });
+      }
+
+      // Check if user can access this document
+      if (!document.isPublic && req.user?.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          error: "Access denied"
+        });
+      }
+
+      // Increment download count
+      await DocumentService.incrementDownloadCount(id);
+      
+      const response: ApiResponse = {
+        success: true,
+        message: "Download count updated"
+      };
+      
+      res.json(response);
+    } catch (error) {
+      console.error("Download document error:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to process download"
       });
     }
   });

@@ -121,6 +121,20 @@ export const burnTypeSchema = z.object({
   updatedAt: z.date(),
 });
 
+// Document schemas
+export const documentSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string().optional(),
+  fileName: z.string(),
+  fileSize: z.number(), // in bytes
+  fileType: z.string(), // MIME type
+  uploadedBy: z.string(), // user ID
+  uploadedAt: z.date(),
+  isPublic: z.boolean(), // whether it's visible to all users
+  downloadCount: z.number().default(0),
+});
+
 // API response schemas
 export const apiResponseSchema = z.object({
   success: z.boolean(),
@@ -139,4 +153,5 @@ export type ApiUsageLog = z.infer<typeof apiUsageLogSchema>;
 export type RateLimit = z.infer<typeof rateLimitSchema>;
 export type Area = z.infer<typeof areaSchema>;
 export type BurnType = z.infer<typeof burnTypeSchema>;
+export type Document = z.infer<typeof documentSchema>;
 export type ApiResponse = z.infer<typeof apiResponseSchema>;

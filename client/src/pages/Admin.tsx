@@ -91,7 +91,8 @@ import {
   XCircle, 
   Info,
   Code,
-  Map
+  Map,
+  Building
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -178,6 +179,8 @@ export default function AdminPage() {
   const [permits, setPermits] = useState<BurnPermit[]>([]);
   const [loadingPermits, setLoadingPermits] = useState(true);
   const [cancellingPermitId, setCancellingPermitId] = useState<string | null>(null);
+  const [selectedPermit, setSelectedPermit] = useState<BurnPermit | null>(null);
+  const [permitDetailsOpen, setPermitDetailsOpen] = useState(false);
 
   // Area form
   const areaForm = useForm<z.infer<typeof areaFormSchema>>({
@@ -825,6 +828,7 @@ export default function AdminPage() {
                           <TableHead>User</TableHead>
                           <TableHead>Area</TableHead>
                           <TableHead>Burn Type</TableHead>
+                          <TableHead>Compartment</TableHead>
                           <TableHead>Date Range</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Actions</TableHead>
@@ -851,6 +855,16 @@ export default function AdminPage() {
                                 {burnType ? burnType.name : 'Unknown Type'}
                               </TableCell>
                               <TableCell>
+                                {permit.compartment ? (
+                                  <div className="flex items-center">
+                                    <Building className="h-4 w-4 mr-1 text-muted-foreground" />
+                                    <span>{permit.compartment}</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-muted-foreground">-</span>
+                                )}
+                              </TableCell>
+                              <TableCell>
                                 {new Date(permit.startDate).toLocaleDateString()} - {new Date(permit.endDate).toLocaleDateString()}
                               </TableCell>
                               <TableCell>
@@ -871,10 +885,8 @@ export default function AdminPage() {
                                     variant="outline"
                                     size="sm"
                                     onClick={() => {
-                                      toast({
-                                        title: "Permit Details",
-                                        description: `Details: ${permit.details || 'No additional details'}\nLocation: ${permit.location?.address || 'No address provided'}`,
-                                      });
+                                      setSelectedPermit(permit);
+                                      setPermitDetailsOpen(true);
                                     }}
                                   >
                                     View Details
@@ -1697,6 +1709,176 @@ export default function AdminPage() {
           </div>
         </main>
         <Footer />
+        
+        {/* Permit Details Dialog */}
+        <Dialog open={permitDetailsOpen} onOpenChange={setPermitDetailsOpen}>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Permit Details</DialogTitle>
+              <DialogDescription>
+                Detailed information about this burn permit application
+              </DialogDescription>
+            </DialogHeader>
+            
+            {selectedPermit && (
+              <div className="space-y-6">
+                {/* Header with Permit Type and Status */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-muted/50 rounded-lg">
+                  <div>
+                    <h3 className="text-xl font-semibold text-primary">
+                      {burnTypes.find(bt => bt.id === selectedPermit.burnTypeId)?.name || 'Unknown Burn Type'}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Permit ID: {selectedPermit.id.substring(0, 12)}...
+                    </p>
+                  </div>
+                  <Badge 
+                    variant={
+                      selectedPermit.status === 'approved' ? 'default' :
+                      selectedPermit.status === 'pending' ? 'secondary' :
+                      selectedPermit.status === 'rejected' || selectedPermit.status === 'cancelled' ? 'destructive' :
+                      'outline'
+                    }
+                    className="text-sm px-3 py-1"
+                  >
+                    {selectedPermit.status.charAt(0).toUpperCase() + selectedPermit.status.slice(1)}
+                  </Badge>
+                </div>
+
+                {/* Key Information Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Dates Section */}
+                  <div className="p-4 border rounded-lg bg-card">
+                    <h4 className="font-semibold mb-3 text-primary">Dates & Timeline</h4>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Burn Date</span>
+                        <div className="flex items-center text-sm font-medium">
+                          <MapPin className="h-4 w-4 mr-1" />
+                          {new Date(selectedPermit.startDate).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Applied</span>
+                        <div className="flex items-center text-sm">
+                          <MapPin className="h-4 w-4 mr-1" />
+                          {new Date(selectedPermit.createdAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                      {selectedPermit.status === "approved" && selectedPermit.approvedAt && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Approved</span>
+                          <div className="flex items-center text-sm text-green-600">
+                            <CheckCircle2 className="h-4 w-4 mr-1" />
+                            {new Date(selectedPermit.approvedAt).toLocaleDateString()}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Location & Details Section */}
+                  <div className="p-4 border rounded-lg bg-card">
+                    <h4 className="font-semibold mb-3 text-primary">Location & Details</h4>
+                    <div className="space-y-3">
+                      <div>
+                        <span className="text-sm text-muted-foreground block mb-1">Area</span>
+                        <div className="flex items-center text-sm font-medium">
+                          <MapPin className="h-4 w-4 mr-1" />
+                          {areas.find(a => a.id === selectedPermit.areaId)?.name || 'Unknown Area'}
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <span className="text-sm text-muted-foreground block mb-1">Coordinates</span>
+                        <div className="flex items-center text-sm">
+                          <MapPin className="h-4 w-4 mr-1" />
+                          {selectedPermit.location?.latitude?.toFixed(6)}, {selectedPermit.location?.longitude?.toFixed(6)}
+                        </div>
+                        {selectedPermit.location?.address && (
+                          <p className="text-sm text-muted-foreground mt-1">{selectedPermit.location.address}</p>
+                        )}
+                      </div>
+                      
+                      {selectedPermit.compartment && (
+                        <div>
+                          <span className="text-sm text-muted-foreground block mb-1">Compartment</span>
+                          <div className="flex items-center text-sm font-medium">
+                            <Building className="h-4 w-4 mr-1" />
+                            {selectedPermit.compartment}
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div>
+                        <span className="text-sm text-muted-foreground block mb-1">Applicant</span>
+                        <div className="flex items-center text-sm">
+                          <User className="h-4 w-4 mr-1" />
+                          {users.find(u => u.uid === selectedPermit.userId)?.displayName || 
+                           users.find(u => u.uid === selectedPermit.userId)?.email || 
+                           'Unknown User'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Additional Details */}
+                {selectedPermit.details && (
+                  <div className="p-4 border rounded-lg bg-card">
+                    <h4 className="font-semibold mb-3 text-primary">Additional Details</h4>
+                    <div className="bg-muted p-3 rounded-md text-sm">
+                      {selectedPermit.details}
+                    </div>
+                  </div>
+                )}
+
+                {/* Status-specific Information */}
+                {selectedPermit.status === "approved" && selectedPermit.approvedBy && selectedPermit.approvedAt && (
+                  <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                    <div className="flex items-center mb-2">
+                      <CheckCircle2 className="h-5 w-5 text-green-600 mr-2" />
+                      <h4 className="font-semibold text-green-800 dark:text-green-300">Approval Information</h4>
+                    </div>
+                    <p className="text-sm text-green-700 dark:text-green-400">
+                      Approved by: <span className="font-medium">{selectedPermit.approvedBy}</span> on {new Date(selectedPermit.approvedAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                )}
+                
+                {selectedPermit.status === "rejected" && selectedPermit.rejectionReason && (
+                  <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <div className="flex items-center mb-2">
+                      <XCircle className="h-5 w-5 text-red-600 mr-2" />
+                      <h4 className="font-semibold text-red-800 dark:text-red-300">Reason for Rejection</h4>
+                    </div>
+                    <div className="bg-red-100 dark:bg-red-900/30 p-3 rounded-md">
+                      <p className="text-sm text-red-700 dark:text-red-400">{selectedPermit.rejectionReason}</p>
+                    </div>
+                  </div>
+                )}
+
+                {selectedPermit.status === "cancelled" && selectedPermit.rejectionReason && (
+                  <div className="p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+                    <div className="flex items-center mb-2">
+                      <XCircle className="h-5 w-5 text-orange-600 mr-2" />
+                      <h4 className="font-semibold text-orange-800 dark:text-orange-300">Cancellation Details</h4>
+                    </div>
+                    <div className="bg-orange-100 dark:bg-orange-900/30 p-3 rounded-md">
+                      <p className="text-sm text-orange-700 dark:text-orange-400">{selectedPermit.rejectionReason}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setPermitDetailsOpen(false)}>
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </>
   );

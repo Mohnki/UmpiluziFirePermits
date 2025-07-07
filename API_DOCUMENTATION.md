@@ -158,6 +158,35 @@ GET /api/permits/:id
 ```
 Get a specific permit by its ID.
 
+**Example Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "permit_12345",
+    "userId": "user_67890",
+    "burnTypeId": "controlled_burn",
+    "areaId": "umpiluzi_section_a",
+    "farmId": "farm_001",
+    "compartment": "C-14B",
+    "startDate": "2024-07-15T06:00:00.000Z",
+    "endDate": "2024-07-15T18:00:00.000Z",
+    "status": "approved",
+    "location": {
+      "latitude": -26.2041,
+      "longitude": 28.0473,
+      "address": "Umpiluzi FMU, Section A"
+    },
+    "details": "Controlled burn of grass areas",
+    "approvedBy": "manager_001",
+    "approvedAt": "2024-07-14T10:30:00.000Z",
+    "createdAt": "2024-07-13T14:20:00.000Z",
+    "updatedAt": "2024-07-14T10:30:00.000Z"
+  },
+  "message": "Permit retrieved successfully"
+}
+```
+
 #### Get User's Permits (Admin/Manager only)
 ```
 GET /api/users/:userId/permits
@@ -178,6 +207,47 @@ GET /api/areas
 ```
 Get all available areas.
 
+**Response Structure:**
+Each area object contains the following fields:
+- `id` - Unique area identifier
+- `name` - Display name of the area
+- `description` - Detailed description of the area
+- `areaManagerId` - ID of the user managing this area
+- `location` - Optional GPS coordinates with latitude and longitude
+- `allowedBurnTypes` - Object mapping burn type IDs to boolean permissions
+- `createdAt` - Date when area was created (ISO format)
+- `createdBy` - User ID who created the area
+- `updatedAt` - Date when area was last modified (ISO format)
+
+**Example Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "umpiluzi_section_a",
+      "name": "Umpiluzi Section A",
+      "description": "Primary fire management section covering eastern grasslands",
+      "areaManagerId": "manager_001",
+      "location": {
+        "latitude": -26.2041,
+        "longitude": 28.0473
+      },
+      "allowedBurnTypes": {
+        "controlled_burn": true,
+        "prescribed_burn": true,
+        "firebreak_maintenance": true,
+        "emergency_burn": false
+      },
+      "createdAt": "2024-01-15T09:00:00.000Z",
+      "createdBy": "admin_001",
+      "updatedAt": "2024-06-20T14:30:00.000Z"
+    }
+  ],
+  "message": "Retrieved 1 areas"
+}
+```
+
 #### Get Area by ID
 ```
 GET /api/areas/:id
@@ -192,11 +262,114 @@ GET /api/burn-types
 ```
 Get all available burn types.
 
+**Response Structure:**
+Each burn type object contains the following fields:
+- `id` - Unique burn type identifier
+- `name` - Display name of the burn type
+- `description` - Detailed description of the burn type and requirements
+- `defaultAllowed` - Whether this burn type is allowed by default in new areas
+- `requiresPermit` - Whether this burn type requires a permit application
+- `createdAt` - Date when burn type was created (ISO format)
+- `createdBy` - User ID who created the burn type
+- `updatedAt` - Date when burn type was last modified (ISO format)
+
+**Example Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "controlled_burn",
+      "name": "Controlled Burn",
+      "description": "Planned burning under controlled conditions for vegetation management",
+      "defaultAllowed": true,
+      "requiresPermit": true,
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "createdBy": "admin_001",
+      "updatedAt": "2024-03-15T10:00:00.000Z"
+    },
+    {
+      "id": "firebreak_maintenance", 
+      "name": "Firebreak Maintenance",
+      "description": "Burning for maintaining firebreaks and access roads",
+      "defaultAllowed": true,
+      "requiresPermit": false,
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "createdBy": "admin_001",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    }
+  ],
+  "message": "Retrieved 2 burn types"
+}
+```
+
 #### Get Burn Type by ID
 ```
 GET /api/burn-types/:id
 ```
 Get a specific burn type by its ID.
+
+### User Profile
+
+#### Get User Profile
+```
+GET /api/user/profile
+```
+Get the current authenticated user's profile information.
+
+**Response Structure:**
+User profile object contains the following fields:
+- `uid` - Unique user identifier (Firebase UID)
+- `email` - User's email address
+- `displayName` - User's display name
+- `photoURL` - Optional profile photo URL
+- `role` - User role (admin, area-manager, user, api-user)
+- `createdAt` - Date when user account was created (ISO format)
+
+**Example Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "uid": "user_67890",
+    "email": "manager@umpiluzi.co.za",
+    "displayName": "John Smith",
+    "photoURL": "https://example.com/photo.jpg",
+    "role": "area-manager",
+    "createdAt": "2024-02-01T08:00:00.000Z"
+  },
+  "message": "User profile retrieved successfully"
+}
+```
+
+### Authentication
+
+#### Verify Token
+```
+POST /api/auth/verify
+```
+Verify a Firebase ID token and get user profile.
+
+**Request Body:**
+```json
+{
+  "idToken": "your_firebase_id_token"
+}
+```
+
+**Example Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "uid": "user_67890",
+    "email": "manager@umpiluzi.co.za",
+    "displayName": "John Smith",
+    "role": "area-manager"
+  },
+  "message": "Authentication successful"
+}
+```
 
 ### Health Check
 
@@ -205,6 +378,15 @@ Get a specific burn type by its ID.
 GET /api/health
 ```
 Check if the API is running (no authentication required).
+
+**Example Response:**
+```json
+{
+  "success": true,
+  "message": "API is running",
+  "timestamp": "2024-07-07T08:00:00.000Z"
+}
+```
 
 ## User Roles and Permissions
 

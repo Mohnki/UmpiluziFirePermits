@@ -6,7 +6,7 @@ import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Alert, AlertDescription } from "../components/ui/alert";
-import { Copy, CheckCircle, Key, Code, Book, Shield, Eye, EyeOff, Download, Play, AlertCircle, LogOut } from "lucide-react";
+import { Copy, CheckCircle, Key, Code, Book, Shield, Eye, EyeOff, Download, AlertCircle, LogOut } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
 
 export default function ApiDocumentation() {
@@ -17,8 +17,6 @@ export default function ApiDocumentation() {
   const [loadingToken, setLoadingToken] = useState(true);
   const [showToken, setShowToken] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
-  const [testingEndpoint, setTestingEndpoint] = useState<string | null>(null);
-  const [testResults, setTestResults] = useState<any>(null);
   
   const baseUrl = window.location.origin;
 
@@ -248,84 +246,7 @@ Generated on: ${new Date().toLocaleDateString()}
     }
   };
 
-  const testEndpoint = async (endpoint: string, method: string = 'GET', params?: any) => {
-    if (!idToken) {
-      toast({
-        title: "Authentication required",
-        description: "Please ensure you're logged in to test endpoints",
-        variant: "destructive",
-      });
-      return;
-    }
 
-    try {
-      setTestingEndpoint(endpoint);
-      setTestResults(null);
-
-      let url = `${baseUrl}${endpoint}`;
-      
-      // Add query parameters if provided
-      if (params && method === 'GET') {
-        const searchParams = new URLSearchParams();
-        Object.entries(params).forEach(([key, value]) => {
-          if (value !== undefined && value !== '') {
-            searchParams.append(key, String(value));
-          }
-        });
-        if (searchParams.toString()) {
-          url += `?${searchParams.toString()}`;
-        }
-      }
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Authorization': `Bearer ${idToken}`,
-          'Content-Type': 'application/json',
-        },
-        ...(method !== 'GET' && params ? { body: JSON.stringify(params) } : {}),
-      });
-
-      const data = await response.json();
-      
-      setTestResults({
-        status: response.status,
-        statusText: response.statusText,
-        data,
-        headers: Object.fromEntries(response.headers.entries()),
-        url,
-      });
-
-      if (data.success) {
-        toast({
-          title: "Test successful",
-          description: `${method} ${endpoint} returned ${response.status}`,
-        });
-      } else {
-        toast({
-          title: "Test completed",
-          description: `${method} ${endpoint} returned ${response.status}: ${data.error || 'Unknown error'}`,
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      setTestResults({
-        status: 0,
-        statusText: 'Network Error',
-        data: { success: false, error: error instanceof Error ? error.message : 'Unknown error' },
-        headers: {},
-        url: endpoint,
-      });
-      
-      toast({
-        title: "Test failed",
-        description: "Network error occurred while testing endpoint",
-        variant: "destructive",
-      });
-    } finally {
-      setTestingEndpoint(null);
-    }
-  };
 
   const CodeBlock = ({ code, language = "bash", label }: { code: string; language?: string; label: string }) => (
     <div className="relative">
@@ -362,73 +283,7 @@ Generated on: ${new Date().toLocaleDateString()}
     </Tabs>
   );
 
-  const TestButton = ({ endpoint, method = 'GET', params, label }: { 
-    endpoint: string; 
-    method?: string; 
-    params?: any; 
-    label: string; 
-  }) => (
-    <Button
-      onClick={() => testEndpoint(endpoint, method, params)}
-      disabled={testingEndpoint === endpoint || !idToken}
-      variant="outline"
-      size="sm"
-      className="flex items-center gap-2"
-    >
-      {testingEndpoint === endpoint ? (
-        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
-      ) : (
-        <Play className="h-3 w-3" />
-      )}
-      {label}
-    </Button>
-  );
 
-  const TestResults = () => {
-    if (!testResults) return null;
-
-    const isSuccess = testResults.status >= 200 && testResults.status < 300;
-    
-    return (
-      <Card className="mt-4">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            {isSuccess ? (
-              <CheckCircle className="h-5 w-5 text-green-500" />
-            ) : (
-              <AlertCircle className="h-5 w-5 text-red-500" />
-            )}
-            Test Results
-          </CardTitle>
-          <CardDescription>
-            {testResults.status} {testResults.statusText} - {testResults.url}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div>
-              <h4 className="font-semibold mb-2">Response Headers</h4>
-              <div className="text-sm bg-gray-100 dark:bg-gray-800 p-2 rounded">
-                {Object.entries(testResults.headers).map(([key, value]) => (
-                  <div key={key} className="flex">
-                    <span className="font-mono text-blue-600 dark:text-blue-400 mr-2">{key}:</span>
-                    <span className="font-mono">{String(value)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold mb-2">Response Body</h4>
-              <pre className="bg-gray-900 dark:bg-gray-800 text-green-400 p-4 rounded-md overflow-x-auto text-sm">
-                <code>{JSON.stringify(testResults.data, null, 2)}</code>
-              </pre>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -905,24 +760,7 @@ def refresh_id_token(refresh_token):
                     <code>/api/permits?compartment=C-14B&status=approved</code><br/>
                     <code>/api/permits?areaId=umpiluzi_section_a&compartment=C-*&includeHistorical=true</code>
                   </div>
-                  <div className="flex gap-2 mt-3 flex-wrap">
-                    <TestButton endpoint="/api/permits" label="Test Current Day" />
-                    <TestButton 
-                      endpoint="/api/permits" 
-                      params={{ includeHistorical: true, status: 'approved', limit: 5 }}
-                      label="Test Historical" 
-                    />
-                    <TestButton 
-                      endpoint="/api/permits" 
-                      params={{ 'location[latitude]': '-26.2041', 'location[longitude]': '28.0473', 'location[radius]': '10' }}
-                      label="Test Location Filter" 
-                    />
-                    <TestButton 
-                      endpoint="/api/permits" 
-                      params={{ compartment: 'C-14B', status: 'approved' }}
-                      label="Test Compartment Filter" 
-                    />
-                  </div>
+
                 </div>
 
                 <div className="space-y-2">
@@ -1016,14 +854,7 @@ def refresh_id_token(refresh_token):
                   <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-950 rounded text-xs text-amber-800 dark:text-amber-200">
                     <strong>Example:</strong> <code>/api/areas?location[latitude]=-26.2041&location[longitude]=28.0473&hasActiveBans=false</code>
                   </div>
-                  <div className="flex gap-2 mt-3">
-                    <TestButton endpoint="/api/areas" label="Test All Areas" />
-                    <TestButton 
-                      endpoint="/api/areas" 
-                      params={{ 'location[latitude]': '-26.2041', 'location[longitude]': '28.0473', 'location[radius]': '50' }}
-                      label="Test Location Filter" 
-                    />
-                  </div>
+
                 </div>
 
                 <div className="space-y-2">
@@ -1041,6 +872,52 @@ def refresh_id_token(refresh_token):
                   </div>
                   <p className="text-sm text-muted-foreground">Get all permits for a specific area</p>
                 </div>
+
+                <div className="space-y-2 mt-4">
+                  <h4 className="font-medium">Response Data Structure - Areas</h4>
+                  <details className="text-sm">
+                    <summary className="cursor-pointer font-medium">Area Object Fields</summary>
+                    <div className="mt-2 space-y-1 ml-4 text-xs">
+                      <div><code>id</code> - Unique area identifier</div>
+                      <div><code>name</code> - Display name of the area</div>
+                      <div><code>description</code> - Detailed description of the area</div>
+                      <div><code>areaManagerId</code> - ID of the user managing this area</div>
+                      <div><code>location</code> - Optional GPS coordinates with latitude and longitude</div>
+                      <div><code>allowedBurnTypes</code> - Object mapping burn type IDs to boolean permissions</div>
+                      <div><code>createdAt</code> - Date when area was created (ISO format)</div>
+                      <div><code>createdBy</code> - User ID who created the area</div>
+                      <div><code>updatedAt</code> - Date when area was last modified (ISO format)</div>
+                    </div>
+                  </details>
+                  <div className="mt-2 p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded text-xs">
+                    <strong>Example Response:</strong>
+                    <pre className="mt-1 text-green-800 dark:text-green-200">{`{
+  "success": true,
+  "data": [
+    {
+      "id": "umpiluzi_section_a",
+      "name": "Umpiluzi Section A",
+      "description": "Primary fire management section covering eastern grasslands",
+      "areaManagerId": "manager_001",
+      "location": {
+        "latitude": -26.2041,
+        "longitude": 28.0473
+      },
+      "allowedBurnTypes": {
+        "controlled_burn": true,
+        "prescribed_burn": true,
+        "firebreak_maintenance": true,
+        "emergency_burn": false
+      },
+      "createdAt": "2024-01-15T09:00:00.000Z",
+      "createdBy": "admin_001",
+      "updatedAt": "2024-06-20T14:30:00.000Z"
+    }
+  ],
+  "message": "Retrieved 1 areas"
+}`}</pre>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
@@ -1056,9 +933,7 @@ def refresh_id_token(refresh_token):
                     <code>/api/burn-types</code>
                   </div>
                   <p className="text-sm text-muted-foreground">Get all burn types</p>
-                  <div className="flex gap-2 mt-3">
-                    <TestButton endpoint="/api/burn-types" label="Test Burn Types" />
-                  </div>
+
                 </div>
 
                 <div className="space-y-2">
@@ -1067,6 +942,52 @@ def refresh_id_token(refresh_token):
                     <code>/api/burn-types/:id</code>
                   </div>
                   <p className="text-sm text-muted-foreground">Get a specific burn type by ID</p>
+                </div>
+
+                <div className="space-y-2 mt-4">
+                  <h4 className="font-medium">Response Data Structure - Burn Types</h4>
+                  <details className="text-sm">
+                    <summary className="cursor-pointer font-medium">Burn Type Object Fields</summary>
+                    <div className="mt-2 space-y-1 ml-4 text-xs">
+                      <div><code>id</code> - Unique burn type identifier</div>
+                      <div><code>name</code> - Display name of the burn type</div>
+                      <div><code>description</code> - Detailed description of the burn type and requirements</div>
+                      <div><code>defaultAllowed</code> - Whether this burn type is allowed by default in new areas</div>
+                      <div><code>requiresPermit</code> - Whether this burn type requires a permit application</div>
+                      <div><code>createdAt</code> - Date when burn type was created (ISO format)</div>
+                      <div><code>createdBy</code> - User ID who created the burn type</div>
+                      <div><code>updatedAt</code> - Date when burn type was last modified (ISO format)</div>
+                    </div>
+                  </details>
+                  <div className="mt-2 p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded text-xs">
+                    <strong>Example Response:</strong>
+                    <pre className="mt-1 text-green-800 dark:text-green-200">{`{
+  "success": true,
+  "data": [
+    {
+      "id": "controlled_burn",
+      "name": "Controlled Burn",
+      "description": "Planned burning under controlled conditions for vegetation management",
+      "defaultAllowed": true,
+      "requiresPermit": true,
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "createdBy": "admin_001",
+      "updatedAt": "2024-03-15T10:00:00.000Z"
+    },
+    {
+      "id": "firebreak_maintenance", 
+      "name": "Firebreak Maintenance",
+      "description": "Burning for maintaining firebreaks and access roads",
+      "defaultAllowed": true,
+      "requiresPermit": false,
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "createdBy": "admin_001",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    }
+  ],
+  "message": "Retrieved 2 burn types"
+}`}</pre>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -1091,8 +1012,48 @@ def refresh_id_token(refresh_token):
                     <code>/api/health</code>
                   </div>
                   <p className="text-sm text-muted-foreground">API health check (no auth required)</p>
-                  <div className="flex gap-2 mt-3">
-                    <TestButton endpoint="/api/health" label="Test Health Check" />
+
+                </div>
+
+                <div className="space-y-2 mt-4">
+                  <h4 className="font-medium">Response Data Structure - User Profile</h4>
+                  <details className="text-sm">
+                    <summary className="cursor-pointer font-medium">User Profile Object Fields</summary>
+                    <div className="mt-2 space-y-1 ml-4 text-xs">
+                      <div><code>uid</code> - Unique user identifier (Firebase UID)</div>
+                      <div><code>email</code> - User's email address</div>
+                      <div><code>displayName</code> - User's display name</div>
+                      <div><code>photoURL</code> - Optional profile photo URL</div>
+                      <div><code>role</code> - User role (admin, area-manager, user, api-user)</div>
+                      <div><code>createdAt</code> - Date when user account was created (ISO format)</div>
+                    </div>
+                  </details>
+                  <div className="mt-2 p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded text-xs">
+                    <strong>Example Response:</strong>
+                    <pre className="mt-1 text-green-800 dark:text-green-200">{`{
+  "success": true,
+  "data": {
+    "uid": "user_67890",
+    "email": "manager@umpiluzi.co.za",
+    "displayName": "John Smith",
+    "photoURL": "https://example.com/photo.jpg",
+    "role": "area-manager",
+    "createdAt": "2024-02-01T08:00:00.000Z"
+  },
+  "message": "User profile retrieved successfully"
+}`}</pre>
+                  </div>
+                </div>
+
+                <div className="space-y-2 mt-4">
+                  <h4 className="font-medium">Response Data Structure - Health Check</h4>
+                  <div className="mt-2 p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded text-xs">
+                    <strong>Example Response:</strong>
+                    <pre className="mt-1 text-green-800 dark:text-green-200">{`{
+  "success": true,
+  "message": "API is running",
+  "timestamp": "2024-07-07T08:00:00.000Z"
+}`}</pre>
                   </div>
                 </div>
               </CardContent>
@@ -1413,13 +1374,48 @@ permits = api.get_permits({'status': 'approved'})`}
                   label="Complete API Class"
                 />
               </div>
+
+              <div>
+                <h3 className="font-semibold mb-3">Common Use Cases with Response Examples</h3>
+                <div className="space-y-4 text-sm">
+                  <div>
+                    <h4 className="font-medium mb-2">Use Case 1: Find all permits for compartment C-14B</h4>
+                    <CodeBlock 
+                      code={`GET ${baseUrl}/api/permits?compartment=C-14B&includeHistorical=true`}
+                      label="Find compartment permits"
+                    />
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-medium mb-2">Use Case 2: Get all approved permits in a specific area today</h4>
+                    <CodeBlock 
+                      code={`GET ${baseUrl}/api/permits?areaId=umpiluzi_section_a&status=approved`}
+                      label="Today's approved permits"
+                    />
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-medium mb-2">Use Case 3: Find permits near GPS coordinates</h4>
+                    <CodeBlock 
+                      code={`GET ${baseUrl}/api/permits?location[latitude]=-26.2041&location[longitude]=28.0473&location[radius]=5`}
+                      label="Location-based search"
+                    />
+                  </div>
+
+                  <div>
+                    <h4 className="font-medium mb-2">Use Case 4: Get area details with burn type permissions</h4>
+                    <CodeBlock 
+                      code={`GET ${baseUrl}/api/areas/umpiluzi_section_a`}
+                      label="Area details"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Returns allowedBurnTypes mapping showing which burn types are permitted in this area</p>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
-      
-      {/* Test Results Section */}
-      <TestResults />
     </div>
   );
 }

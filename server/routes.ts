@@ -86,10 +86,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/permits", authenticateUser, async (req: Request, res: Response) => {
     try {
       // Convert string query params to proper types before validation
-      const processedQuery = {
+      const processedQuery: any = {
         ...req.query,
         includeHistorical: req.query.includeHistorical === 'true' ? true : undefined
       };
+
+      // Convert numeric parameters
+      if (processedQuery.limit) {
+        processedQuery.limit = parseInt(processedQuery.limit, 10);
+      }
+      if (processedQuery.offset) {
+        processedQuery.offset = parseInt(processedQuery.offset, 10);
+      }
+
+      // Convert location parameters if they exist
+      if (processedQuery['location[latitude]'] || processedQuery['location[longitude]'] || processedQuery['location[radius]']) {
+        processedQuery.location = {
+          latitude: processedQuery['location[latitude]'] ? parseFloat(processedQuery['location[latitude]']) : undefined,
+          longitude: processedQuery['location[longitude]'] ? parseFloat(processedQuery['location[longitude]']) : undefined,
+          radius: processedQuery['location[radius]'] ? parseFloat(processedQuery['location[radius]']) : undefined
+        };
+        // Remove the bracket notation parameters
+        delete processedQuery['location[latitude]'];
+        delete processedQuery['location[longitude]'];
+        delete processedQuery['location[radius]'];
+      }
       
       const queryParams = permitQuerySchema.parse(processedQuery);
       

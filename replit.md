@@ -146,6 +146,14 @@ The `.replit` file configures the project to run in the Replit environment with 
 - **Implemented compartment filtering** in Firebase service with case-insensitive search
 - **Enhanced API documentation** with interactive testing capabilities for compartment filtering
 
+### Comprehensive API Response Documentation (July 2025)
+- **Added detailed response examples** for all API endpoints in both web and markdown documentation
+- **Enhanced response structure documentation** with complete field descriptions for all data models
+- **Updated Areas API documentation** with full object structure and example responses
+- **Updated Burn Types API documentation** with comprehensive field explanations and examples
+- **Updated User Profile API documentation** with complete authentication and profile response examples
+- **Added Health Check API documentation** with example responses
+
 The compartment field allows users to specify and filter permits by specific sections within farms or areas where burns will occur (e.g., "C-14B", "Section A", etc.).
 
 ## API Documentation Updates

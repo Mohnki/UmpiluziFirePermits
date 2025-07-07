@@ -407,6 +407,7 @@ export default function PermitManagement({
                 <TableRow>
                   <TableHead>Burn Type</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead>Compartment</TableHead>
                   <TableHead>Applicant</TableHead>
                   <TableHead>Submitted</TableHead>
                   <TableHead>Actions</TableHead>
@@ -420,6 +421,16 @@ export default function PermitManagement({
                     </TableCell>
                     <TableCell>
                       {format(permit.startDate, "MMM d, yyyy")}
+                    </TableCell>
+                    <TableCell>
+                      {permit.compartment ? (
+                        <div className="flex items-center">
+                          <Building className="h-4 w-4 mr-1 text-muted-foreground" />
+                          <span>{permit.compartment}</span>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center">
@@ -483,6 +494,7 @@ export default function PermitManagement({
                 <TableRow>
                   <TableHead>Burn Type</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead>Compartment</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Applicant</TableHead>
                   <TableHead>Actions</TableHead>
@@ -496,6 +508,16 @@ export default function PermitManagement({
                     </TableCell>
                     <TableCell>
                       {format(permit.startDate, "MMM d, yyyy")}
+                    </TableCell>
+                    <TableCell>
+                      {permit.compartment ? (
+                        <div className="flex items-center">
+                          <Building className="h-4 w-4 mr-1 text-muted-foreground" />
+                          <span>{permit.compartment}</span>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge variant={getStatusBadgeVariant(permit.status) as any}>
@@ -560,6 +582,7 @@ export default function PermitManagement({
                 <TableRow>
                   <TableHead>Burn Type</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead>Compartment</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Applicant</TableHead>
                   <TableHead>Actions</TableHead>
@@ -573,6 +596,16 @@ export default function PermitManagement({
                     </TableCell>
                     <TableCell>
                       {format(permit.startDate, "MMM d, yyyy")}
+                    </TableCell>
+                    <TableCell>
+                      {permit.compartment ? (
+                        <div className="flex items-center">
+                          <Building className="h-4 w-4 mr-1 text-muted-foreground" />
+                          <span>{permit.compartment}</span>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge variant={getStatusBadgeVariant(permit.status) as any}>
@@ -744,85 +777,134 @@ export default function PermitManagement({
           </DialogHeader>
           
           {selectedPermit && (
-            <div className="space-y-4">
-              <div className="flex justify-between">
-                <h3 className="text-lg font-semibold">
-                  {getBurnTypeName(selectedPermit.burnTypeId)}
-                </h3>
-                <Badge variant={getStatusBadgeVariant(selectedPermit.status) as any}>
+            <div className="space-y-6">
+              {/* Header with Permit Type and Status */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-muted/50 rounded-lg">
+                <div>
+                  <h3 className="text-xl font-semibold text-primary">
+                    {getBurnTypeName(selectedPermit.burnTypeId)}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Permit ID: {selectedPermit.id.substring(0, 12)}...
+                  </p>
+                </div>
+                <Badge variant={getStatusBadgeVariant(selectedPermit.status) as any} className="text-sm px-3 py-1">
                   {selectedPermit.status.charAt(0).toUpperCase() + selectedPermit.status.slice(1)}
                 </Badge>
               </div>
-              
+
+              {/* Key Information Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h4 className="text-sm font-medium mb-1">Burn Date</h4>
-                  <p className="flex items-center text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    {format(selectedPermit.startDate, "MMMM d, yyyy")}
-                    {selectedPermit.startDate.toDateString() !== selectedPermit.endDate.toDateString() && 
-                      ` - ${format(selectedPermit.endDate, "MMMM d, yyyy")}`}
-                  </p>
-                </div>
-                
-                <div>
-                  <h4 className="text-sm font-medium mb-1">Application Date</h4>
-                  <p className="flex items-center text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    {format(selectedPermit.createdAt, "MMMM d, yyyy")}
-                  </p>
-                </div>
-                
-                <div>
-                  <h4 className="text-sm font-medium mb-1">Location</h4>
-                  <p className="flex items-center text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4 mr-1" />
-                    {selectedPermit.location.latitude.toFixed(6)}, {selectedPermit.location.longitude.toFixed(6)}
-                    {selectedPermit.location.address && <span className="ml-1">({selectedPermit.location.address})</span>}
-                  </p>
-                </div>
-                
-                <div>
-                  <h4 className="text-sm font-medium mb-1">Applicant</h4>
-                  <p className="flex items-center text-sm text-muted-foreground">
-                    <User className="h-4 w-4 mr-1" />
-                    User ID: {selectedPermit.userId.substring(0, 10)}...
-                  </p>
-                </div>
-                
-                {selectedPermit.compartment && (
-                  <div>
-                    <h4 className="text-sm font-medium mb-1">Compartment</h4>
-                    <p className="flex items-center text-sm text-muted-foreground">
-                      <Building className="h-4 w-4 mr-1" />
-                      {selectedPermit.compartment}
-                    </p>
+                {/* Dates Section */}
+                <div className="p-4 border rounded-lg bg-card">
+                  <h4 className="font-semibold mb-3 text-primary">Dates & Timeline</h4>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Burn Date</span>
+                      <div className="flex items-center text-sm font-medium">
+                        <Calendar className="h-4 w-4 mr-1" />
+                        {format(selectedPermit.startDate, "MMM d, yyyy")}
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Applied</span>
+                      <div className="flex items-center text-sm">
+                        <Calendar className="h-4 w-4 mr-1" />
+                        {format(selectedPermit.createdAt, "MMM d, yyyy HH:mm")}
+                      </div>
+                    </div>
+                    {selectedPermit.status === "approved" && selectedPermit.approvedAt && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Approved</span>
+                        <div className="flex items-center text-sm text-green-600">
+                          <CheckCircle2 className="h-4 w-4 mr-1" />
+                          {format(selectedPermit.approvedAt, "MMM d, yyyy HH:mm")}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
+
+                {/* Location & Details Section */}
+                <div className="p-4 border rounded-lg bg-card">
+                  <h4 className="font-semibold mb-3 text-primary">Location & Details</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <span className="text-sm text-muted-foreground block mb-1">Coordinates</span>
+                      <div className="flex items-center text-sm">
+                        <MapPin className="h-4 w-4 mr-1" />
+                        {selectedPermit.location.latitude.toFixed(6)}, {selectedPermit.location.longitude.toFixed(6)}
+                      </div>
+                      {selectedPermit.location.address && (
+                        <p className="text-sm text-muted-foreground mt-1">{selectedPermit.location.address}</p>
+                      )}
+                    </div>
+                    
+                    {selectedPermit.compartment && (
+                      <div>
+                        <span className="text-sm text-muted-foreground block mb-1">Compartment</span>
+                        <div className="flex items-center text-sm font-medium">
+                          <Building className="h-4 w-4 mr-1" />
+                          {selectedPermit.compartment}
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div>
+                      <span className="text-sm text-muted-foreground block mb-1">Applicant</span>
+                      <div className="flex items-center text-sm">
+                        <User className="h-4 w-4 mr-1" />
+                        User ID: {selectedPermit.userId.substring(0, 10)}...
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              
+
+              {/* Additional Details */}
               {selectedPermit.details && (
-                <div>
-                  <h4 className="text-sm font-medium mb-1">Additional Details</h4>
+                <div className="p-4 border rounded-lg bg-card">
+                  <h4 className="font-semibold mb-3 text-primary">Additional Details</h4>
                   <div className="bg-muted p-3 rounded-md text-sm">
                     {selectedPermit.details}
                   </div>
                 </div>
               )}
-              
+
+              {/* Status-specific Information */}
               {selectedPermit.status === "approved" && selectedPermit.approvedBy && selectedPermit.approvedAt && (
-                <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 rounded-md">
-                  <h4 className="text-sm font-medium text-green-800 dark:text-green-300 mb-1">Approval Information</h4>
+                <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                  <div className="flex items-center mb-2">
+                    <CheckCircle2 className="h-5 w-5 text-green-600 mr-2" />
+                    <h4 className="font-semibold text-green-800 dark:text-green-300">Approval Information</h4>
+                  </div>
                   <p className="text-sm text-green-700 dark:text-green-400">
-                    Approved by: {selectedPermit.approvedBy} on {format(selectedPermit.approvedAt, "MMMM d, yyyy")}
+                    Approved by: <span className="font-medium">{selectedPermit.approvedBy}</span> on {format(selectedPermit.approvedAt, "MMMM d, yyyy 'at' HH:mm")}
                   </p>
                 </div>
               )}
               
               {selectedPermit.status === "rejected" && selectedPermit.rejectionReason && (
-                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-md">
-                  <h4 className="text-sm font-medium text-red-800 dark:text-red-300 mb-1">Reason for Rejection</h4>
-                  <p className="text-sm text-red-700 dark:text-red-400">{selectedPermit.rejectionReason}</p>
+                <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                  <div className="flex items-center mb-2">
+                    <XCircleIcon className="h-5 w-5 text-red-600 mr-2" />
+                    <h4 className="font-semibold text-red-800 dark:text-red-300">Reason for Rejection</h4>
+                  </div>
+                  <div className="bg-red-100 dark:bg-red-900/30 p-3 rounded-md">
+                    <p className="text-sm text-red-700 dark:text-red-400">{selectedPermit.rejectionReason}</p>
+                  </div>
+                </div>
+              )}
+
+              {selectedPermit.status === "cancelled" && selectedPermit.rejectionReason && (
+                <div className="p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+                  <div className="flex items-center mb-2">
+                    <XCircleIcon className="h-5 w-5 text-orange-600 mr-2" />
+                    <h4 className="font-semibold text-orange-800 dark:text-orange-300">Cancellation Details</h4>
+                  </div>
+                  <div className="bg-orange-100 dark:bg-orange-900/30 p-3 rounded-md">
+                    <p className="text-sm text-orange-700 dark:text-orange-400">{selectedPermit.rejectionReason}</p>
+                  </div>
                 </div>
               )}
             </div>

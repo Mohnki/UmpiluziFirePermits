@@ -655,6 +655,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/documents/:id/download", authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const document = await DocumentService.getDocumentById(id);
+      
+      if (!document) {
+        return res.status(404).json({
+          success: false,
+          error: "Document not found"
+        });
+      }
+
+      // Check if user can access this document
+      if (!document.isPublic && req.user?.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          error: "Access denied"
+        });
+      }
+
+      // Increment download count
+      await DocumentService.incrementDownloadCount(id);
+      
+      // For now, since we don't have actual file storage, we'll create a simple text file
+      // In a real implementation, you'd retrieve the actual file from storage (AWS S3, etc.)
+      const fileContent = `Document: ${document.title}\n\nDescription: ${document.description || 'No description'}\n\nThis is a placeholder file. In a production system, this would be the actual uploaded file.`;
+      
+      // Set headers for file download
+      res.setHeader('Content-Disposition', `attachment; filename="${document.fileName}"`);
+      res.setHeader('Content-Type', document.fileType);
+      res.setHeader('Content-Length', Buffer.byteLength(fileContent));
+      
+      // Send the file content
+      res.send(fileContent);
+    } catch (error) {
+      console.error("Download document error:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to process download"
+      });
+    }
+  });
+
   app.post("/api/documents/:id/download", authenticateUser, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -680,15 +723,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const response: ApiResponse = {
         success: true,
-        message: "Download count updated"
+        message: "Download count updated",
+        data: { downloadUrl: `/api/documents/${id}/download` }
       };
       
       res.json(response);
     } catch (error) {
-      console.error("Download document error:", error);
+      console.error("Track download error:", error);
       res.status(500).json({
         success: false,
-        error: "Failed to process download"
+        error: "Failed to track download"
       });
     }
   });

@@ -87,20 +87,41 @@ export default function Documents() {
     try {
       setDownloadingId(document.id);
       
-      // Track download
       const idToken = await user.getIdToken();
-      await fetch(`/api/documents/${document.id}/download`, {
-        method: 'POST',
+      
+      // Fetch the file as a blob
+      const response = await fetch(`/api/documents/${document.id}/download`, {
+        method: 'GET',
         headers: {
           'Authorization': `Bearer ${idToken}`,
-          'Content-Type': 'application/json',
         },
       });
 
-      // For now, we'll just show a message since we don't have actual file storage
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+
+      // Get the file as a blob
+      const blob = await response.blob();
+      
+      // Create download URL and trigger download
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = document.fileName;
+      link.style.display = 'none';
+      
+      // Add to DOM, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the object URL
+      URL.revokeObjectURL(downloadUrl);
+
       toast({
-        title: "Download would start",
-        description: `The download for "${document.title}" would begin now if file storage was implemented.`,
+        title: "Download started",
+        description: `Downloading "${document.title}"`,
       });
 
       // Update local download count

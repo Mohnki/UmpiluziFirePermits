@@ -74,7 +74,7 @@ export default function Documents() {
     fetchDocuments();
   }, [user, toast]);
 
-  const handleDownload = async (document: Document) => {
+  const handleDownload = async (doc: Document) => {
     if (!user) {
       toast({
         title: "Sign in required",
@@ -85,12 +85,12 @@ export default function Documents() {
     }
 
     try {
-      setDownloadingId(document.id);
+      setDownloadingId(doc.id);
       
       const idToken = await user.getIdToken();
       
       // Fetch the file as a blob
-      const response = await fetch(`/api/documents/${document.id}/download`, {
+      const response = await fetch(`/api/documents/${doc.id}/download`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${idToken}`,
@@ -108,7 +108,7 @@ export default function Documents() {
       const downloadUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.download = document.fileName;
+      link.download = doc.fileName;
       link.style.display = 'none';
       
       // Add to DOM, click, and remove
@@ -121,15 +121,15 @@ export default function Documents() {
 
       toast({
         title: "Download started",
-        description: `Downloading "${document.title}"`,
+        description: `Downloading "${doc.title}"`,
       });
 
       // Update local download count
       setDocuments(prev => 
-        prev.map(doc => 
-          doc.id === document.id 
-            ? { ...doc, downloadCount: doc.downloadCount + 1 }
-            : doc
+        prev.map(document => 
+          document.id === doc.id 
+            ? { ...document, downloadCount: document.downloadCount + 1 }
+            : document
         )
       );
     } catch (error) {

@@ -232,6 +232,136 @@ export default function AdminPage() {
     },
   });
 
+  // Handle document upload/edit
+  const handleDocumentSubmit = async (values: z.infer<typeof documentFormSchema>) => {
+    if (!user || !userProfile) return;
+    
+    try {
+      setUploadingDocument(true);
+      const idToken = await user.getIdToken();
+      
+      if (editingDocumentId) {
+        // Update existing document
+        const response = await fetch(`/api/documents/${editingDocumentId}`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${idToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(values),
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to update document');
+        }
+        
+        // Update local state
+        setDocuments(prev => 
+          prev.map(doc => 
+            doc.id === editingDocumentId 
+              ? { ...doc, ...values }
+              : doc
+          )
+        );
+        
+        toast({
+          title: "Success",
+          description: "Document updated successfully",
+        });
+      } else {
+        // Upload new document
+        const fileInput = document.getElementById('file-upload') as HTMLInputElement;
+        const file = fileInput?.files?.[0];
+        
+        if (!file) {
+          toast({
+            title: "Error",
+            description: "Please select a file to upload",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Create FormData for file upload
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('title', values.title);
+        formData.append('description', values.description || '');
+        formData.append('isPublic', values.isPublic.toString());
+        
+        const response = await fetch('/api/documents', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${idToken}`,
+          },
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to upload document');
+        }
+        
+        const data = await response.json();
+        
+        // Add new document to local state
+        setDocuments(prev => [...prev, data.data]);
+        
+        toast({
+          title: "Success",
+          description: "Document uploaded successfully",
+        });
+      }
+      
+      setDocumentDialogOpen(false);
+      documentForm.reset();
+      setEditingDocumentId(null);
+    } catch (error) {
+      console.error("Error handling document:", error);
+      toast({
+        title: "Error",
+        description: `Failed to ${editingDocumentId ? 'update' : 'upload'} document. Please try again.`,
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingDocument(false);
+    }
+  };
+
+  // Handle document deletion
+  const handleDeleteDocument = async (documentId: string) => {
+    if (!user || !userProfile) return;
+    
+    try {
+      const idToken = await user.getIdToken();
+      const response = await fetch(`/api/documents/${documentId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${idToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete document');
+      }
+      
+      // Remove from local state
+      setDocuments(prev => prev.filter(doc => doc.id !== documentId));
+      
+      toast({
+        title: "Success",
+        description: "Document deleted successfully",
+      });
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete document. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Fetch all users
   useEffect(() => {
     const fetchUsers = async () => {
@@ -1804,10 +1934,7 @@ export default function AdminPage() {
                         </DialogHeader>
                         
                         <Form {...documentForm}>
-                          <form onSubmit={documentForm.handleSubmit((values) => {
-                            // Document form submission will be handled here
-                            console.log("Document form values:", values);
-                          })} className="space-y-4">
+                          <form onSubmit={documentForm.handleSubmit(handleDocumentSubmit)} className="space-y-4">
                             <FormField
                               control={documentForm.control}
                               name="title"
@@ -1977,10 +2104,7 @@ export default function AdminPage() {
                               <Button 
                                 variant="destructive" 
                                 size="sm"
-                                onClick={() => {
-                                  // Document deletion will be implemented
-                                  console.log("Delete document:", document.id);
-                                }}
+                                onClick={() => handleDeleteDocument(document.id)}
                               >
                                 <Trash className="h-4 w-4" />
                               </Button>

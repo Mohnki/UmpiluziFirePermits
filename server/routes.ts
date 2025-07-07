@@ -1,5 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
+import multer from "multer";
 import { 
   authRequestSchema, 
   permitQuerySchema, 
@@ -30,6 +31,32 @@ import {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Apply rate limiting middleware to all API routes
   app.use('/api', rateLimitMiddleware);
+
+  // Configure multer for file uploads
+  const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB limit
+    },
+    fileFilter: (req, file, cb) => {
+      // Check file types
+      const allowedTypes = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'text/plain',
+        'image/jpeg',
+        'image/jpg',
+        'image/png'
+      ];
+      
+      if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Invalid file type. Only PDF, DOC, DOCX, TXT, JPG, JPEG, PNG files are allowed.'));
+      }
+    }
+  });
 
   // Authentication routes
   app.post("/api/auth/verify", async (req: Request, res: Response) => {
@@ -540,15 +567,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/documents", authenticateUser, requireAdmin, async (req: Request, res: Response) => {
+  app.post("/api/documents", authenticateUser, requireAdmin, upload.single('file'), async (req: Request, res: Response) => {
     try {
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          error: "No file uploaded"
+        });
+      }
+
       const documentData = {
         title: req.body.title,
-        description: req.body.description,
-        fileName: req.body.fileName,
-        fileSize: req.body.fileSize,
-        fileType: req.body.fileType,
-        isPublic: req.body.isPublic || false,
+        description: req.body.description || '',
+        fileName: req.file.originalname,
+        fileSize: req.file.size,
+        fileType: req.file.mimetype,
+        isPublic: req.body.isPublic === 'true',
         uploadedBy: req.user!.uid,
       };
 

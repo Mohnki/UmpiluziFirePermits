@@ -1,0 +1,57 @@
+[Error] ReferenceError: Can't find variable: Calendar
+	(anonymous function) (Admin.tsx:3631)
+	map
+	AdminPage (Admin.tsx:3541:227)
+	renderWithHooks (chunk-RPCDYKBN.js:11548)
+	updateFunctionComponent (chunk-RPCDYKBN.js:14582)
+	callCallback2 (chunk-RPCDYKBN.js:3674)
+	dispatchEvent
+	invokeGuardedCallbackDev (chunk-RPCDYKBN.js:3699)
+	invokeGuardedCallback (chunk-RPCDYKBN.js:3733)
+	beginWork$1 (chunk-RPCDYKBN.js:19765)
+	performUnitOfWork (chunk-RPCDYKBN.js:19198)
+	workLoopSync (chunk-RPCDYKBN.js:19137)
+	renderRootSync (chunk-RPCDYKBN.js:19116)
+	recoverFromConcurrentError (chunk-RPCDYKBN.js:18736)
+	performConcurrentWorkOnRoot (chunk-RPCDYKBN.js:18684)
+	workLoop (chunk-RPCDYKBN.js:197)
+	flushWork (chunk-RPCDYKBN.js:176)
+	performWorkUntilDeadline (chunk-RPCDYKBN.js:384)
+[Error] The above error occurred in the <AdminPage> component:
+
+AdminPage@https://3c354dd1-7f2b-4cf2-a228-df7248da0c64-00-19gajdoog8lga.janeway.replit.dev/src/pages/Admin.tsx:161:73
+Route@https://3c354dd1-7f2b-4cf2-a228-df7248da0c64-00-19gajdoog8lga.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js:323:20
+Switch@https://3c354dd1-7f2b-4cf2-a228-df7248da0c64-00-19gajdoog8lga.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js:379:25
+Router
+TooltipProviderProvider@https://3c354dd1-7f2b-4cf2-a228-df7248da0c64-00-19gajdoog8lga.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js:38:52
+TooltipProvider@https://3c354dd1-7f2b-4cf2-a228-df7248da0c64-00-19gajdoog8lga.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js:69:12
+ThemeProvider@https://3c354dd1-7f2b-4cf2-a228-df7248da0c64-00-19gajdoog8lga.janeway.replit.dev/src/components/ui/theme-provider.tsx:25:11
+AuthProvider@https://3c354dd1-7f2b-4cf2-a228-df7248da0c64-00-19gajdoog8lga.janeway.replit.dev/src/lib/AuthContext.tsx:21:40
+QueryClientProvider@https://3c354dd1-7f2b-4cf2-a228-df7248da0c64-00-19gajdoog8lga.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js:2805:9
+App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+	logCapturedError (chunk-RPCDYKBN.js:14032)
+	(anonymous function) (chunk-RPCDYKBN.js:14052)
+	callCallback (chunk-RPCDYKBN.js:11248)
+	commitUpdateQueue (chunk-RPCDYKBN.js:11265)
+	commitLayoutEffectOnFiber (chunk-RPCDYKBN.js:17093)
+	commitLayoutMountEffects_complete (chunk-RPCDYKBN.js:17980)
+	commitLayoutEffects_begin (chunk-RPCDYKBN.js:17969)
+	commitLayoutEffects (chunk-RPCDYKBN.js:17920)
+	commitRootImpl (chunk-RPCDYKBN.js:19353)
+	commitRoot (chunk-RPCDYKBN.js:19277)
+	finishConcurrentRender (chunk-RPCDYKBN.js:18760)
+	performConcurrentWorkOnRoot (chunk-RPCDYKBN.js:18718)
+	workLoop (chunk-RPCDYKBN.js:197)
+	flushWork (chunk-RPCDYKBN.js:176)
+	performWorkUntilDeadline (chunk-RPCDYKBN.js:384)
+[Error] ReferenceError: Can't find variable: Calendar
+	commitRootImpl (chunk-RPCDYKBN.js:19413)
+	commitRoot (chunk-RPCDYKBN.js:19277)
+	finishConcurrentRender (chunk-RPCDYKBN.js:18760)
+	performConcurrentWorkOnRoot (chunk-RPCDYKBN.js:18718)
+	workLoop (chunk-RPCDYKBN.js:197)
+	flushWork (chunk-RPCDYKBN.js:176)
+	performWorkUntilDeadline (chunk-RPCDYKBN.js:384)

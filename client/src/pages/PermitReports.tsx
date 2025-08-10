@@ -140,11 +140,57 @@ export default function PermitReports() {
         setPermits(permitData.data || []);
         setHasGeneratedReport(true);
         
-        const permitCount = permitData.data?.length || 0;
-        toast({
-          title: "Success",
-          description: `Report generated successfully! Found ${permitCount} permits.`,
+        // Calculate filtered permits count for the selected period
+        const totalFetched = permitData.data?.length || 0;
+        
+        // Apply the same filtering logic to get the actual count for the period
+        const filteredForPeriod = (permitData.data || []).filter((permit: any) => {
+          const permitDate = new Date(permit.createdAt);
+          const now = new Date();
+          
+          // Normalize dates to start of day for accurate comparison (using UTC to avoid timezone issues)
+          const normalizedPermitDate = new Date(Date.UTC(permitDate.getUTCFullYear(), permitDate.getUTCMonth(), permitDate.getUTCDate()));
+          const normalizedNow = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+          
+          // Date range filter
+          if (dateRange !== "all") {
+            const daysAgo = new Date(normalizedNow.getTime() - parseInt(dateRange) * 24 * 60 * 60 * 1000);
+            if (normalizedPermitDate < daysAgo) return false;
+          }
+          
+          // Custom date range filter
+          if (dateFrom) {
+            const normalizedDateFrom = new Date(Date.UTC(dateFrom.getUTCFullYear(), dateFrom.getUTCMonth(), dateFrom.getUTCDate()));
+            if (normalizedPermitDate < normalizedDateFrom) return false;
+          }
+          if (dateTo) {
+            const normalizedDateTo = new Date(Date.UTC(dateTo.getUTCFullYear(), dateTo.getUTCMonth(), dateTo.getUTCDate()));
+            if (normalizedPermitDate > normalizedDateTo) return false;
+          }
+          
+          return true;
         });
+        
+        const filteredCount = filteredForPeriod.length;
+        
+        if (filteredCount === 0 && totalFetched > 0) {
+          toast({
+            title: "No Data Found",
+            description: `No permits found for the selected period. ${totalFetched} permits exist but fall outside your date range.`,
+            variant: "destructive",
+          });
+        } else if (filteredCount === 0) {
+          toast({
+            title: "No Data Found",
+            description: "No permits found in the database.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Success",
+            description: `Report generated! Found ${filteredCount} permits in selected period (${totalFetched} total permits fetched).`,
+          });
+        }
       } else {
         throw new Error('Failed to fetch permits');
       }

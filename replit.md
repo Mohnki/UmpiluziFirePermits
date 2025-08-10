@@ -8,6 +8,16 @@ This repository contains a web application for the Umpiluzi Fire Protection Asso
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+### Report System Optimizations (August 2025)
+- **Removed 90-day display cap**: Reports can now show full historical data without arbitrary limits
+- **Increased backend fetch limit**: From 1000 to 5000 permits for comprehensive historical reporting
+- **Smart data aggregation**: Automatically switches to weekly view for 6+ months, monthly view for 2+ years
+- **Enhanced date range options**: Added 6 months and 2 years preset options
+- **Optimized Firestore queries**: Use date-based filtering at database level when possible
+- **Improved loading indicators**: Better user feedback for large report generation
+
 ## System Architecture
 
 ### Frontend Architecture

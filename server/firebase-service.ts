@@ -98,7 +98,17 @@ export class PermitService {
       // Use a simple query to avoid complex index requirements
       let permitQuery: Query = db.collection('burnPermits');
       
-      // Apply only one filter at a time to avoid complex indexes
+      // For historical reports with date ranges, use Firestore date filtering when possible
+      if (query.includeHistorical && query.startDate) {
+        const startDate = new Date(query.startDate);
+        permitQuery = permitQuery.where('createdAt', '>=', startDate);
+      }
+      if (query.includeHistorical && query.endDate) {
+        const endDate = new Date(query.endDate);
+        permitQuery = permitQuery.where('createdAt', '<=', endDate);
+      }
+      
+      // Apply only one additional filter at a time to avoid complex indexes
       if (query.userId) {
         permitQuery = permitQuery.where('userId', '==', query.userId);
       } else if (query.areaId) {
@@ -112,7 +122,8 @@ export class PermitService {
       
       // Get more documents than needed to account for filtering
       // For reports, increase the limit to fetch historical data
-      const limit = query.limit || (query.includeHistorical ? 1000 : 100);
+      // Use a much higher limit for reports to ensure we get all historical data
+      const limit = query.limit || (query.includeHistorical ? 5000 : 100);
       permitQuery = permitQuery.limit(limit);
 
       const snapshot = await permitQuery.get();
@@ -127,7 +138,7 @@ export class PermitService {
           startDate: convertTimestampToDate(data.startDate),
           endDate: convertTimestampToDate(data.endDate),
           status: data.status,
-          location: data.location,
+          location: data.location || { latitude: 0, longitude: 0 },
           details: data.details,
           compartment: data.compartment,
           approvedBy: data.approvedBy,
@@ -198,6 +209,7 @@ export class PermitService {
     const radius = locationFilter.radius || 10; // Default 10km radius
     
     return permits.filter(permit => {
+      if (!permit.location) return false;
       const distance = this.calculateDistance(
         locationFilter.latitude,
         locationFilter.longitude,
@@ -287,7 +299,7 @@ export class AreaService {
           name: data.name,
           description: data.description,
           areaManagerId: data.areaManagerId,
-          location: data.location,
+          location: data.location || { latitude: 0, longitude: 0 },
           allowedBurnTypes: data.allowedBurnTypes || {},
           createdAt: convertTimestampToDate(data.createdAt),
           createdBy: data.createdBy,

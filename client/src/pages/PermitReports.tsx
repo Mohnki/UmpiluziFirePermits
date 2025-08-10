@@ -113,9 +113,22 @@ export default function PermitReports() {
     try {
       setLoadingData(true);
       
+      // Build query parameters for optimized filtering
+      const queryParams = new URLSearchParams({
+        includeHistorical: 'true'
+      });
+      
+      // Add date range parameters if using custom dates
+      if (dateFrom) {
+        queryParams.append('startDate', dateFrom.toISOString());
+      }
+      if (dateTo) {
+        queryParams.append('endDate', dateTo.toISOString());
+      }
+      
       // Fetch permits including historical data for reports
       const idToken = await user.getIdToken();
-      const permitResponse = await fetch('/api/permits?includeHistorical=true', {
+      const permitResponse = await fetch(`/api/permits?${queryParams.toString()}`, {
         headers: {
           'Authorization': `Bearer ${idToken}`,
           'Content-Type': 'application/json',
@@ -126,9 +139,11 @@ export default function PermitReports() {
         const permitData = await permitResponse.json();
         setPermits(permitData.data || []);
         setHasGeneratedReport(true);
+        
+        const permitCount = permitData.data?.length || 0;
         toast({
           title: "Success",
-          description: "Report generated successfully!",
+          description: `Report generated successfully! Found ${permitCount} permits.`,
         });
       } else {
         throw new Error('Failed to fetch permits');
@@ -258,9 +273,9 @@ export default function PermitReports() {
           return permitDate < oldest ? permitDate : oldest;
         }, new Date());
         
-        const daysDiff = Math.ceil((now.getTime() - oldestPermit.getTime()) / (1000 * 60 * 60 * 24));
-        days = Math.min(daysDiff + 1, 90); // Cap at 90 days for performance
-        startDate = new Date(now.getTime() - (days - 1) * 24 * 60 * 60 * 1000);
+        const daysDiff = Math.ceil((now.getTime() - oldestPermit.getTime()) / (1000 * 60 * 60 * 1000));
+        days = daysDiff + 1; // Remove the 90-day cap to show full historical data
+        startDate = oldestPermit;
       }
     }
     
@@ -271,39 +286,111 @@ export default function PermitReports() {
 
 
 
-  // Permits over time based on selected range
-  const timeData = Array.from({ length: days }, (_, i) => {
-    const date = new Date(startDate);
-    date.setDate(startDate.getDate() + i);
+  // Permits over time based on selected range - optimized for large datasets
+  const timeData = (() => {
+    // For very large date ranges (>180 days), aggregate by week or month for better performance
+    const shouldAggregateByWeek = days > 180 && days <= 730;
+    const shouldAggregateByMonth = days > 730;
     
-    const dayPermits = filteredPermits.filter(p => {
-      const permitDate = new Date(p.createdAt);
-      const normalizedPermitDate = new Date(Date.UTC(permitDate.getUTCFullYear(), permitDate.getUTCMonth(), permitDate.getUTCDate()));
-      const normalizedDate = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+    if (shouldAggregateByMonth) {
+      // Group by month for very large ranges
+      const monthMap = new Map();
+      filteredPermits.forEach(permit => {
+        const permitDate = new Date(permit.createdAt);
+        const monthKey = `${permitDate.getFullYear()}-${permitDate.getMonth()}`;
+        if (!monthMap.has(monthKey)) {
+          monthMap.set(monthKey, {
+            date: permitDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+            permits: [],
+            year: permitDate.getFullYear(),
+            month: permitDate.getMonth()
+          });
+        }
+        monthMap.get(monthKey).permits.push(permit);
+      });
       
-      return normalizedPermitDate.getTime() === normalizedDate.getTime();
-    });
-    
-
-    
-    return {
-      date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      permits: dayPermits.length,
-      approved: dayPermits.filter(p => p.status === 'approved').length,
-      pending: dayPermits.filter(p => p.status === 'pending').length,
-      rejected: dayPermits.filter(p => p.status === 'rejected').length
-    };
-  });
+      return Array.from(monthMap.values())
+        .sort((a, b) => a.year - b.year || a.month - b.month)
+        .map(monthData => ({
+          date: monthData.date,
+          permits: monthData.permits.length,
+          approved: monthData.permits.filter((p: BurnPermit) => p.status === 'approved').length,
+          pending: monthData.permits.filter((p: BurnPermit) => p.status === 'pending').length,
+          rejected: monthData.permits.filter((p: BurnPermit) => p.status === 'rejected').length
+        }));
+    } else if (shouldAggregateByWeek) {
+      // Group by week for large ranges
+      const weekMap = new Map();
+      filteredPermits.forEach(permit => {
+        const permitDate = new Date(permit.createdAt);
+        const weekStart = new Date(permitDate);
+        weekStart.setDate(permitDate.getDate() - permitDate.getDay()); // Start of week
+        const weekKey = weekStart.toISOString().split('T')[0];
+        if (!weekMap.has(weekKey)) {
+          weekMap.set(weekKey, {
+            date: weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            permits: [],
+            sortDate: weekStart
+          });
+        }
+        weekMap.get(weekKey).permits.push(permit);
+      });
+      
+      return Array.from(weekMap.values())
+        .sort((a, b) => a.sortDate.getTime() - b.sortDate.getTime())
+        .map(weekData => ({
+          date: weekData.date,
+          permits: weekData.permits.length,
+          approved: weekData.permits.filter((p: BurnPermit) => p.status === 'approved').length,
+          pending: weekData.permits.filter((p: BurnPermit) => p.status === 'pending').length,
+          rejected: weekData.permits.filter((p: BurnPermit) => p.status === 'rejected').length
+        }));
+    } else {
+      // Daily view for smaller ranges
+      return Array.from({ length: Math.min(days, 365) }, (_, i) => {
+        const date = new Date(startDate);
+        date.setDate(startDate.getDate() + i);
+        
+        const dayPermits = filteredPermits.filter(p => {
+          const permitDate = new Date(p.createdAt);
+          const normalizedPermitDate = new Date(Date.UTC(permitDate.getUTCFullYear(), permitDate.getUTCMonth(), permitDate.getUTCDate()));
+          const normalizedDate = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+          
+          return normalizedPermitDate.getTime() === normalizedDate.getTime();
+        });
+        
+        return {
+          date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          permits: dayPermits.length,
+          approved: dayPermits.filter((p: BurnPermit) => p.status === 'approved').length,
+          pending: dayPermits.filter((p: BurnPermit) => p.status === 'pending').length,
+          rejected: dayPermits.filter((p: BurnPermit) => p.status === 'rejected').length
+        };
+      });
+    }
+  })();
 
   // Generate dynamic chart title based on date range
   const getChartTitle = () => {
+    const shouldAggregateByWeek = days > 180 && days <= 730;
+    const shouldAggregateByMonth = days > 730;
+    
+    let aggregationInfo = "";
+    if (shouldAggregateByMonth) {
+      aggregationInfo = " - Monthly View";
+    } else if (shouldAggregateByWeek) {
+      aggregationInfo = " - Weekly View";
+    } else {
+      aggregationInfo = " - Daily View";
+    }
+    
     if (dateFrom && dateTo) {
-      return `Permits Over Time (${format(dateFrom, "MMM d")} - ${format(dateTo, "MMM d, yyyy")})`;
+      return `Permits Over Time (${format(dateFrom, "MMM d")} - ${format(dateTo, "MMM d, yyyy")})${aggregationInfo}`;
     } else if (dateRange !== "all") {
       const dayCount = parseInt(dateRange);
-      return `Permits Over Time (Last ${dayCount} day${dayCount === 1 ? '' : 's'})`;
+      return `Permits Over Time (Last ${dayCount} day${dayCount === 1 ? '' : 's'})${aggregationInfo}`;
     } else {
-      return `Permits Over Time (All Time - ${days} day${days === 1 ? '' : 's'} shown)`;
+      return `Permits Over Time (All Historical Data)${aggregationInfo}`;
     }
   };
 
@@ -359,7 +446,9 @@ export default function PermitReports() {
                     <SelectItem value="7">Last 7 days</SelectItem>
                     <SelectItem value="30">Last 30 days</SelectItem>
                     <SelectItem value="90">Last 90 days</SelectItem>
+                    <SelectItem value="180">Last 6 months</SelectItem>
                     <SelectItem value="365">Last year</SelectItem>
+                    <SelectItem value="730">Last 2 years</SelectItem>
                     <SelectItem value="all">All time</SelectItem>
                   </SelectContent>
                 </Select>
@@ -502,9 +591,14 @@ export default function PermitReports() {
             <span className="ml-2">Loading areas and burn types...</span>
           </div>
         ) : loadingData ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <span className="ml-2">Generating report...</span>
+          <div className="flex flex-col items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+            <span className="text-lg font-medium">Generating report...</span>
+            <span className="text-sm text-gray-500 mt-2">
+              {dateRange === "all" ? "Processing all historical data" : 
+               parseInt(dateRange) > 365 ? "Processing large date range" :
+               "This may take a moment"}
+            </span>
           </div>
         ) : !hasGeneratedReport ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">

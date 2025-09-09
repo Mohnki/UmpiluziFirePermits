@@ -102,6 +102,7 @@ export default function UserReportsPage() {
         try {
           setLoadingPermits(true);
           const idToken = await user.getIdToken();
+          
           const response = await fetch(`/api/permits?userId=${targetUserId}`, {
             headers: {
               'Authorization': `Bearer ${idToken}`,
@@ -114,6 +115,7 @@ export default function UserReportsPage() {
           }
           
           const data = await response.json();
+          
           setPermits(data.data || []);
         } catch (error) {
           console.error("Error fetching user permits:", error);

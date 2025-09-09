@@ -933,7 +933,13 @@ export default function AdminPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {users.map((user) => (
+                        {users
+                          .sort((a, b) => {
+                            const nameA = (a.displayName || a.email).toLowerCase();
+                            const nameB = (b.displayName || b.email).toLowerCase();
+                            return nameA.localeCompare(nameB);
+                          })
+                          .map((user) => (
                           <TableRow key={user.uid}>
                             <TableCell>
                               <div className="flex items-center">

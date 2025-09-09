@@ -95,6 +95,8 @@ export class AuthService {
 export class PermitService {
   static async getPermits(query: PermitQuery): Promise<BurnPermit[]> {
     try {
+      console.log('DEBUG: getPermits called with query:', JSON.stringify(query));
+      
       // Use a simple query to avoid complex index requirements
       let permitQuery: Query = db.collection('burnPermits');
       
@@ -102,19 +104,24 @@ export class PermitService {
       if (query.includeHistorical && query.startDate) {
         const startDate = new Date(query.startDate);
         permitQuery = permitQuery.where('createdAt', '>=', startDate);
+        console.log('DEBUG: Added startDate filter:', startDate);
       }
       if (query.includeHistorical && query.endDate) {
         const endDate = new Date(query.endDate);
         permitQuery = permitQuery.where('createdAt', '<=', endDate);
+        console.log('DEBUG: Added endDate filter:', endDate);
       }
       
       // Apply only one additional filter at a time to avoid complex indexes
       if (query.userId) {
         permitQuery = permitQuery.where('userId', '==', query.userId);
+        console.log('DEBUG: Added userId filter:', query.userId);
       } else if (query.areaId) {
         permitQuery = permitQuery.where('areaId', '==', query.areaId);
+        console.log('DEBUG: Added areaId filter:', query.areaId);
       } else if (query.status) {
         permitQuery = permitQuery.where('status', '==', query.status);
+        console.log('DEBUG: Added status filter:', query.status);
       }
 
       // Order by createdAt which should have a simple index
@@ -125,8 +132,11 @@ export class PermitService {
       // Use a much higher limit for reports to ensure we get all historical data
       const limit = query.limit || (query.includeHistorical ? 5000 : 100);
       permitQuery = permitQuery.limit(limit);
+      console.log('DEBUG: Query limit set to:', limit);
 
+      console.log('DEBUG: Executing Firestore query...');
       const snapshot = await permitQuery.get();
+      console.log('DEBUG: Firestore query returned', snapshot.docs.length, 'documents');
       let permits = snapshot.docs.map(doc => {
         const data = doc.data();
         return {

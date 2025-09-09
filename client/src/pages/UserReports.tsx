@@ -103,7 +103,7 @@ export default function UserReportsPage() {
           setLoadingPermits(true);
           const idToken = await user.getIdToken();
           
-          const response = await fetch(`/api/permits?userId=${targetUserId}`, {
+          const response = await fetch(`/api/permits?userId=${targetUserId}&includeHistorical=true`, {
             headers: {
               'Authorization': `Bearer ${idToken}`,
               'Content-Type': 'application/json',

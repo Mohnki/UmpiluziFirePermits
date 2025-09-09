@@ -159,7 +159,7 @@ const documentFormSchema = z.object({
 export default function AdminPage() {
   const { user, userProfile, isAdmin, isAreaManager, loading } = useAuth();
   const { toast } = useToast();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   
   // Get tab from URL parameter
   const urlParams = new URLSearchParams(window.location.search);
@@ -1004,7 +1004,7 @@ export default function AdminPage() {
                                         userEmail: user.email,
                                         userName: user.displayName || user.email
                                       });
-                                      window.location.href = `/user-reports?${params.toString()}`;
+                                      setLocation(`/user-reports?${params.toString()}`);
                                     }}
                                     disabled={user.uid === userProfile?.uid}
                                   >

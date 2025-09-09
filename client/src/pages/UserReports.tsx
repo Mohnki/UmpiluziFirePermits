@@ -52,8 +52,41 @@ import {
   Clock,
   ArrowLeft,
   BarChart3,
-  TrendingUp
+  TrendingUp,
+  Map,
+  List
 } from "lucide-react";
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Fix for default markers in react-leaflet
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
+// Create custom marker icons for different permit statuses
+const createMarkerIcon = (color: string) => {
+  return new L.Icon({
+    iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`,
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  });
+};
+
+const markerIcons = {
+  approved: createMarkerIcon('orange'),
+  completed: createMarkerIcon('blue'),
+  cancelled: createMarkerIcon('red'),
+  rejected: createMarkerIcon('red'),
+  pending: createMarkerIcon('yellow')
+};
 
 interface UserReportStats {
   totalPermits: number;
@@ -94,6 +127,9 @@ export default function UserReportsPage() {
   const [burnTypeFilter, setBurnTypeFilter] = useState<string>("all");
   const [dateFromFilter, setDateFromFilter] = useState<string>("");
   const [dateToFilter, setDateToFilter] = useState<string>("");
+  
+  // View state
+  const [viewMode, setViewMode] = useState<'table' | 'map'>('table');
 
   // Fetch user permits
   useEffect(() => {
@@ -346,10 +382,32 @@ export default function UserReportsPage() {
                   </p>
                 </div>
               </div>
-              <Button onClick={exportReport} className="w-full sm:w-auto">
-                <Download className="h-4 w-4 mr-2" />
-                Export Report
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex rounded-lg border bg-background p-1">
+                  <Button
+                    variant={viewMode === 'table' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('table')}
+                    className="flex items-center gap-2"
+                  >
+                    <List className="h-4 w-4" />
+                    Table
+                  </Button>
+                  <Button
+                    variant={viewMode === 'map' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('map')}
+                    className="flex items-center gap-2"
+                  >
+                    <Map className="h-4 w-4" />
+                    Map
+                  </Button>
+                </div>
+                <Button onClick={exportReport} className="w-full sm:w-auto">
+                  <Download className="h-4 w-4 mr-2" />
+                  Export Report
+                </Button>
+              </div>
             </div>
 
             {/* Statistics Cards */}
@@ -568,12 +626,15 @@ export default function UserReportsPage() {
               </CardContent>
             </Card>
 
-            {/* Permits Table */}
+            {/* Permits Display */}
             <Card>
               <CardHeader>
-                <CardTitle>Permit History</CardTitle>
+                <CardTitle>{viewMode === 'map' ? 'Permit Locations' : 'Permit History'}</CardTitle>
                 <CardDescription>
-                  Complete list of all permits for this user
+                  {viewMode === 'map' 
+                    ? 'Geographic view of all permit locations for this user'
+                    : 'Complete list of all permits for this user'
+                  }
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -588,7 +649,7 @@ export default function UserReportsPage() {
                       {permits.length === 0 ? "No permits found for this user." : "No permits match the current filters."}
                     </p>
                   </div>
-                ) : (
+                ) : viewMode === 'table' ? (
                   <div className="overflow-x-auto">
                     <Table>
                       <TableCaption>List of permits for {targetUserName || targetUserEmail}</TableCaption>
@@ -658,6 +719,127 @@ export default function UserReportsPage() {
                         })}
                       </TableBody>
                     </Table>
+                  </div>
+                ) : (
+                  // Map View
+                  <div className="h-[600px] w-full">
+                    {(() => {
+                      // Filter permits with location data
+                      const permitsWithLocation = filteredPermits.filter(p => 
+                        p.location?.latitude && p.location?.longitude
+                      );
+
+                      if (permitsWithLocation.length === 0) {
+                        return (
+                          <div className="flex items-center justify-center h-full bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <div className="text-center">
+                              <MapPin className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                                No Location Data
+                              </h3>
+                              <p className="text-gray-500 dark:text-gray-400">
+                                {filteredPermits.length > 0 
+                                  ? "None of the filtered permits have location data for mapping."
+                                  : "No permits found to display on map."
+                                }
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      // Calculate map bounds to fit all permits
+                      const latitudes = permitsWithLocation.map(p => p.location!.latitude);
+                      const longitudes = permitsWithLocation.map(p => p.location!.longitude);
+                      
+                      const centerLat = latitudes.reduce((a, b) => a + b, 0) / latitudes.length;
+                      const centerLng = longitudes.reduce((a, b) => a + b, 0) / longitudes.length;
+
+                      return (
+                        <MapContainer
+                          center={[centerLat, centerLng]}
+                          zoom={10}
+                          style={{ height: '100%', width: '100%' }}
+                          bounds={permitsWithLocation.map(p => [p.location!.latitude, p.location!.longitude])}
+                          boundsOptions={{ padding: [20, 20] }}
+                          className="rounded-lg"
+                        >
+                          <TileLayer
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                          />
+                          {permitsWithLocation.map((permit) => {
+                            const area = areas.find(a => a.id === permit.areaId);
+                            const burnType = burnTypes.find(bt => bt.id === permit.burnTypeId);
+                            
+                            return (
+                              <Marker
+                                key={permit.id}
+                                position={[permit.location!.latitude, permit.location!.longitude]}
+                                icon={markerIcons[permit.status] || markerIcons.approved}
+                              >
+                                <Popup>
+                                  <div className="p-2 min-w-[200px]">
+                                    <div className="font-semibold text-lg mb-2">
+                                      Permit #{permit.id.substring(0, 8)}
+                                    </div>
+                                    <div className="space-y-1 text-sm">
+                                      <div><strong>Status:</strong> 
+                                        <Badge variant={getStatusBadgeVariant(permit.status)} className="ml-1 text-xs">
+                                          {permit.status.toUpperCase()}
+                                        </Badge>
+                                      </div>
+                                      <div><strong>Burn Type:</strong> {burnType?.name || 'Unknown Type'}</div>
+                                      <div><strong>Area:</strong> {area?.name || 'Unknown Area'}</div>
+                                      <div><strong>Valid:</strong> {new Date(permit.startDate).toLocaleDateString()} - {new Date(permit.endDate).toLocaleDateString()}</div>
+                                      {permit.compartment && (
+                                        <div><strong>Compartment:</strong> {permit.compartment}</div>
+                                      )}
+                                      {permit.details && (
+                                        <div><strong>Details:</strong> {permit.details}</div>
+                                      )}
+                                      {permit.location?.address && (
+                                        <div><strong>Address:</strong> {permit.location.address}</div>
+                                      )}
+                                      <div><strong>Created:</strong> {new Date(permit.createdAt).toLocaleDateString()}</div>
+                                      {permit.approvedAt && (
+                                        <div><strong>Approved:</strong> {new Date(permit.approvedAt).toLocaleDateString()}</div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </Popup>
+                              </Marker>
+                            );
+                          })}
+                        </MapContainer>
+                      );
+                    })()}
+                  </div>
+                )}
+
+                {viewMode === 'map' && filteredPermits.some(p => p.location?.latitude && p.location?.longitude) && (
+                  <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      <p>This map shows {filteredPermits.filter(p => p.location?.latitude && p.location?.longitude).length} permits with location data. Click on markers to view permit details.</p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-4 text-sm">
+                      <div className="flex items-center gap-1">
+                        <div className="w-4 h-4 bg-orange-500 rounded-full"></div>
+                        <span>Approved</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
+                        <span>Completed</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-4 h-4 bg-red-500 rounded-full"></div>
+                        <span>Cancelled/Rejected</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-4 h-4 bg-yellow-500 rounded-full"></div>
+                        <span>Pending</span>
+                      </div>
+                    </div>
                   </div>
                 )}
               </CardContent>

@@ -16,6 +16,7 @@ export interface BurnPermit {
     longitude: number;
     address?: string;
   };
+  compartment?: string; // Compartment number or section within the farm/area
   details: string; // Additional details provided by the user
   approvedBy?: string; // User ID of approver (if manually approved)
   approvedAt?: Date; // When the permit was approved

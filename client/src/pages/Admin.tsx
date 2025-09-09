@@ -987,13 +987,31 @@ export default function AdminPage() {
                                   Saving...
                                 </Button>
                               ) : (
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  disabled={user.uid === userProfile?.uid}
-                                >
-                                  {user.uid === userProfile?.uid ? "Current User" : "View Details"}
-                                </Button>
+                                <div className="flex gap-2">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    disabled={user.uid === userProfile?.uid}
+                                  >
+                                    {user.uid === userProfile?.uid ? "Current User" : "View Details"}
+                                  </Button>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => {
+                                      const params = new URLSearchParams({
+                                        userId: user.uid,
+                                        userEmail: user.email,
+                                        userName: user.displayName || user.email
+                                      });
+                                      window.location.href = `/user-reports?${params.toString()}`;
+                                    }}
+                                    disabled={user.uid === userProfile?.uid}
+                                  >
+                                    <FileText className="h-4 w-4 mr-1" />
+                                    User Reports
+                                  </Button>
+                                </div>
                               )}
                             </TableCell>
                           </TableRow>

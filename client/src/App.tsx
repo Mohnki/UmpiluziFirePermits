@@ -13,6 +13,7 @@ import MyPermits from "@/pages/MyPermits";
 import TodaysPermits from "@/pages/TodaysPermits";
 import ApiDocumentation from "@/pages/ApiDocumentation";
 import PermitReports from "@/pages/PermitReports";
+import UserReports from "@/pages/UserReports";
 import Safety from "@/pages/Safety";
 import RiskCalculator from "@/pages/RiskCalculator";
 import { ThemeProvider } from "@/components/ui/theme-provider";
@@ -30,6 +31,7 @@ function Router() {
       <Route path="/todays-permits" component={TodaysPermits} />
       <Route path="/api-docs" component={ApiDocumentation} />
       <Route path="/reports" component={PermitReports} />
+      <Route path="/user-reports" component={UserReports} />
       <Route path="/safety" component={Safety} />
       <Route path="/risk-calculator" component={RiskCalculator} />
       {/* Fallback to 404 */}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Download } from "lucide-react";
+import { X, Download, Share, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface BeforeInstallPromptEvent extends Event {
@@ -8,13 +8,40 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 const SESSION_KEY = "pwa-install-dismissed";
+const IS_DEV = import.meta.env.DEV;
+
+function isIOS() {
+  return (
+    /iphone|ipad|ipod/i.test(navigator.userAgent) &&
+    !(window as unknown as { MSStream?: unknown }).MSStream
+  );
+}
+
+function isInStandaloneMode() {
+  return (
+    ("standalone" in navigator &&
+      (navigator as unknown as { standalone: boolean }).standalone) ||
+    window.matchMedia("(display-mode: standalone)").matches
+  );
+}
 
 export default function PWAInstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [deferredPrompt, setDeferredPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
   const [visible, setVisible] = useState(false);
+  const [ios, setIos] = useState(false);
 
   useEffect(() => {
     if (sessionStorage.getItem(SESSION_KEY)) return;
+    if (isInStandaloneMode()) return;
+
+    const iosDevice = isIOS();
+    setIos(iosDevice);
+
+    if (iosDevice) {
+      const timer = setTimeout(() => setVisible(true), 2000);
+      return () => clearTimeout(timer);
+    }
 
     const handler = (e: Event) => {
       e.preventDefault();
@@ -23,7 +50,20 @@ export default function PWAInstallPrompt() {
     };
 
     window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+
+    let devTimer: ReturnType<typeof setTimeout> | undefined;
+    if (IS_DEV) {
+      devTimer = setTimeout(() => {
+        if (!sessionStorage.getItem(SESSION_KEY)) {
+          setVisible(true);
+        }
+      }, 1000);
+    }
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+      if (devTimer) clearTimeout(devTimer);
+    };
   }, []);
 
   const handleInstall = async () => {
@@ -31,6 +71,7 @@ export default function PWAInstallPrompt() {
     await deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === "accepted") {
+      sessionStorage.setItem(SESSION_KEY, "1");
       setVisible(false);
       setDeferredPrompt(null);
     }
@@ -52,15 +93,26 @@ export default function PWAInstallPrompt() {
           <img
             src="/icon-192.png"
             alt="UFPA Fire Permit"
-            className="flex-shrink-0 w-12 h-12 rounded-xl shadow-md"
+            className="flex-shrink-0 w-12 h-12 rounded-xl shadow-md object-contain bg-white"
           />
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm text-gray-900 dark:text-white leading-tight">
               Install Fire Permit System
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Quick access to permits right from your home screen
-            </p>
+            {ios ? (
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                Tap{" "}
+                <Share className="inline w-3 h-3 mx-0.5 -mt-0.5" /> then{" "}
+                <strong className="font-semibold text-gray-700 dark:text-gray-300">
+                  Add to Home Screen
+                </strong>{" "}
+                <Plus className="inline w-3 h-3 mx-0.5 -mt-0.5" />
+              </p>
+            ) : (
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                Quick access to permits right from your home screen
+              </p>
+            )}
           </div>
           <button
             onClick={handleDismiss}
@@ -70,24 +122,39 @@ export default function PWAInstallPrompt() {
             <X className="w-4 h-4" />
           </button>
         </div>
-        <div className="flex gap-2 px-4 pb-4">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1 text-gray-600 dark:text-gray-300"
-            onClick={handleDismiss}
-          >
-            Not now
-          </Button>
-          <Button
-            size="sm"
-            className="flex-1 bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600 text-white border-0"
-            onClick={handleInstall}
-          >
-            <Download className="w-3.5 h-3.5 mr-1.5" />
-            Install App
-          </Button>
-        </div>
+
+        {ios ? (
+          <div className="px-4 pb-4">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-gray-600 dark:text-gray-300"
+              onClick={handleDismiss}
+            >
+              Got it
+            </Button>
+          </div>
+        ) : (
+          <div className="flex gap-2 px-4 pb-4">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 text-gray-600 dark:text-gray-300"
+              onClick={handleDismiss}
+            >
+              Not now
+            </Button>
+            <Button
+              size="sm"
+              className="flex-1 bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600 text-white border-0"
+              onClick={handleInstall}
+              disabled={!deferredPrompt}
+            >
+              <Download className="w-3.5 h-3.5 mr-1.5" />
+              Install App
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

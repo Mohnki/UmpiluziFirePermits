@@ -18,6 +18,7 @@ import Safety from "@/pages/Safety";
 import RiskCalculator from "@/pages/RiskCalculator";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { AuthProvider } from "./lib/AuthContext";
+import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 
 function Router() {
   return (
@@ -48,6 +49,7 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <Router />
+            <PWAInstallPrompt />
           </TooltipProvider>
         </ThemeProvider>
       </AuthProvider>

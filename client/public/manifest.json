@@ -1,0 +1,24 @@
+{
+  "name": "UFPA Fire Permit System",
+  "short_name": "Fire Permits",
+  "description": "Apply for fire permits and manage fire safety with the Umpiluzi Fire Protection Association.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#DB2B1B",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

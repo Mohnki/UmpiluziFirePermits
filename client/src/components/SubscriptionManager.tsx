@@ -150,7 +150,7 @@ export default function SubscriptionManager() {
     );
   }
 
-  const showSubscribe = !status?.subscriptionStatus || status.subscriptionStatus === "cancelled" || status.subscriptionStatus === "past_due" || status.subscriptionStatus === "none";
+  const showSubscribe = !status?.subscriptionStatus || status.subscriptionStatus === "cancelled" || status.subscriptionStatus === "past_due" || status.subscriptionStatus === "none" || status.subscriptionStatus === "free";
 
   return (
     <>

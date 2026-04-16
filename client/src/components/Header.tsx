@@ -190,8 +190,21 @@ export default function Header() {
                 </Link>
               )}
               {hasManagerAccess && (
-                <Link href="/reports" className="text-foreground hover:text-primary transition font-medium">
-                  Reports
+                <>
+                  <Link href="/reports" className="text-foreground hover:text-primary transition font-medium">
+                    Reports
+                  </Link>
+                  <Link href="/user-reports" className="text-foreground hover:text-primary transition font-medium">
+                    User Reports
+                  </Link>
+                </>
+              )}
+              {canManageBilling && (
+                <Link href="/billing" className="text-foreground hover:text-primary transition font-medium">
+                  <span className="inline-flex items-center gap-1.5">
+                    <CreditCard className="h-4 w-4" aria-hidden="true" />
+                    Billing
+                  </span>
                 </Link>
               )}
               {isSuperAdmin && (
@@ -489,8 +502,47 @@ export default function Header() {
                     Manage Areas
                   </Link>
                 )}
-                
-                <button 
+
+                {hasManagerAccess && (
+                  <>
+                    <Link href="/reports"
+                      className="text-foreground hover:text-primary transition py-2 border-b border-gray-100 dark:border-gray-700 flex items-center"
+                      onClick={closeMobileMenu}
+                    >
+                      <BarChart3 className="h-4 w-4 mr-2" aria-hidden="true" />
+                      Reports
+                    </Link>
+                    <Link href="/user-reports"
+                      className="text-foreground hover:text-primary transition py-2 border-b border-gray-100 dark:border-gray-700 flex items-center"
+                      onClick={closeMobileMenu}
+                    >
+                      <BarChart3 className="h-4 w-4 mr-2" aria-hidden="true" />
+                      User Reports
+                    </Link>
+                  </>
+                )}
+
+                {canManageBilling && (
+                  <Link href="/billing"
+                    className="text-foreground hover:text-primary transition py-2 border-b border-gray-100 dark:border-gray-700 flex items-center"
+                    onClick={closeMobileMenu}
+                  >
+                    <CreditCard className="h-4 w-4 mr-2" aria-hidden="true" />
+                    Billing
+                  </Link>
+                )}
+
+                {isSuperAdmin && (
+                  <Link href="/superadmin"
+                    className="text-purple-700 dark:text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 transition py-2 px-2 rounded border-b border-gray-100 dark:border-gray-700 flex items-center font-medium"
+                    onClick={closeMobileMenu}
+                  >
+                    <Shield className="h-4 w-4 mr-2" aria-hidden="true" />
+                    Super Admin
+                  </Link>
+                )}
+
+                <button
                   onClick={() => {
                     handleLogout();
                     closeMobileMenu();

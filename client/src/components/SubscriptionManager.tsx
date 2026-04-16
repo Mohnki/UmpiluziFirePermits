@@ -278,7 +278,7 @@ export default function SubscriptionManager() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <span className="text-4xl font-bold">R100</span>
+                <span className="text-4xl font-bold">R250</span>
                 <span className="text-muted-foreground ml-1">/ month</span>
               </div>
               <ul className="space-y-3">
@@ -314,9 +314,9 @@ export default function SubscriptionManager() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <span className="text-4xl font-bold">R1,000</span>
+                <span className="text-4xl font-bold">R2,250</span>
                 <span className="text-muted-foreground ml-1">/ year</span>
-                <Badge variant="secondary" className="ml-2">Save R200</Badge>
+                <Badge variant="secondary" className="ml-2">Save R750</Badge>
               </div>
               <ul className="space-y-3">
                 {features.map((f) => {

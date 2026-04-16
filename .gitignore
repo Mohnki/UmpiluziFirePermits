@@ -4,3 +4,10 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+
+# Local tooling
+.agents/
+.claude/
+.firebase/
+skills/
+skills-lock.json

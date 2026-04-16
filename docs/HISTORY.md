@@ -287,6 +287,138 @@ Heavily rewritten:
 - `client/src/pages/Home.tsx` (added HowItWorks, reordered sections)
 - `client/src/pages/ManageFarms.tsx` (confirm dialog)
 
+## Superadmin + Paystack subscription system (2026-04-16)
+
+### What was added
+
+A `superadmin` role, Paystack-powered subscription billing, and soft-lock
+infrastructure — modeled on the FirePermits project (`~/Projects/FirePermits`).
+
+### Role hierarchy (current)
+
+```
+superadmin  →  full system owner (willem@alasia.co.za)
+   ├── manage all users + promote/demote admins
+   ├── billing: configure Paystack, assign billing access, toggle isFree, toggle soft-lock
+   └── everything admin can do
+admin  →  same as before + optional billing capability (canManageBilling flag)
+area-manager  →  same as before + optional billing capability
+user  →  unchanged
+api-user  →  unchanged
+```
+
+`UserRole`: `'superadmin' | 'admin' | 'area-manager' | 'user' | 'api-user'`.
+Superadmin inherits all admin permissions in Firestore rules, Cloud Function
+middleware, and client-side guards.
+
+### Firestore documents added
+
+- **`system/subscription`** — single doc tracking billing state:
+  `subscriptionStatus`, `isFree` (boolean), `softLockEnabled` (boolean),
+  `subscriptionCode`, `subscriptionEmailToken`, `subscriptionPlan`,
+  `currentPeriodEnd`, `paystackCustomerCode`, `lastWebhookEventId`.
+  Initial state: `{ subscriptionStatus: "free", isFree: true, softLockEnabled: false }`.
+
+- **`system/paystackConfig`** — superadmin-configurable:
+  `publicKey`, `monthlyPlanCode`, `annualPlanCode`. Plan codes stored in
+  Firestore, not hardcoded. Superadmin sets them from `/superadmin` → Paystack
+  Config tab.
+
+- **`users/{uid}`** gained `canManageBilling?: boolean` field.
+
+### Payment model
+
+- Single FPA subscription — UFPA (the organisation) pays. Farmers don't.
+- Pricing: R250/month (`PLN_g12pb6e89lwhtch`) or R2,250/year.
+- Payment via Paystack inline popup (v2 API: `new PaystackPop().newTransaction()`).
+- Paystack inline JS loaded from `client/index.html`.
+- `PAYSTACK_SECRET_KEY` stored in Google Secret Manager via
+  `firebase functions:secrets:set`.
+
+### Webhook flow
+
+`POST /api/paystack/webhook` — public endpoint, HMAC SHA512 verified.
+
+| Event | Action |
+| --- | --- |
+| `subscription.create` | → status `active`, store codes |
+| `invoice.update` (success) | → extend `currentPeriodEnd` |
+| `invoice.payment_failed` | → status `past_due` |
+| `subscription.disable` / `subscription.not_renew` | → status `cancelled` |
+
+All writes to `system/subscription` via Admin SDK. Idempotency via
+`lastWebhookEventId`.
+
+### Soft-lock (built, off by default)
+
+When `softLockEnabled: true` AND subscription not active/free:
+- Client: `SoftLockBanner` shows on all pages. ApplyPermit submit disabled.
+- Server: `requireActiveSubscription` middleware returns 402 on
+  `PATCH /api/permits/:id` and `POST /api/documents`. Superadmin exempt.
+
+When `softLockEnabled: false` (default): zero enforcement. System works
+exactly as before.
+
+### Files added
+
+| File | Purpose |
+| --- | --- |
+| `functions/src/superadmin-routes.ts` | User mgmt, subscription toggles, Paystack config CRUD |
+| `functions/src/subscription-routes.ts` | Initialize, cancel, resubscribe, status |
+| `functions/src/paystack-webhook.ts` | HMAC-verified webhook handler |
+| `functions/src/subscription-middleware.ts` | `requireActiveSubscription` soft-lock middleware |
+| `client/src/pages/SuperAdmin.tsx` | 3-tab dashboard (Users, Subscription, Paystack Config) |
+| `client/src/components/SubscriptionManager.tsx` | Billing page with pricing cards (R250/R2,250) |
+| `client/src/components/SoftLockBanner.tsx` | Conditional soft-lock alert |
+| `client/src/hooks/useSubscriptionStatus.ts` | React Query hook, 5-min stale time |
+| `scripts/migrate-superadmin.ts` | One-time: set superadmin + seed system docs |
+
+### Files modified
+
+- `functions/src/schema.ts` — `superadmin` in role enum, `SubscriptionState`, `PaystackConfig` interfaces, `canManageBilling` on UserProfile
+- `functions/src/auth-middleware.ts` — `requireSuperAdmin`, `requireBillingAccess`, updated `requireAdmin`/`requireManagerAccess` to include superadmin
+- `functions/src/firebase-service.ts` — returns `canManageBilling` in getUserProfile
+- `functions/src/routes.ts` — mounts superadmin, subscription, webhook routes + soft-lock on permit/document write endpoints
+- `functions/src/index.ts` — declares `PAYSTACK_SECRET_KEY` secret
+- `client/src/lib/roles.ts` — `superadmin` in UserRole, `isSuperAdmin()`, updated `isAdmin()`/`hasManagerAccess()`
+- `client/src/lib/AuthContext.tsx` — `isSuperAdmin`, `canManageBilling` flags
+- `client/src/lib/firebase.ts` — `canManageBilling` on UserProfile interface
+- `client/src/App.tsx` — `/superadmin` + `/billing` routes, `SoftLockBanner`
+- `client/src/components/Header.tsx` — Super Admin (purple badge) + Billing (credit card) nav links
+- `client/src/pages/ApplyPermit.tsx` — soft-lock guard on submit
+- `client/index.html` — Paystack inline JS script tag
+- `firestore.rules` — `isSuperAdmin()` helper, `isAdmin()` includes superadmin, `system/{docId}` collection rules
+- `shared/schema.ts` — `superadmin` in role enum
+
+### PWA icon update (2026-04-16)
+
+Replaced `icon-192.png` and `icon-512.png` with new fire emblem design
+(resized from `generated-icon.png` via ImageMagick).
+
+### Decisions to remember
+
+- Paystack plan codes are **not hardcoded** — superadmin sets them from the dashboard.
+  If plans change, update in Paystack dashboard + SuperAdmin → Paystack Config.
+- `isFree: true` is the default. Superadmin flips it off when ready to charge.
+- `softLockEnabled: false` is the default. Turn on separately from billing.
+- The billing page displays R250/month and R2,250/year. These are display-only;
+  actual charge amounts come from the Paystack plan configuration.
+- Only superadmin can promote users to `admin` or `superadmin`.
+- The `canManageBilling` flag can be set on any role by superadmin.
+- Migration script (`scripts/migrate-superadmin.ts`) has already been run.
+  Re-running is safe (uses `merge: true`).
+
+### What's pending
+
+- Create annual Paystack plan and add plan code via SuperAdmin dashboard.
+- DNS cutover for `umpiluzifpa.org` (see `docs/MIGRATION.md`).
+- 14-day Replit dual-run then teardown.
+- Firestore TTL on `apiUsageLogs.timestamp` (30d) — set via console.
+- Cleanup PR: remove dead Drizzle/Postgres/Passport deps + `server/` directory.
+- Enable `checkRateLimit` enforcement in a later PR.
+- Consider funneling client-direct Firestore writes through Functions for
+  stronger server-side validation (future).
+
 ## Tech stack quick reference
 
 - Node 20, TypeScript 5.6, ESM everywhere except Cloud Functions (CommonJS in

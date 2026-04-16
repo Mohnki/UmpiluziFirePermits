@@ -16,8 +16,8 @@ import { useConfirm } from "@/components/ui/confirm-dialog";
 
 declare global {
   interface Window {
-    PaystackPop?: {
-      setup: (config: any) => { openIframe: () => void };
+    PaystackPop?: new () => {
+      newTransaction: (config: any) => void;
     };
   }
 }
@@ -49,21 +49,27 @@ export default function SubscriptionManager() {
     },
     onSuccess: (resp) => {
       const data = resp.data;
+      console.log("[SubscriptionManager] Paystack init data:", data);
       if (window.PaystackPop) {
-        const handler = window.PaystackPop.setup({
-          key: data.publicKey,
-          email: data.email,
-          plan: data.planCode,
-          currency: data.currency || "ZAR",
-          metadata: data.metadata,
-          onClose: () => toast({ title: "Cancelled", description: "Payment window closed." }),
-          callback: () => {
-            toast({ title: "Subscription created", description: "Refreshing status…" });
-            setTimeout(() => queryClient.invalidateQueries({ queryKey: ["subscription-status"] }), 2000);
-            setIsDialogOpen(false);
-          },
-        });
-        handler.openIframe();
+        try {
+          const popup = new window.PaystackPop();
+          popup.newTransaction({
+            key: data.publicKey,
+            email: data.email,
+            plan: data.planCode,
+            currency: data.currency || "ZAR",
+            metadata: data.metadata,
+            onClose: () => toast({ title: "Cancelled", description: "Payment window closed." }),
+            onSuccess: () => {
+              toast({ title: "Subscription created", description: "Refreshing status…" });
+              setTimeout(() => queryClient.invalidateQueries({ queryKey: ["subscription-status"] }), 2000);
+              setIsDialogOpen(false);
+            },
+          });
+        } catch (e) {
+          console.error("[SubscriptionManager] Paystack popup error:", e);
+          toast({ title: "Error", description: "Failed to open payment window. Check console.", variant: "destructive" });
+        }
       } else {
         toast({ title: "Error", description: "Payment system not loaded. Refresh and try again.", variant: "destructive" });
       }

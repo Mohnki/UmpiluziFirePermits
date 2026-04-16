@@ -5,11 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { CreditCard, AlertCircle, Check } from "lucide-react";
+import { CreditCard, AlertCircle, Check, Shield, Flame, FileCheck2, MapPinned, BarChart3 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAuth } from "@/lib/AuthContext";
 import { useSubscriptionStatus } from "@/hooks/useSubscriptionStatus";
 import { useConfirm } from "@/components/ui/confirm-dialog";
@@ -22,13 +20,20 @@ declare global {
   }
 }
 
+const features = [
+  { icon: FileCheck2, label: "Unlimited burn permit applications" },
+  { icon: MapPinned, label: "GPS-tracked permit locations" },
+  { icon: Shield, label: "Legal compliance with the Fire Act" },
+  { icon: Flame, label: "Burn ban management" },
+  { icon: BarChart3, label: "Historical reports and analytics" },
+];
+
 export default function SubscriptionManager() {
   const { user } = useAuth();
   const { toast } = useToast();
   const confirm = useConfirm();
   const queryClient = useQueryClient();
   const { data: status, isLoading } = useSubscriptionStatus();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<"monthly" | "annual">("monthly");
 
   const getToken = async () => {
@@ -61,9 +66,8 @@ export default function SubscriptionManager() {
             metadata: data.metadata,
             onClose: () => toast({ title: "Cancelled", description: "Payment window closed." }),
             onSuccess: () => {
-              toast({ title: "Subscription created", description: "Refreshing status…" });
+              toast({ title: "Subscription created!", description: "Your subscription is now active." });
               setTimeout(() => queryClient.invalidateQueries({ queryKey: ["subscription-status"] }), 2000);
-              setIsDialogOpen(false);
             },
           });
         } catch (e) {
@@ -89,9 +93,8 @@ export default function SubscriptionManager() {
       return res.json();
     },
     onSuccess: () => {
-      toast({ title: "Subscription activated" });
+      toast({ title: "Subscription activated!" });
       queryClient.invalidateQueries({ queryKey: ["subscription-status"] });
-      setIsDialogOpen(false);
     },
     onError: (e: Error) => {
       if (e.message.includes("No") && e.message.includes("payment")) {
@@ -119,108 +122,252 @@ export default function SubscriptionManager() {
     onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
 
-  const handleSubscribe = () => {
+  const handleSubscribe = (plan: "monthly" | "annual") => {
+    setSelectedPlan(plan);
     if (status?.subscriptionStatus === "cancelled" && status?.paystackCustomerCode) {
-      savedCardMutation.mutate({ plan: selectedPlan });
+      savedCardMutation.mutate({ plan });
     } else {
-      initMutation.mutate({ plan: selectedPlan, email: user!.email! });
+      initMutation.mutate({ plan, email: user!.email! });
     }
   };
 
   const handleCancel = async () => {
     const ok = await confirm({
       title: "Cancel subscription?",
-      description: "Access continues until the end of the current billing period. You can resubscribe at any time.",
-      confirmLabel: "Yes, cancel",
+      description: "Your subscription will remain active until the end of the current billing period. After that, the system will become read-only until you resubscribe.",
+      confirmLabel: "Yes, cancel subscription",
       destructive: true,
     });
     if (ok) cancelMutation.mutate();
   };
 
   if (isLoading) {
-    return <Card><CardHeader><Skeleton className="h-6 w-48" /></CardHeader><CardContent><Skeleton className="h-32 w-full" /></CardContent></Card>;
-  }
-
-  if (status?.isFree) {
     return (
-      <Card>
-        <CardHeader><CardTitle className="flex items-center gap-2"><Check className="h-5 w-5 text-green-500" />Subscription</CardTitle></CardHeader>
-        <CardContent>
-          <Alert className="border-green-500 bg-green-50 dark:bg-green-950">
-            <Check className="h-4 w-4 text-green-500" />
-            <AlertTitle className="text-green-700 dark:text-green-300">Free access</AlertTitle>
-            <AlertDescription className="text-green-600 dark:text-green-400">This system is currently free. No subscription required.</AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <Skeleton className="h-40 w-full" />
+        <div className="grid gap-6 md:grid-cols-2"><Skeleton className="h-64" /><Skeleton className="h-64" /></div>
+      </div>
     );
   }
 
-  const showSubscribe = !status?.subscriptionStatus || status.subscriptionStatus === "cancelled" || status.subscriptionStatus === "past_due" || status.subscriptionStatus === "none" || status.subscriptionStatus === "free";
-
-  return (
-    <>
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><CreditCard className="h-5 w-5" />Subscription</CardTitle>
-          <CardDescription>Manage the UFPA system subscription</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Status</span>
-            <Badge variant={status?.subscriptionStatus === "active" ? "default" : "destructive"} className={status?.subscriptionStatus === "active" ? "bg-green-500" : ""}>
-              {status?.subscriptionStatus === "active" ? "Active" : status?.subscriptionStatus === "past_due" ? "Payment failed" : status?.subscriptionStatus === "cancelled" ? "Cancelled" : "No subscription"}
-            </Badge>
+  // Free access state
+  if (status?.isFree) {
+    return (
+      <div className="space-y-8">
+        <div className="text-center">
+          <div className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-green-100 dark:bg-green-900 mb-4">
+            <Check className="h-7 w-7 text-green-600 dark:text-green-400" aria-hidden="true" />
           </div>
-
-          {status?.subscriptionStatus === "active" && (
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">Plan</span><span className="font-medium capitalize">{status.subscriptionPlan}</span></div>
-              {status.currentPeriodEnd && (
-                <div className="flex justify-between"><span className="text-muted-foreground">Renews</span><span className="font-medium tabular-nums">{new Date(status.currentPeriodEnd).toLocaleDateString("en-ZA")}</span></div>
-              )}
-            </div>
-          )}
-
-          {(status?.subscriptionStatus === "past_due" || status?.subscriptionStatus === "cancelled") && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Subscription issue</AlertTitle>
-              <AlertDescription>
-                {status.subscriptionStatus === "past_due" ? "Payment failed. Update your payment method." : "Subscription cancelled. Resubscribe to maintain access."}
+          <h2 className="text-2xl font-bold mb-2">Free Access Active</h2>
+          <p className="text-muted-foreground max-w-md mx-auto">
+            The UFPA Fire Permit System is currently free to use. No subscription is required.
+          </p>
+        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <Alert className="border-green-500 bg-green-50 dark:bg-green-950">
+              <Check className="h-4 w-4 text-green-500" />
+              <AlertTitle className="text-green-700 dark:text-green-300">All features included</AlertTitle>
+              <AlertDescription className="text-green-600 dark:text-green-400">
+                Your system administrator has enabled free access. All features are available without a subscription.
               </AlertDescription>
             </Alert>
-          )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-          <div className="flex flex-col gap-2">
-            {showSubscribe && <Button onClick={() => setIsDialogOpen(true)} className="w-full h-11"><CreditCard className="h-4 w-4 mr-2" aria-hidden="true" />{status?.subscriptionStatus === "cancelled" ? "Resubscribe" : "Subscribe now"}</Button>}
-            {status?.subscriptionStatus === "active" && <Button variant="outline" onClick={handleCancel} className="w-full h-11">Cancel subscription</Button>}
-          </div>
-        </CardContent>
-      </Card>
+  const isActive = status?.subscriptionStatus === "active";
+  const isCancelled = status?.subscriptionStatus === "cancelled";
+  const isPastDue = status?.subscriptionStatus === "past_due";
+  const needsSubscription = !isActive;
+  const isPending = initMutation.isPending || savedCardMutation.isPending;
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Choose your plan</DialogTitle>
-            <DialogDescription>Select a subscription plan for the UFPA Fire Permit System</DialogDescription>
-          </DialogHeader>
-          <RadioGroup value={selectedPlan} onValueChange={(v) => setSelectedPlan(v as "monthly" | "annual")}>
-            <Label htmlFor="monthly" className="flex items-center justify-between p-4 border rounded-md cursor-pointer hover:bg-muted/50">
-              <div className="flex items-center gap-3"><RadioGroupItem value="monthly" id="monthly" /><div><div className="font-semibold">Monthly</div><div className="text-sm text-muted-foreground">Billed monthly</div></div></div>
-            </Label>
-            <Label htmlFor="annual" className="flex items-center justify-between p-4 border rounded-md cursor-pointer hover:bg-muted/50">
-              <div className="flex items-center gap-3"><RadioGroupItem value="annual" id="annual" /><div><div className="font-semibold">Annual</div><div className="text-sm text-muted-foreground">Billed yearly</div><Badge variant="secondary" className="mt-1">Best value</Badge></div></div>
-            </Label>
-          </RadioGroup>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSubscribe} disabled={initMutation.isPending || savedCardMutation.isPending}>
-              {initMutation.isPending || savedCardMutation.isPending ? "Processing…" : "Continue to payment"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+  return (
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="text-center">
+        <div className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 mb-4">
+          <CreditCard className="h-7 w-7 text-primary" aria-hidden="true" />
+        </div>
+        <h2 className="text-2xl font-bold mb-2">
+          {isActive ? "Your Subscription" : "Subscribe to UFPA Fire Permits"}
+        </h2>
+        <p className="text-muted-foreground max-w-md mx-auto">
+          {isActive
+            ? "Manage your subscription and billing details."
+            : "Choose a plan to keep the fire permit system running for your association."}
+        </p>
+      </div>
+
+      {/* Status alerts */}
+      {isPastDue && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Payment failed</AlertTitle>
+          <AlertDescription>
+            Your last payment failed. Please update your payment method or subscribe again to restore full access.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {isCancelled && (
+        <Alert className="border-orange-500 bg-orange-50 dark:bg-orange-950">
+          <AlertCircle className="h-4 w-4 text-orange-500" />
+          <AlertTitle className="text-orange-700 dark:text-orange-300">Subscription cancelled</AlertTitle>
+          <AlertDescription className="text-orange-600 dark:text-orange-400">
+            Your subscription has been cancelled.
+            {status?.currentPeriodEnd && new Date(status.currentPeriodEnd) > new Date()
+              ? ` Access continues until ${new Date(status.currentPeriodEnd).toLocaleDateString("en-ZA")}. Resubscribe anytime.`
+              : " Resubscribe to restore access."}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Active subscription details */}
+      {isActive && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Check className="h-5 w-5 text-green-500" />
+              Active Subscription
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="rounded-lg border p-4">
+                <p className="text-xs font-medium text-muted-foreground mb-1">Plan</p>
+                <p className="text-lg font-bold capitalize">{status?.subscriptionPlan || "—"}</p>
+              </div>
+              <div className="rounded-lg border p-4">
+                <p className="text-xs font-medium text-muted-foreground mb-1">Status</p>
+                <Badge className="bg-green-500 text-white">Active</Badge>
+              </div>
+              <div className="rounded-lg border p-4">
+                <p className="text-xs font-medium text-muted-foreground mb-1">Next billing date</p>
+                <p className="text-lg font-bold tabular-nums">
+                  {status?.currentPeriodEnd
+                    ? new Date(status.currentPeriodEnd).toLocaleDateString("en-ZA")
+                    : "—"}
+                </p>
+              </div>
+            </div>
+            <div className="pt-2">
+              <Button
+                variant="outline"
+                onClick={handleCancel}
+                disabled={cancelMutation.isPending}
+                className="h-11 text-destructive hover:text-destructive"
+              >
+                {cancelMutation.isPending ? "Cancelling…" : "Cancel subscription"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Pricing cards — show when not active */}
+      {needsSubscription && (
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Monthly */}
+          <Card className={`relative overflow-hidden transition-shadow hover:shadow-lg ${selectedPlan === "monthly" ? "ring-2 ring-primary" : ""}`}>
+            <CardHeader>
+              <CardTitle>Monthly</CardTitle>
+              <CardDescription>Flexible, cancel anytime</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <span className="text-4xl font-bold">R100</span>
+                <span className="text-muted-foreground ml-1">/ month</span>
+              </div>
+              <ul className="space-y-3">
+                {features.map((f) => {
+                  const Icon = f.icon;
+                  return (
+                    <li key={f.label} className="flex items-center gap-3 text-sm">
+                      <Icon className="h-4 w-4 text-primary flex-shrink-0" aria-hidden="true" />
+                      <span>{f.label}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+              <Button
+                className="w-full h-12 text-base"
+                onClick={() => handleSubscribe("monthly")}
+                disabled={isPending}
+              >
+                <CreditCard className="h-4 w-4 mr-2" aria-hidden="true" />
+                {isPending && selectedPlan === "monthly" ? "Processing…" : isCancelled ? "Resubscribe monthly" : "Subscribe monthly"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Annual */}
+          <Card className={`relative overflow-hidden transition-shadow hover:shadow-lg ${selectedPlan === "annual" ? "ring-2 ring-primary" : ""}`}>
+            <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-bl-lg">
+              Best value
+            </div>
+            <CardHeader>
+              <CardTitle>Annual</CardTitle>
+              <CardDescription>Save with yearly billing</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <span className="text-4xl font-bold">R1,000</span>
+                <span className="text-muted-foreground ml-1">/ year</span>
+                <Badge variant="secondary" className="ml-2">Save R200</Badge>
+              </div>
+              <ul className="space-y-3">
+                {features.map((f) => {
+                  const Icon = f.icon;
+                  return (
+                    <li key={f.label} className="flex items-center gap-3 text-sm">
+                      <Icon className="h-4 w-4 text-primary flex-shrink-0" aria-hidden="true" />
+                      <span>{f.label}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+              <Button
+                className="w-full h-12 text-base"
+                onClick={() => handleSubscribe("annual")}
+                disabled={isPending}
+              >
+                <CreditCard className="h-4 w-4 mr-2" aria-hidden="true" />
+                {isPending && selectedPlan === "annual" ? "Processing…" : isCancelled ? "Resubscribe annually" : "Subscribe annually"}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Features reminder for active subscribers */}
+      {isActive && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">What's included</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {features.map((f) => {
+                const Icon = f.icon;
+                return (
+                  <li key={f.label} className="flex items-center gap-3 text-sm">
+                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" aria-hidden="true" />
+                    <span>{f.label}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Security note */}
+      <p className="text-center text-xs text-muted-foreground">
+        Payments are processed securely by Paystack. Your card details are never stored on our servers.
+      </p>
+    </div>
   );
 }

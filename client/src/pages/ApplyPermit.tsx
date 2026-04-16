@@ -57,6 +57,9 @@ import { useConfirm } from "@/components/ui/confirm-dialog";
 import { RequiredMark } from "@/components/ui/required-mark";
 import { FullPageSpinner, LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useSubscriptionStatus } from "@/hooks/useSubscriptionStatus";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 // Form schema
 const permitFormSchema = z.object({
@@ -145,6 +148,8 @@ export default function ApplyPermitPage() {
   const { toast } = useToast();
   const [location, navigate] = useLocation();
   const confirm = useConfirm();
+  const { data: subStatus } = useSubscriptionStatus();
+  const isSoftLocked = subStatus?.softLockEnabled && !subStatus?.isActive;
 
   const [farms, setFarms] = useState<Farm[]>([]);
   const [noFarms, setNoFarms] = useState(false);
@@ -802,10 +807,20 @@ export default function ApplyPermitPage() {
                           )}
                         />
                         
+                        {isSoftLocked && (
+                          <Alert variant="destructive" className="mb-4">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>Submissions paused</AlertTitle>
+                            <AlertDescription>
+                              The system subscription is inactive. New permit applications cannot be submitted until billing is restored.
+                            </AlertDescription>
+                          </Alert>
+                        )}
+
                         <div className="flex justify-end">
                           <Button
                             type="submit"
-                            disabled={isSubmitting || !form.watch("acceptDisclaimer")}
+                            disabled={isSubmitting || !form.watch("acceptDisclaimer") || !!isSoftLocked}
                             className="w-full md:w-auto h-11"
                             size="lg"
                           >

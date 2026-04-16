@@ -1,6 +1,7 @@
 import { setGlobalOptions } from "firebase-functions/v2";
 import { onRequest } from "firebase-functions/v2/https";
 import { buildApp } from "./app";
+import { paystackSecretKey } from "./paystack-webhook";
 
 setGlobalOptions({
   region: "us-central1",
@@ -16,6 +17,7 @@ export const api = onRequest(
     cpu: 1,
     concurrency: 80,
     invoker: "public",
+    secrets: [paystackSecretKey],
   },
   app
 );

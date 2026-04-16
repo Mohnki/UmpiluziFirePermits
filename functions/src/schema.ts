@@ -7,7 +7,7 @@ export const userProfileSchema = z.object({
   email: z.string().email(),
   displayName: z.string(),
   photoURL: z.string().optional(),
-  role: z.enum(["admin", "area-manager", "user", "api-user"]),
+  role: z.enum(["superadmin", "admin", "area-manager", "user", "api-user"]),
   createdAt: z.date(),
 });
 
@@ -56,7 +56,9 @@ export const areaQuerySchema = z.object({
   offset: z.number().min(0).optional(),
 });
 
-export type UserProfile = z.infer<typeof userProfileSchema>;
+export type UserProfile = z.infer<typeof userProfileSchema> & {
+  canManageBilling?: boolean;
+};
 export type PermitQuery = z.infer<typeof permitQuerySchema>;
 export type AreaQuery = z.infer<typeof areaQuerySchema>;
 
@@ -121,4 +123,23 @@ export interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
   message?: string;
+}
+
+export interface SubscriptionState {
+  subscriptionStatus: "free" | "trial" | "active" | "past_due" | "cancelled" | "none";
+  subscriptionCode?: string;
+  subscriptionEmailToken?: string;
+  subscriptionPlan?: string;
+  subscriptionStartedAt?: string;
+  currentPeriodEnd?: string;
+  paystackCustomerCode?: string;
+  isFree: boolean;
+  softLockEnabled: boolean;
+  lastWebhookEventId?: string;
+}
+
+export interface PaystackConfig {
+  publicKey: string;
+  monthlyPlanCode?: string;
+  annualPlanCode?: string;
 }

@@ -257,4 +257,5 @@ export interface UserProfile {
   photoURL: string;
   role: UserRole;
   createdAt: Date;
+  canManageBilling?: boolean;
 }

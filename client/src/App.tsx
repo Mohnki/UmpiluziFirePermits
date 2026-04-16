@@ -17,9 +17,27 @@ import UserReports from "@/pages/UserReports";
 import Safety from "@/pages/Safety";
 import RiskCalculator from "@/pages/RiskCalculator";
 import { ThemeProvider } from "@/components/ui/theme-provider";
-import { AuthProvider } from "./lib/AuthContext";
+import { AuthProvider, useAuth } from "./lib/AuthContext";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import { ConfirmDialogProvider } from "@/components/ui/confirm-dialog";
+import SuperAdmin from "@/pages/SuperAdmin";
+import SoftLockBanner from "@/components/SoftLockBanner";
+import SubscriptionManager from "@/components/SubscriptionManager";
+import Header from "@/components/Header";
+
+function BillingPage() {
+  const { canManageBilling, isSuperAdmin, loading } = useAuth();
+  if (loading) return null;
+  if (!canManageBilling && !isSuperAdmin) return <NotFound />;
+  return (
+    <div className="flex flex-col min-h-screen">
+      <Header />
+      <main className="flex-grow bg-gray-50 dark:bg-gray-900">
+        <div className="mx-auto max-w-2xl px-4 py-8"><SubscriptionManager /></div>
+      </main>
+    </div>
+  );
+}
 
 function Router() {
   return (
@@ -36,6 +54,8 @@ function Router() {
       <Route path="/user-reports" component={UserReports} />
       <Route path="/safety" component={Safety} />
       <Route path="/risk-calculator" component={RiskCalculator} />
+      <Route path="/superadmin" component={SuperAdmin} />
+      <Route path="/billing" component={BillingPage} />
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>
@@ -49,6 +69,7 @@ function App() {
         <ThemeProvider defaultTheme="light" storageKey="umpiluzi-theme">
           <TooltipProvider>
             <ConfirmDialogProvider>
+              <SoftLockBanner />
               <Toaster />
               <Router />
               <PWAInstallPrompt />

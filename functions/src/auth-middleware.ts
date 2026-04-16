@@ -47,6 +47,17 @@ export const requireRole = (roles: string[]) => {
   };
 };
 
-export const requireAdmin = requireRole(["admin"]);
-export const requireManagerAccess = requireRole(["admin", "area-manager"]);
-export const requireApiAccess = requireRole(["admin", "area-manager", "api-user"]);
+export const requireAdmin = requireRole(["superadmin", "admin"]);
+export const requireManagerAccess = requireRole(["superadmin", "admin", "area-manager"]);
+export const requireApiAccess = requireRole(["superadmin", "admin", "area-manager", "api-user"]);
+export const requireSuperAdmin = requireRole(["superadmin"]);
+
+export const requireBillingAccess = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.user) {
+    return res.status(401).json({ success: false, error: "Authentication required" });
+  }
+  if (req.user.role === "superadmin" || (req.user as any).canManageBilling) {
+    return next();
+  }
+  return res.status(403).json({ success: false, error: "Billing access required" });
+};

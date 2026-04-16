@@ -9,7 +9,14 @@ service cloud.firestore {
     function isAdmin() {
       return isAuthenticated() &&
              exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+             (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin');
+    }
+
+    function isSuperAdmin() {
+      return isAuthenticated() &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
     }
 
     function isAreaManager() {
@@ -100,6 +107,14 @@ service cloud.firestore {
     // API usage logs — server-only (Admin SDK). Deny all client access.
     match /apiUsageLogs/{logId} {
       allow read, write: if false;
+    }
+
+    // System config — superadmin + billing users read; writes via Admin SDK only.
+    match /system/{docId} {
+      allow read: if isSuperAdmin() ||
+        (isAuthenticated() &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.canManageBilling == true);
+      allow write: if false;
     }
   }
 }

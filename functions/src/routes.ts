@@ -20,9 +20,22 @@ import {
 } from "./auth-middleware";
 import { rateLimitMiddleware } from "./rate-limit-service";
 import { StorageService } from "./storage-service";
+import { superadminRoutes } from "./superadmin-routes";
+import { subscriptionRoutes } from "./subscription-routes";
+import { handlePaystackWebhook } from "./paystack-webhook";
+import { requireActiveSubscription } from "./subscription-middleware";
 
 export function registerRoutes(app: Express) {
   app.use("/api", rateLimitMiddleware);
+
+  // Paystack webhook (public — signature verified internally)
+  app.post("/api/paystack/webhook", handlePaystackWebhook);
+
+  // Superadmin routes
+  app.use("/api/superadmin", superadminRoutes);
+
+  // Subscription management routes
+  app.use("/api/subscriptions", subscriptionRoutes);
 
   const upload = multer({
     storage: multer.memoryStorage(),
@@ -207,6 +220,7 @@ export function registerRoutes(app: Express) {
     "/api/permits/:id",
     authenticateUser,
     requireManagerAccess,
+    requireActiveSubscription,
     async (req: Request, res: Response) => {
       try {
         const { status, rejectionReason } = req.body;
@@ -373,6 +387,7 @@ export function registerRoutes(app: Express) {
     "/api/documents",
     authenticateUser,
     requireAdmin,
+    requireActiveSubscription,
     upload.single("file"),
     async (req: Request, res: Response) => {
       try {

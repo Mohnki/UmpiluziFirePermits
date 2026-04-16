@@ -1,32 +1,30 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User } from "firebase/auth";
 import { onAuthStateChange, getUserProfile, UserProfile } from "./firebase";
-import { UserRole } from "./roles";
 
-// Create the auth context
 type AuthContextType = {
   user: User | null;
   userProfile: UserProfile | null;
   loading: boolean;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
   isAreaManager: boolean;
   isApiUser: boolean;
   hasManagerAccess: boolean;
+  canManageBilling: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Provider component
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch user profile when user auth state changes
   useEffect(() => {
-    const fetchUserProfile = async (user: User) => {
+    const fetchUserProfile = async (u: User) => {
       try {
-        const profile = await getUserProfile(user.uid);
+        const profile = await getUserProfile(u.uid);
         setUserProfile(profile);
       } catch (error) {
         console.error("Error fetching user profile:", error);
@@ -35,38 +33,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    // Subscribe to auth state changes
-    const unsubscribe = onAuthStateChange((user) => {
-      setUser(user);
-      
-      if (user) {
-        fetchUserProfile(user);
+    const unsubscribe = onAuthStateChange((u) => {
+      setUser(u);
+      if (u) {
+        fetchUserProfile(u);
       } else {
         setUserProfile(null);
         setLoading(false);
       }
     });
 
-    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
 
-  // Compute role-based access flags
-  const isAdmin = userProfile?.role === 'admin';
-  const isAreaManager = userProfile?.role === 'area-manager';
-  const isApiUser = userProfile?.role === 'api-user';
+  const isSuperAdmin = userProfile?.role === "superadmin";
+  const isAdmin = userProfile?.role === "admin" || isSuperAdmin;
+  const isAreaManager = userProfile?.role === "area-manager";
+  const isApiUser = userProfile?.role === "api-user";
   const hasManagerAccess = isAdmin || isAreaManager;
+  const canManageBilling = isSuperAdmin || (userProfile?.canManageBilling ?? false);
 
   return (
-    <AuthContext.Provider 
-      value={{ 
-        user, 
-        userProfile, 
-        loading, 
-        isAdmin, 
+    <AuthContext.Provider
+      value={{
+        user,
+        userProfile,
+        loading,
+        isAdmin,
+        isSuperAdmin,
         isAreaManager,
         isApiUser,
-        hasManagerAccess 
+        hasManagerAccess,
+        canManageBilling,
       }}
     >
       {children}
@@ -74,7 +72,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// Custom hook to use the auth context
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {

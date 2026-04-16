@@ -15,7 +15,8 @@ import {
   CheckSquare,
   BarChart3,
   Code,
-  Shield
+  Shield,
+  CreditCard
 } from "lucide-react";
 import LoginButton from "@/components/LoginButton";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -34,7 +35,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user, userProfile, isAdmin, isAreaManager, isApiUser, hasManagerAccess } = useAuth();
+  const { user, userProfile, isAdmin, isSuperAdmin, isAreaManager, isApiUser, hasManagerAccess, canManageBilling } = useAuth();
   const [location, setLocation] = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
   
@@ -193,6 +194,16 @@ export default function Header() {
                   Reports
                 </Link>
               )}
+              {isSuperAdmin && (
+                <Link
+                  href="/superadmin"
+                  className="inline-flex items-center gap-1.5 rounded-md bg-purple-500/10 px-2.5 py-1 text-purple-700 dark:text-purple-300 hover:bg-purple-500/20 transition font-medium"
+                  aria-label="Super Admin dashboard"
+                >
+                  <Shield className="h-4 w-4" aria-hidden="true" />
+                  Super Admin
+                </Link>
+              )}
             </>
           )}
         </nav>
@@ -288,7 +299,25 @@ export default function Header() {
                     </DropdownMenuItem>
                   </Link>
                 )}
-                
+
+                {canManageBilling && (
+                  <Link href="/billing">
+                    <DropdownMenuItem className="cursor-pointer">
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      <span>Billing</span>
+                    </DropdownMenuItem>
+                  </Link>
+                )}
+
+                {isSuperAdmin && (
+                  <Link href="/superadmin">
+                    <DropdownMenuItem className="cursor-pointer text-purple-700 dark:text-purple-300">
+                      <Shield className="mr-2 h-4 w-4" />
+                      <span>Super Admin</span>
+                    </DropdownMenuItem>
+                  </Link>
+                )}
+
                 <DropdownMenuSeparator />
                 
                 <Link href="/#contact">

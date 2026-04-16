@@ -49,6 +49,7 @@ export class AuthService {
       photoURL: data.photoURL || undefined,
       role: data.role,
       createdAt: convertTimestampToDate(data.createdAt),
+      canManageBilling: data.canManageBilling || false,
     };
   }
 }

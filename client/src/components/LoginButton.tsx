@@ -8,8 +8,10 @@ import { Link } from "wouter";
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -118,7 +120,8 @@ export default function LoginButton() {
           Sign in
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] p-0">
+      <DialogContent className="sm:max-w-[425px] p-0" aria-describedby={undefined}>
+        <VisuallyHidden><DialogTitle>Sign in or create an account</DialogTitle></VisuallyHidden>
         <AuthForms onClose={() => setOpen(false)} />
       </DialogContent>
     </Dialog>

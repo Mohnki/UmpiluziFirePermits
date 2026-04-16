@@ -354,8 +354,8 @@ export function registerRoutes(app: Express) {
   // Documents
   app.get("/api/documents", authenticateUser, async (req: Request, res: Response) => {
     try {
-      const documents =
-        req.user?.role === "admin"
+      const isAdminUser = ["admin", "superadmin"].includes(req.user?.role ?? "");
+      const documents = isAdminUser
           ? await DocumentService.getAllDocuments()
           : await DocumentService.getPublicDocuments();
       return res.json({
@@ -373,7 +373,7 @@ export function registerRoutes(app: Express) {
     try {
       const document = await DocumentService.getDocumentById(req.params.id);
       if (!document) return res.status(404).json({ success: false, error: "Document not found" });
-      if (!document.isPublic && req.user?.role !== "admin") {
+      if (!document.isPublic && !["admin", "superadmin"].includes(req.user?.role ?? "") && req.user?.role !== "superadmin") {
         return res.status(403).json({ success: false, error: "Access denied" });
       }
       return res.json({ success: true, data: document } as ApiResponse);
@@ -477,7 +477,7 @@ export function registerRoutes(app: Express) {
     try {
       const document = await DocumentService.getDocumentById(req.params.id);
       if (!document) return res.status(404).json({ success: false, error: "Document not found" });
-      if (!document.isPublic && req.user?.role !== "admin") {
+      if (!document.isPublic && !["admin", "superadmin"].includes(req.user?.role ?? "")) {
         return res.status(403).json({ success: false, error: "Access denied" });
       }
       if (!document.storagePath) {
@@ -502,7 +502,7 @@ export function registerRoutes(app: Express) {
     try {
       const document = await DocumentService.getDocumentById(req.params.id);
       if (!document) return res.status(404).json({ success: false, error: "Document not found" });
-      if (!document.isPublic && req.user?.role !== "admin") {
+      if (!document.isPublic && !["admin", "superadmin"].includes(req.user?.role ?? "")) {
         return res.status(403).json({ success: false, error: "Access denied" });
       }
       await DocumentService.incrementDownloadCount(req.params.id);

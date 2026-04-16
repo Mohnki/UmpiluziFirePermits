@@ -71,6 +71,7 @@ export function AuthForms({ onClose }: { onClose?: () => void }) {
   const [isLoading, setIsLoading] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>("login");
 
@@ -134,25 +135,22 @@ export function AuthForms({ onClose }: { onClose?: () => void }) {
   // Handle login with email/password
   const onLoginSubmit = async (values: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
+    setAuthError(null);
     try {
       await signInWithEmailPassword(values.email, values.password);
       toast({
         title: "Welcome back!",
         description: "You have successfully signed in.",
       });
-      setRetryCount(0); // Reset retry count on success
+      setRetryCount(0);
       if (onClose) onClose();
     } catch (error: any) {
       console.error("Login error details:", error);
-      
+      const message = getAuthErrorMessage(error);
+      setAuthError(message);
+
       if (isNetworkError(error) && retryCount < 3) {
         showRetryToast(error, () => onLoginSubmit(values));
-      } else {
-        toast({
-          title: "Sign in failed",
-          description: getAuthErrorMessage(error),
-          variant: "destructive",
-        });
       }
     } finally {
       setIsLoading(false);
@@ -162,25 +160,22 @@ export function AuthForms({ onClose }: { onClose?: () => void }) {
   // Handle registration
   const onRegisterSubmit = async (values: z.infer<typeof registerSchema>) => {
     setIsLoading(true);
+    setAuthError(null);
     try {
       await registerWithEmailPassword(values.email, values.password, values.name);
       toast({
         title: "Welcome!",
         description: "Your account has been created successfully and you are now signed in.",
       });
-      setRetryCount(0); // Reset retry count on success
+      setRetryCount(0);
       if (onClose) onClose();
     } catch (error: any) {
       console.error("Registration error details:", error);
-      
+      const message = getAuthErrorMessage(error);
+      setAuthError(message);
+
       if (isNetworkError(error) && retryCount < 3) {
         showRetryToast(error, () => onRegisterSubmit(values));
-      } else {
-        toast({
-          title: "Registration failed",
-          description: getAuthErrorMessage(error),
-          variant: "destructive",
-        });
       }
     } finally {
       setIsLoading(false);
@@ -291,7 +286,7 @@ export function AuthForms({ onClose }: { onClose?: () => void }) {
 
   return (
     <Card className="w-full max-w-md mx-auto">
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setAuthError(null); }}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="login">Login</TabsTrigger>
           <TabsTrigger value="register">Register</TabsTrigger>
@@ -306,6 +301,11 @@ export function AuthForms({ onClose }: { onClose?: () => void }) {
             </CardDescription>
           </CardHeader>
           <CardContent>
+          {authError && activeTab === "login" && (
+            <div className="mb-4 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive" role="alert">
+              {authError}
+            </div>
+          )}
           <Form {...loginForm}>
             <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
               <FormField
@@ -386,6 +386,11 @@ export function AuthForms({ onClose }: { onClose?: () => void }) {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {authError && activeTab === "register" && (
+            <div className="mb-4 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive" role="alert">
+              {authError}
+            </div>
+          )}
           <Form {...registerForm}>
             <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
               <FormField

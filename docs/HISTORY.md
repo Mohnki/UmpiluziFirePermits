@@ -408,6 +408,48 @@ Replaced `icon-192.png` and `icon-512.png` with new fire emblem design
 - Migration script (`scripts/migrate-superadmin.ts`) has already been run.
   Re-running is safe (uses `merge: true`).
 
+## Post-deployment fixes (2026-04-16)
+
+Bugs found during live testing and fixed same-day:
+
+1. **Paystack v2 API** — `PaystackPop.setup()` + `openIframe()` were deprecated.
+   Replaced with `new PaystackPop().newTransaction()`. File: `SubscriptionManager.tsx`.
+2. **Subscribe button missing** — when `isFree` toggled off, `subscriptionStatus`
+   was still `"free"` (seed value). Added `"free"` to `showSubscribe` conditions.
+3. **Billing page too bare** — redesigned with side-by-side pricing cards
+   (R250/month, R2,250/year), feature lists, active plan details grid, and
+   contextual alerts. No more plain card with a single button.
+4. **Documents 500 error** — missing composite index (`isPublic` + `uploadedAt`)
+   and superadmin role not included in admin document access checks. Fixed both.
+   Added index to `firestore.indexes.json`.
+5. **DialogTitle warning** — login dialog (`LoginButton.tsx`) missing
+   `<DialogTitle>` for Radix accessibility. Added with `VisuallyHidden` wrapper.
+6. **Auth error messages** — login/register errors now show inline on the form
+   (red alert box) in addition to console logging. Errors clear when switching
+   tabs. All Firebase Auth error codes already mapped in `getAuthErrorMessage()`.
+7. **Post-login redirect** — users auto-redirect after login based on role:
+   superadmin → `/superadmin`, admin → `/admin`, area-manager → `/area-manager`,
+   api-user → `/api-docs`, user → `/apply-permit`. Only fires on fresh sign-in
+   from the home page (not on reload or deep links). File: `AuthContext.tsx`.
+8. **Missing nav links** — desktop and mobile nav were missing several
+   role-appropriate links. Fixed:
+   - Desktop: added User Reports, Billing (with CreditCard icon) for billing users
+   - Mobile: added Reports, User Reports, Billing, Super Admin links
+     (previously only in the avatar dropdown)
+9. **PWA icons** — replaced with new fire emblem design from `generated-icon.png`.
+
+### Navigation link visibility by role (current)
+
+| Link | user | area-manager | admin | superadmin |
+| --- | --- | --- | --- | --- |
+| Home, Safety Hub | yes | yes | yes | yes |
+| My Permits, Apply, Farms, Today's Map | yes | yes | yes | yes |
+| Manage Areas | — | yes | — | — |
+| Admin Panel | — | — | yes | yes |
+| Reports, User Reports | — | yes | yes | yes |
+| Billing | — | if `canManageBilling` | if `canManageBilling` | yes |
+| Super Admin | — | — | — | yes |
+
 ### What's pending
 
 - Create annual Paystack plan and add plan code via SuperAdmin dashboard.

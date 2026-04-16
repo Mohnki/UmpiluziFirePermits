@@ -49,6 +49,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { 
   AlertCircle, 
   Edit, 
@@ -76,6 +77,7 @@ type FarmFormValues = z.infer<typeof farmFormSchema>;
 export default function ManageFarms() {
   const { user, userProfile } = useAuth();
   const { toast } = useToast();
+  const confirm = useConfirm();
   
   const [farms, setFarms] = useState<Farm[]>([]);
   const [areas, setAreas] = useState<Area[]>([]);
@@ -216,10 +218,14 @@ export default function ManageFarms() {
   
   // Handle delete farm
   const handleDeleteFarm = async (farmId: string) => {
-    if (!confirm("Are you sure you want to delete this farm? This action cannot be undone.")) {
-      return;
-    }
-    
+    const ok = await confirm({
+      title: "Delete this farm?",
+      description: "This action cannot be undone. All permits linked to this farm will remain but orphaned.",
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
+
     try {
       await deleteFarm(farmId);
       

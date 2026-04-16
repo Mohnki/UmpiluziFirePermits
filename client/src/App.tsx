@@ -19,6 +19,7 @@ import RiskCalculator from "@/pages/RiskCalculator";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { AuthProvider } from "./lib/AuthContext";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
+import { ConfirmDialogProvider } from "@/components/ui/confirm-dialog";
 
 function Router() {
   return (
@@ -47,9 +48,11 @@ function App() {
       <AuthProvider>
         <ThemeProvider defaultTheme="light" storageKey="umpiluzi-theme">
           <TooltipProvider>
-            <Toaster />
-            <Router />
-            <PWAInstallPrompt />
+            <ConfirmDialogProvider>
+              <Toaster />
+              <Router />
+              <PWAInstallPrompt />
+            </ConfirmDialogProvider>
           </TooltipProvider>
         </ThemeProvider>
       </AuthProvider>

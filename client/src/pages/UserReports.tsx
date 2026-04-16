@@ -650,7 +650,34 @@ export default function UserReportsPage() {
                     </p>
                   </div>
                 ) : viewMode === 'table' ? (
-                  <div className="overflow-x-auto">
+                  <>
+                    {/* Mobile cards */}
+                    <ul className="md:hidden space-y-3" aria-label={`Permit list for ${targetUserName || targetUserEmail}`}>
+                      {filteredPermits.map((permit) => {
+                        const area = areas.find(a => a.id === permit.areaId);
+                        const burnType = burnTypes.find(bt => bt.id === permit.burnTypeId);
+                        return (
+                          <li key={permit.id} className="rounded-md border p-4">
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <div className="font-mono text-xs text-muted-foreground">#{permit.id.substring(0, 8)}</div>
+                                <div className="font-semibold flex items-center"><Flame className="h-4 w-4 mr-1 text-muted-foreground" aria-hidden="true" />{burnType?.name ?? 'Unknown Type'}</div>
+                                <div className="text-sm text-muted-foreground flex items-center"><MapPin className="h-4 w-4 mr-1" aria-hidden="true" />{area?.name ?? 'Unknown Area'}</div>
+                              </div>
+                              <Badge variant={getStatusBadgeVariant(permit.status)}>{permit.status.charAt(0).toUpperCase() + permit.status.slice(1)}</Badge>
+                            </div>
+                            <div className="text-xs text-muted-foreground space-y-1">
+                              <div className="flex items-center tabular-nums"><Calendar className="h-3.5 w-3.5 mr-1" aria-hidden="true" />{new Date(permit.startDate).toLocaleDateString("en-ZA")} – {new Date(permit.endDate).toLocaleDateString("en-ZA")}</div>
+                              {permit.compartment && <div className="flex items-center"><Building className="h-3.5 w-3.5 mr-1" aria-hidden="true" />{permit.compartment}</div>}
+                              <div className="tabular-nums">Created: {new Date(permit.createdAt).toLocaleDateString("en-ZA")}</div>
+                              {permit.approvedAt && <div className="tabular-nums">Approved: {new Date(permit.approvedAt).toLocaleDateString("en-ZA")}</div>}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    {/* Desktop table */}
+                    <div className="overflow-x-auto hidden md:block">
                     <Table>
                       <TableCaption>List of permits for {targetUserName || targetUserEmail}</TableCaption>
                       <TableHeader>
@@ -669,7 +696,7 @@ export default function UserReportsPage() {
                         {filteredPermits.map((permit) => {
                           const area = areas.find(a => a.id === permit.areaId);
                           const burnType = burnTypes.find(bt => bt.id === permit.burnTypeId);
-                          
+
                           return (
                             <TableRow key={permit.id}>
                               <TableCell className="font-mono text-sm">
@@ -682,44 +709,45 @@ export default function UserReportsPage() {
                               </TableCell>
                               <TableCell>
                                 <div className="flex items-center">
-                                  <MapPin className="h-4 w-4 mr-1 text-muted-foreground" />
+                                  <MapPin className="h-4 w-4 mr-1 text-muted-foreground" aria-hidden="true" />
                                   {area ? area.name : 'Unknown Area'}
                                 </div>
                               </TableCell>
                               <TableCell>
                                 <div className="flex items-center">
-                                  <Flame className="h-4 w-4 mr-1 text-muted-foreground" />
+                                  <Flame className="h-4 w-4 mr-1 text-muted-foreground" aria-hidden="true" />
                                   {burnType ? burnType.name : 'Unknown Type'}
                                 </div>
                               </TableCell>
                               <TableCell>
                                 {permit.compartment ? (
                                   <div className="flex items-center">
-                                    <Building className="h-4 w-4 mr-1 text-muted-foreground" />
+                                    <Building className="h-4 w-4 mr-1 text-muted-foreground" aria-hidden="true" />
                                     <span>{permit.compartment}</span>
                                   </div>
                                 ) : (
                                   <span className="text-muted-foreground">-</span>
                                 )}
                               </TableCell>
-                              <TableCell>
+                              <TableCell className="tabular-nums">
                                 <div className="flex items-center">
-                                  <Calendar className="h-4 w-4 mr-1 text-muted-foreground" />
-                                  {new Date(permit.startDate).toLocaleDateString()} - {new Date(permit.endDate).toLocaleDateString()}
+                                  <Calendar className="h-4 w-4 mr-1 text-muted-foreground" aria-hidden="true" />
+                                  {new Date(permit.startDate).toLocaleDateString("en-ZA")} – {new Date(permit.endDate).toLocaleDateString("en-ZA")}
                                 </div>
                               </TableCell>
-                              <TableCell>
-                                {new Date(permit.createdAt).toLocaleDateString()}
+                              <TableCell className="tabular-nums">
+                                {new Date(permit.createdAt).toLocaleDateString("en-ZA")}
                               </TableCell>
-                              <TableCell>
-                                {permit.approvedAt ? new Date(permit.approvedAt).toLocaleDateString() : '-'}
+                              <TableCell className="tabular-nums">
+                                {permit.approvedAt ? new Date(permit.approvedAt).toLocaleDateString("en-ZA") : '-'}
                               </TableCell>
                             </TableRow>
                           );
                         })}
                       </TableBody>
                     </Table>
-                  </div>
+                    </div>
+                  </>
                 ) : (
                   // Map View
                   <div className="h-[600px] w-full">
@@ -763,6 +791,8 @@ export default function UserReportsPage() {
                           bounds={permitsWithLocation.map(p => [p.location!.latitude, p.location!.longitude])}
                           boundsOptions={{ padding: [20, 20] }}
                           className="rounded-lg"
+                          role="region"
+                          aria-label="Map of permit locations for this user"
                         >
                           <TileLayer
                             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

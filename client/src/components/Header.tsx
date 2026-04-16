@@ -169,12 +169,22 @@ export default function Header() {
                 </>
               )}
               {isAdmin && (
-                <Link href="/admin" className="text-foreground hover:text-primary transition font-medium">
-                  Admin Panel
+                <Link
+                  href="/admin"
+                  className="inline-flex items-center gap-1.5 rounded-md bg-destructive/10 px-2.5 py-1 text-destructive hover:bg-destructive/20 transition font-medium"
+                  aria-label="Admin Panel (restricted)"
+                >
+                  <Shield className="h-4 w-4" aria-hidden="true" />
+                  Admin
                 </Link>
               )}
               {isAreaManager && (
-                <Link href="/area-manager" className="text-foreground hover:text-primary transition font-medium">
+                <Link
+                  href="/area-manager"
+                  className="inline-flex items-center gap-1.5 rounded-md bg-secondary/20 px-2.5 py-1 text-secondary-foreground hover:bg-secondary/30 transition font-medium"
+                  aria-label="Manage Areas (area manager)"
+                >
+                  <LayoutDashboard className="h-4 w-4" aria-hidden="true" />
                   Manage Areas
                 </Link>
               )}
@@ -203,7 +213,7 @@ export default function Header() {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>
                   <div className="font-normal text-xs text-muted-foreground">Signed in as</div>
-                  <div className="font-medium truncate">{userProfile?.email}</div>
+                  <div className="font-medium truncate" title={userProfile?.email ?? ""}>{userProfile?.email}</div>
                 </DropdownMenuLabel>
                 
                 <DropdownMenuSeparator />
@@ -327,14 +337,17 @@ export default function Header() {
               </DropdownMenu>
             </div>
           )}
-          <button 
+          <button
             onClick={toggleMobileMenu}
-            className="text-foreground focus:outline-none ml-2"
+            className="text-foreground ml-2 inline-flex items-center justify-center h-11 w-11 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label={isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-nav"
           >
             {isMobileMenuOpen ? (
-              <X className="h-6 w-6" />
+              <X className="h-6 w-6" aria-hidden="true" />
             ) : (
-              <Menu className="h-6 w-6" />
+              <Menu className="h-6 w-6" aria-hidden="true" />
             )}
           </button>
         </div>
@@ -342,7 +355,7 @@ export default function Header() {
 
       {/* Mobile Navigation */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-white dark:bg-gray-900 shadow-lg">
+        <div id="mobile-nav" className="md:hidden bg-white dark:bg-gray-900 shadow-lg">
           <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col space-y-3">
             <Link href="/"
               className="text-foreground hover:text-primary transition py-2 border-b border-gray-100 dark:border-gray-700"
@@ -429,20 +442,21 @@ export default function Header() {
                 
                 {isAdmin && (
                   <Link href="/admin"
-                    className="text-foreground hover:text-primary transition py-2 border-b border-gray-100 dark:border-gray-700 flex items-center"
+                    className="text-destructive bg-destructive/10 hover:bg-destructive/20 transition py-2 px-2 rounded border-b border-gray-100 dark:border-gray-700 flex items-center font-medium"
                     onClick={closeMobileMenu}
+                    aria-label="Admin Panel (restricted)"
                   >
-                    <Settings className="h-4 w-4 mr-2" />
+                    <Shield className="h-4 w-4 mr-2" aria-hidden="true" />
                     Admin Panel
                   </Link>
                 )}
-                
+
                 {isAreaManager && (
                   <Link href="/area-manager"
-                    className="text-foreground hover:text-primary transition py-2 border-b border-gray-100 dark:border-gray-700 flex items-center"
+                    className="text-foreground bg-secondary/20 hover:bg-secondary/30 transition py-2 px-2 rounded border-b border-gray-100 dark:border-gray-700 flex items-center font-medium"
                     onClick={closeMobileMenu}
                   >
-                    <LayoutDashboard className="h-4 w-4 mr-2" />
+                    <LayoutDashboard className="h-4 w-4 mr-2" aria-hidden="true" />
                     Manage Areas
                   </Link>
                 )}

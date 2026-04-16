@@ -632,16 +632,18 @@ export default function PermitReports() {
         </Card>
 
         {initialLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <span className="ml-2">Loading areas and burn types...</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" aria-busy="true">
+            <div className="h-24 rounded-md bg-muted animate-pulse" />
+            <div className="h-24 rounded-md bg-muted animate-pulse" />
+            <div className="h-24 rounded-md bg-muted animate-pulse" />
+            <div className="h-24 rounded-md bg-muted animate-pulse" />
           </div>
         ) : loadingData ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-            <span className="text-lg font-medium">Generating report...</span>
+          <div className="flex flex-col items-center justify-center py-20" role="status" aria-live="polite">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" aria-hidden="true" />
+            <span className="text-lg font-medium">Generating report…</span>
             <span className="text-sm text-gray-500 mt-2">
-              {dateRange === "all" ? "Processing all historical data" : 
+              {dateRange === "all" ? "Processing all historical data" :
                parseInt(dateRange) > 365 ? "Processing large date range" :
                "This may take a moment"}
             </span>

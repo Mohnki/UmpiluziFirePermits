@@ -75,7 +75,7 @@ export default function UmpiluziFMUMap({ className }: UmpiluziFMUMapProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-800 rounded-full mb-6">
-            <MapPin className="w-8 h-8 text-green-600 dark:text-green-400" />
+            <MapPin className="w-8 h-8 text-green-600 dark:text-green-400" aria-hidden="true" />
           </div>
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
             Umpiluzi Fire Management Unit
@@ -118,6 +118,8 @@ export default function UmpiluziFMUMap({ className }: UmpiluziFMUMapProps) {
                 style={{ height: '100%', width: '100%' }}
                 scrollWheelZoom={true}
                 zoomControl={true}
+                role="region"
+                aria-label="Interactive map of the Umpiluzi Fire Management Unit"
               >
                 <TileLayer
                   url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"

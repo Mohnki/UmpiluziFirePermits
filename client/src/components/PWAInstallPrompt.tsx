@@ -7,7 +7,8 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
-const SESSION_KEY = "pwa-install-dismissed";
+const DISMISS_KEY = "pwa-install-dismissed-at";
+const DISMISS_TTL_MS = 48 * 60 * 60 * 1000; // 48h between prompts
 const IS_DEV = import.meta.env.DEV;
 
 function isIOS() {
@@ -25,6 +26,14 @@ function isInStandaloneMode() {
   );
 }
 
+function wasRecentlyDismissed() {
+  const raw = localStorage.getItem(DISMISS_KEY);
+  if (!raw) return false;
+  const ts = parseInt(raw, 10);
+  if (Number.isNaN(ts)) return false;
+  return Date.now() - ts < DISMISS_TTL_MS;
+}
+
 export default function PWAInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
@@ -32,55 +41,82 @@ export default function PWAInstallPrompt() {
   const [ios, setIos] = useState(false);
 
   useEffect(() => {
-    if (sessionStorage.getItem(SESSION_KEY)) return;
     if (isInStandaloneMode()) return;
+    if (wasRecentlyDismissed()) return;
 
     const iosDevice = isIOS();
     setIos(iosDevice);
 
-    if (iosDevice) {
-      const timer = setTimeout(() => setVisible(true), 2000);
-      return () => clearTimeout(timer);
+    const existing = (window as Window).__deferredInstallPrompt as
+      | BeforeInstallPromptEvent
+      | null
+      | undefined;
+    if (existing) {
+      setDeferredPrompt(existing);
+      setVisible(true);
     }
 
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setVisible(true);
+    const onAvailable = () => {
+      const evt = (window as Window).__deferredInstallPrompt as
+         | BeforeInstallPromptEvent
+         | null
+         | undefined;
+      if (evt) {
+        setDeferredPrompt(evt);
+        setVisible(true);
+      }
     };
 
-    window.addEventListener("beforeinstallprompt", handler);
+    const onInstalled = () => {
+      setVisible(false);
+      setDeferredPrompt(null);
+    };
+
+    window.addEventListener("pwa-install-available", onAvailable);
+    window.addEventListener("pwa-installed", onInstalled);
+
+    let iosTimer: ReturnType<typeof setTimeout> | undefined;
+    if (iosDevice) {
+      iosTimer = setTimeout(() => setVisible(true), 2000);
+    }
 
     let devTimer: ReturnType<typeof setTimeout> | undefined;
-    if (IS_DEV) {
+    if (IS_DEV && !iosDevice) {
       devTimer = setTimeout(() => {
-        if (!sessionStorage.getItem(SESSION_KEY)) {
-          setVisible(true);
-        }
-      }, 1000);
+        if (!wasRecentlyDismissed()) setVisible(true);
+      }, 1500);
     }
 
     return () => {
-      window.removeEventListener("beforeinstallprompt", handler);
+      window.removeEventListener("pwa-install-available", onAvailable);
+      window.removeEventListener("pwa-installed", onInstalled);
+      if (iosTimer) clearTimeout(iosTimer);
       if (devTimer) clearTimeout(devTimer);
     };
   }, []);
 
   const handleInstall = async () => {
     if (!deferredPrompt) return;
-    await deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === "accepted") {
-      sessionStorage.setItem(SESSION_KEY, "1");
+    try {
+      await deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === "accepted") {
+        setVisible(false);
+      } else {
+        localStorage.setItem(DISMISS_KEY, Date.now().toString());
+        setVisible(false);
+      }
+    } catch {
       setVisible(false);
+    } finally {
       setDeferredPrompt(null);
+      (window as Window).__deferredInstallPrompt = null;
     }
   };
 
   const handleDismiss = () => {
-    sessionStorage.setItem(SESSION_KEY, "1");
+    localStorage.setItem(DISMISS_KEY, Date.now().toString());
     setVisible(false);
-    setDeferredPrompt(null);
   };
 
   if (!visible) return null;

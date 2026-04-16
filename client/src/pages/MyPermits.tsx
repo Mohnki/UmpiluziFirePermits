@@ -43,6 +43,16 @@ import {
   Share2,
 } from "lucide-react";
 import { format } from "date-fns";
+import { formatDate, formatDateLong } from "@/lib/format";
+import { LoadingSpinner, FullPageSpinner } from "@/components/ui/loading-spinner";
+import { TableSkeleton } from "@/components/ui/table-skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function MyPermits() {
   const { user, loading } = useAuth();
@@ -54,6 +64,9 @@ export default function MyPermits() {
   const [farms, setFarms] = useState<Farm[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [completingPermit, setCompletingPermit] = useState<string | null>(null);
+  const [viewingPermit, setViewingPermit] = useState<BurnPermit | null>(null);
+  const [historyPage, setHistoryPage] = useState(0);
+  const HISTORY_PAGE_SIZE = 20;
 
   // Fetch user's permits, areas and burn types
   useEffect(() => {
@@ -203,8 +216,8 @@ export default function MyPermits() {
     const burnTypeName = getBurnTypeName(permit.burnTypeId);
     const areaName = getAreaName(permit.areaId);
     const farmName = permit.farmId ? getFarmName(permit.farmId) : "No Farm Specified";
-    const startDate = format(new Date(permit.startDate), "MMM d, yyyy");
-    const endDate = format(new Date(permit.endDate), "MMM d, yyyy");
+    const startDate = formatDate(permit.startDate);
+    const endDate = formatDate(permit.endDate);
 
     const message = `🔥 BURN PERMIT ACTIVE 🔥
 
@@ -319,12 +332,23 @@ export default function MyPermits() {
     return <Redirect to="/" />;
   }
 
-  // Loading state
-  if (loading || isLoading) {
+  if (loading) {
+    return <FullPageSpinner label="Loading" />;
+  }
+
+  if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2">Loading your permits...</span>
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow bg-gray-50 dark:bg-gray-900">
+          <div className="mx-auto max-w-7xl px-4 py-8">
+            <div className="max-w-5xl mx-auto space-y-6">
+              <h1 className="text-2xl md:text-3xl font-bold">My Burn Permits</h1>
+              <TableSkeleton rows={3} columns={6} />
+            </div>
+          </div>
+        </main>
+        <Footer />
       </div>
     );
   }
@@ -397,7 +421,37 @@ export default function MyPermits() {
               ) : (
                 <Card>
                   <CardContent>
-                    <div className="rounded-md border">
+                    {/* Mobile: card list */}
+                    <ul className="md:hidden space-y-3" aria-label="Active permits">
+                      {activePermits.map((permit) => (
+                        <li key={permit.id} className="rounded-md border p-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <div className="font-mono text-xs text-muted-foreground">#{permit.id.substring(0, 8)}</div>
+                              <div className="font-semibold">{getBurnTypeName(permit.burnTypeId)}</div>
+                              <div className="text-sm text-muted-foreground">{getAreaName(permit.areaId)}</div>
+                            </div>
+                            <Badge className="flex items-center gap-1 capitalize bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300">
+                              {getStatusIcon(permit.status)}
+                              {permit.status}
+                            </Badge>
+                          </div>
+                          <div className="text-sm mb-3"><span className="text-muted-foreground">Date:</span> <span className="tabular-nums">{formatDate(permit.startDate)}</span></div>
+                          <div className="flex flex-wrap gap-2">
+                            <Button size="sm" variant="outline" className="h-11 flex-1" onClick={() => setViewingPermit(permit)}>View</Button>
+                            <Button size="sm" variant="secondary" className="h-11 flex-1" onClick={() => handleSharePermit(permit)}>
+                              <Share2 className="h-4 w-4 mr-1" aria-hidden="true" />Share
+                            </Button>
+                            <Button size="sm" className="h-11 flex-1" onClick={() => handleCompletePermit(permit.id)} disabled={completingPermit === permit.id}>
+                              {completingPermit === permit.id ? <><LoadingSpinner size="sm" className="text-primary-foreground mr-1" />Completing…</> : "Complete"}
+                            </Button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+
+                    {/* Desktop: table */}
+                    <div className="rounded-md border hidden md:block">
                       <Table>
                         <TableHeader>
                           <TableRow>
@@ -412,7 +466,7 @@ export default function MyPermits() {
                         <TableBody>
                           {activePermits.map((permit) => (
                             <TableRow key={permit.id}>
-                              <TableCell className="font-medium">
+                              <TableCell className="font-mono text-xs">
                                 {permit.id.substring(0, 8)}
                               </TableCell>
                               <TableCell>
@@ -421,11 +475,8 @@ export default function MyPermits() {
                               <TableCell>
                                 {getAreaName(permit.areaId)}
                               </TableCell>
-                              <TableCell>
-                                {format(
-                                  new Date(permit.startDate),
-                                  "MMM d, yyyy",
-                                )}
+                              <TableCell className="tabular-nums">
+                                {formatDate(permit.startDate)}
                               </TableCell>
                               <TableCell>
                                 <Badge className="flex items-center gap-1 capitalize bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800">
@@ -438,11 +489,7 @@ export default function MyPermits() {
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => {
-                                      alert(
-                                        `Permit details: ${permit.details || "No additional details"}`,
-                                      );
-                                    }}
+                                    onClick={() => setViewingPermit(permit)}
                                   >
                                     View
                                   </Button>
@@ -451,7 +498,7 @@ export default function MyPermits() {
                                     variant="secondary"
                                     onClick={() => handleSharePermit(permit)}
                                   >
-                                    <Share2 className="h-4 w-4 mr-1" />
+                                    <Share2 className="h-4 w-4 mr-1" aria-hidden="true" />
                                     Share
                                   </Button>
                                   <Button
@@ -464,8 +511,8 @@ export default function MyPermits() {
                                   >
                                     {completingPermit === permit.id ? (
                                       <>
-                                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                                        Completing...
+                                        <LoadingSpinner size="sm" className="text-primary-foreground mr-1" />
+                                        Completing…
                                       </>
                                     ) : (
                                       "Complete"
@@ -509,66 +556,93 @@ export default function MyPermits() {
               ) : (
                 <Card>
                   <CardContent>
-                    <div className="rounded-md border">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Permit Number</TableHead>
-                            <TableHead>Burn Type</TableHead>
-                            <TableHead>Area</TableHead>
-                            <TableHead>Date</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Details</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {historyPermits.map((permit) => (
-                            <TableRow key={permit.id}>
-                              <TableCell className="font-medium">
-                                {permit.id.substring(0, 8)}
-                              </TableCell>
-                              <TableCell>
-                                {getBurnTypeName(permit.burnTypeId)}
-                              </TableCell>
-                              <TableCell>
-                                {getAreaName(permit.areaId)}
-                              </TableCell>
-                              <TableCell>
-                                {format(
-                                  new Date(permit.startDate),
-                                  "MMM d, yyyy",
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                <Badge
-                                  className="flex items-center capitalize"
-                                  variant={
-                                    getStatusBadgeVariant(permit.status) as any
-                                  }
-                                >
-                                  {getStatusIcon(permit.status)}
-                                  {permit.status}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    // Display more details in a modal if needed
-                                    alert(
-                                      `Permit details: ${permit.details || "No additional details"}`,
-                                    );
-                                  }}
-                                >
-                                  View
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
+                    {(() => {
+                      const paged = historyPermits.slice(0, (historyPage + 1) * HISTORY_PAGE_SIZE);
+                      const hasMore = paged.length < historyPermits.length;
+                      return (
+                        <>
+                          {/* Mobile cards */}
+                          <ul className="md:hidden space-y-3" aria-label="Permit history">
+                            {paged.map((permit) => (
+                              <li key={permit.id} className="rounded-md border p-4">
+                                <div className="flex justify-between items-start mb-2">
+                                  <div>
+                                    <div className="font-mono text-xs text-muted-foreground">#{permit.id.substring(0, 8)}</div>
+                                    <div className="font-semibold">{getBurnTypeName(permit.burnTypeId)}</div>
+                                    <div className="text-sm text-muted-foreground">{getAreaName(permit.areaId)}</div>
+                                  </div>
+                                  <Badge className="flex items-center capitalize" variant={getStatusBadgeVariant(permit.status) as any}>
+                                    {getStatusIcon(permit.status)}{permit.status}
+                                  </Badge>
+                                </div>
+                                <div className="text-sm mb-3"><span className="text-muted-foreground">Date:</span> <span className="tabular-nums">{formatDate(permit.startDate)}</span></div>
+                                <Button size="sm" variant="outline" className="w-full h-11" onClick={() => setViewingPermit(permit)}>View</Button>
+                              </li>
+                            ))}
+                          </ul>
+                          {/* Desktop table */}
+                          <div className="rounded-md border hidden md:block">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Permit Number</TableHead>
+                                  <TableHead>Burn Type</TableHead>
+                                  <TableHead>Area</TableHead>
+                                  <TableHead>Date</TableHead>
+                                  <TableHead>Status</TableHead>
+                                  <TableHead>Details</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {paged.map((permit) => (
+                                  <TableRow key={permit.id}>
+                                    <TableCell className="font-mono text-xs">
+                                      {permit.id.substring(0, 8)}
+                                    </TableCell>
+                                    <TableCell>
+                                      {getBurnTypeName(permit.burnTypeId)}
+                                    </TableCell>
+                                    <TableCell>
+                                      {getAreaName(permit.areaId)}
+                                    </TableCell>
+                                    <TableCell className="tabular-nums">
+                                      {formatDate(permit.startDate)}
+                                    </TableCell>
+                                    <TableCell>
+                                      <Badge
+                                        className="flex items-center capitalize"
+                                        variant={
+                                          getStatusBadgeVariant(permit.status) as any
+                                        }
+                                      >
+                                        {getStatusIcon(permit.status)}
+                                        {permit.status}
+                                      </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setViewingPermit(permit)}
+                                      >
+                                        View
+                                      </Button>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                          {hasMore && (
+                            <div className="flex justify-center pt-4">
+                              <Button variant="outline" onClick={() => setHistoryPage(p => p + 1)} className="h-11">
+                                Load more ({historyPermits.length - paged.length} remaining)
+                              </Button>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                   </CardContent>
                 </Card>
               )}
@@ -589,6 +663,39 @@ export default function MyPermits() {
 
         <Footer />
       </div>
+
+      <Dialog open={!!viewingPermit} onOpenChange={(o) => !o && setViewingPermit(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Permit Details</DialogTitle>
+            <DialogDescription>Permit #{viewingPermit?.id.substring(0, 8)}</DialogDescription>
+          </DialogHeader>
+          {viewingPermit && (
+            <div className="space-y-3 text-sm">
+              <div><span className="font-medium">Burn type:</span> {getBurnTypeName(viewingPermit.burnTypeId)}</div>
+              <div><span className="font-medium">Area:</span> {getAreaName(viewingPermit.areaId)}</div>
+              <div><span className="font-medium">Date:</span> <span className="tabular-nums">{formatDateLong(viewingPermit.startDate)}</span></div>
+              <div><span className="font-medium">Status:</span> <span className="capitalize">{viewingPermit.status}</span></div>
+              {viewingPermit.location && (
+                <div><span className="font-medium">Location:</span> <span className="tabular-nums">{viewingPermit.location.latitude.toFixed(6)}, {viewingPermit.location.longitude.toFixed(6)}</span></div>
+              )}
+              {viewingPermit.compartment && (
+                <div><span className="font-medium">Compartment:</span> {viewingPermit.compartment}</div>
+              )}
+              <div>
+                <div className="font-medium mb-1">Additional details</div>
+                <p className="text-muted-foreground whitespace-pre-wrap">{viewingPermit.details || "No additional details provided."}</p>
+              </div>
+              {viewingPermit.status === "rejected" && viewingPermit.rejectionReason && (
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-md">
+                  <div className="font-medium text-red-800 dark:text-red-300 mb-1">Rejection reason</div>
+                  <p className="text-red-700 dark:text-red-400">{viewingPermit.rejectionReason}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
@@ -630,11 +737,11 @@ function PermitCard({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <h4 className="text-sm font-medium mb-1">Burn Date</h4>
-            <p className="text-sm text-muted-foreground">
-              {format(new Date(permit.startDate), "MMMM d, yyyy")}
+            <p className="text-sm text-muted-foreground tabular-nums">
+              {formatDateLong(permit.startDate)}
               {permit.startDate.toDateString() !==
                 permit.endDate.toDateString() &&
-                ` - ${format(new Date(permit.endDate), "MMMM d, yyyy")}`}
+                ` - ${formatDateLong(permit.endDate)}`}
             </p>
           </div>
 

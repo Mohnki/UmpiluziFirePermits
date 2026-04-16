@@ -262,7 +262,7 @@ export function AuthForms({ onClose }: { onClose?: () => void }) {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="your.email@example.com" {...field} disabled={isLoading} />
+                      <Input type="email" inputMode="email" autoComplete="email" placeholder="your.email@example.com" {...field} disabled={isLoading} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -315,7 +315,7 @@ export function AuthForms({ onClose }: { onClose?: () => void }) {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="your.email@example.com" {...field} disabled={isLoading} />
+                      <Input type="email" inputMode="email" autoComplete="email" placeholder="your.email@example.com" {...field} disabled={isLoading} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -328,7 +328,7 @@ export function AuthForms({ onClose }: { onClose?: () => void }) {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} disabled={isLoading} />
+                      <Input type="password" autoComplete="current-password" placeholder="••••••••" {...field} disabled={isLoading} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -395,7 +395,7 @@ export function AuthForms({ onClose }: { onClose?: () => void }) {
                   <FormItem>
                     <FormLabel>Full Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="John Doe" {...field} disabled={isLoading} />
+                      <Input autoComplete="name" placeholder="John Doe" {...field} disabled={isLoading} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -408,7 +408,7 @@ export function AuthForms({ onClose }: { onClose?: () => void }) {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="your.email@example.com" {...field} disabled={isLoading} />
+                      <Input type="email" inputMode="email" autoComplete="email" placeholder="your.email@example.com" {...field} disabled={isLoading} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -421,7 +421,7 @@ export function AuthForms({ onClose }: { onClose?: () => void }) {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} disabled={isLoading} />
+                      <Input type="password" autoComplete="new-password" placeholder="••••••••" {...field} disabled={isLoading} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -434,7 +434,7 @@ export function AuthForms({ onClose }: { onClose?: () => void }) {
                   <FormItem>
                     <FormLabel>Confirm Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} disabled={isLoading} />
+                      <Input type="password" autoComplete="new-password" placeholder="••••••••" {...field} disabled={isLoading} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

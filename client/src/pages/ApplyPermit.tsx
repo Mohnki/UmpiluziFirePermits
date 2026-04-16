@@ -48,11 +48,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CalendarIcon, Flame, Loader2, MapPin, Bookmark } from "lucide-react";
+import { CalendarIcon, Flame, Loader2, MapPin, Bookmark, ChevronDown, ChevronUp } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
+import { useConfirm } from "@/components/ui/confirm-dialog";
+import { RequiredMark } from "@/components/ui/required-mark";
+import { FullPageSpinner, LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 // Form schema
 const permitFormSchema = z.object({
@@ -114,12 +118,14 @@ function LocationPicker({ position, setPosition }: {
   
   return (
     <div className="w-full h-full">
-      <MapContainer 
-        center={position || [-26.233070192235484, 30.497703552246097]} // Default to specified coordinates
-        zoom={position ? 13 : 9} 
+      <MapContainer
+        center={position || [-26.233070192235484, 30.497703552246097]}
+        zoom={position ? 13 : 9}
         style={{ height: '100%', width: '100%' }}
         scrollWheelZoom={true}
         zoomControl={true}
+        role="region"
+        aria-label="Burn location picker. Click the map to place a marker."
       >
         <TileLayer
           url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
@@ -138,11 +144,14 @@ export default function ApplyPermitPage() {
   const { user, loading } = useAuth();
   const { toast } = useToast();
   const [location, navigate] = useLocation();
-  
+  const confirm = useConfirm();
+
   const [farms, setFarms] = useState<Farm[]>([]);
+  const [noFarms, setNoFarms] = useState(false);
   const [burnTypes, setBurnTypes] = useState<BurnType[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
+  const [geoLoading, setGeoLoading] = useState(false);
   const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
   const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -178,17 +187,9 @@ export default function ApplyPermitPage() {
           setFarms(userFarms);
           
           if (userFarms.length === 0) {
-            toast({
-              title: "No Farms Found",
-              description: "You need to register a farm before applying for a burn permit. Redirecting to the farm management page.",
-              duration: 5000,
-            });
-            
-            // Give the user time to read the message before redirecting
-            setTimeout(() => {
-              navigate("/my-farms");
-            }, 2500);
-            return; // Exit early if no farms
+            setNoFarms(true);
+            setLoadingData(false);
+            return;
           }
         } catch (farmError) {
           console.error("Error fetching farms:", farmError);
@@ -247,6 +248,7 @@ export default function ApplyPermitPage() {
     const getLocation = () => {
       if (navigator.geolocation) {
         setLocationError(null);
+        setGeoLoading(true);
         navigator.geolocation.getCurrentPosition(
           (position) => {
             const { latitude, longitude } = position.coords;
@@ -256,8 +258,10 @@ export default function ApplyPermitPage() {
               latitude,
               longitude,
             });
+            setGeoLoading(false);
           },
           (error) => {
+            setGeoLoading(false);
             console.error("Error getting location:", error);
             let errorMessage = "Could not get your current location.";
             
@@ -362,17 +366,40 @@ export default function ApplyPermitPage() {
 
   // Loading state
   if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2">Loading...</span>
-      </div>
-    );
+    return <FullPageSpinner />;
   }
 
   // Redirect if not logged in
   if (!loading && !user) {
     return <Redirect to="/" />;
+  }
+
+  // Empty state: no farms registered.
+  if (!loadingData && noFarms) {
+    return (
+      <>
+        <Helmet>
+          <title>Register a farm first - Umpiluzi Fire Protection Association</title>
+        </Helmet>
+        <div className="flex flex-col min-h-screen">
+          <Header />
+          <main className="flex-grow bg-gray-50 dark:bg-gray-900">
+            <div className="mx-auto max-w-2xl px-4 py-16 text-center">
+              <MapPin className="h-12 w-12 mx-auto mb-4 text-muted-foreground" aria-hidden="true" />
+              <h1 className="text-2xl font-bold mb-2">Register a farm first</h1>
+              <p className="text-muted-foreground mb-6">
+                You need at least one registered farm before you can apply for a burn permit.
+              </p>
+              <Button size="lg" className="h-11" onClick={() => navigate("/my-farms")}>
+                <MapPin className="h-4 w-4 mr-2" aria-hidden="true" />
+                Register a farm
+              </Button>
+            </div>
+          </main>
+          <Footer />
+        </div>
+      </>
+    );
   }
 
   return (
@@ -410,20 +437,25 @@ export default function ApplyPermitPage() {
                 </CardHeader>
                 <CardContent>
                   {loadingData ? (
-                    <div className="flex items-center justify-center py-10">
-                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                      <span className="ml-2">Loading form data...</span>
-                    </div>
+                    <FullPageSpinner label="Loading form data" />
                   ) : (
                     <Form {...form}>
-                      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                      <form
+                        onSubmit={form.handleSubmit(onSubmit, (errors) => {
+                          const first = Object.keys(errors)[0];
+                          if (first) {
+                            try { form.setFocus(first as any); } catch {}
+                          }
+                        })}
+                        className="space-y-6"
+                      >
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <FormField
                             control={form.control}
                             name="farmId"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Farm</FormLabel>
+                                <FormLabel>Farm<RequiredMark /></FormLabel>
                                 <Select
                                   onValueChange={field.onChange}
                                   defaultValue={field.value}
@@ -454,7 +486,7 @@ export default function ApplyPermitPage() {
                             name="burnTypeId"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Burn Type</FormLabel>
+                                <FormLabel>Burn Type<RequiredMark /></FormLabel>
                                 <Select
                                   onValueChange={field.onChange}
                                   defaultValue={field.value}
@@ -515,19 +547,23 @@ export default function ApplyPermitPage() {
                             <div className="flex items-center justify-between mb-2">
                               <h3 className="text-base font-medium">Burn Location</h3>
                               
-                              <Button 
-                                type="button" 
-                                variant="outline" 
+                              <Button
+                                type="button"
+                                variant="outline"
                                 size="sm"
+                                disabled={geoLoading}
                                 onClick={() => {
                                   if (navigator.geolocation) {
+                                    setGeoLoading(true);
                                     navigator.geolocation.getCurrentPosition(
                                       (position) => {
                                         const { latitude, longitude } = position.coords;
                                         setMarkerPosition([latitude, longitude]);
                                         setLocationError(null);
+                                        setGeoLoading(false);
                                       },
                                       (error) => {
+                                        setGeoLoading(false);
                                         console.error("Error getting location:", error);
                                         setLocationError("PERMISSION_DENIED");
                                         toast({
@@ -539,10 +575,10 @@ export default function ApplyPermitPage() {
                                     );
                                   }
                                 }}
-                                className="flex items-center gap-1"
+                                className="flex items-center gap-1 h-11"
                               >
-                                <MapPin className="h-4 w-4" />
-                                Use My Location
+                                {geoLoading ? <LoadingSpinner size="sm" /> : <MapPin className="h-4 w-4" aria-hidden="true" />}
+                                {geoLoading ? "Locating…" : "Use My Location"}
                               </Button>
                             </div>
                             
@@ -559,21 +595,27 @@ export default function ApplyPermitPage() {
                                       Location permission was denied. Click 'Use My Location' and allow location access, or manually set a location by clicking on the map below.
                                     </p>
                                     <div className="mt-2">
-                                      <Button 
-                                        type="button" 
-                                        size="sm" 
+                                      <Button
+                                        type="button"
+                                        size="sm"
                                         variant="outline"
                                         className="text-xs"
-                                        onClick={() => {
-                                          // This opens browser settings for most browsers
-                                          if (window.confirm("Would you like to open your browser settings to enable location access?")) {
-                                            if (navigator.userAgent.indexOf("Chrome") !== -1) {
-                                              window.open('chrome://settings/content/location');
-                                            } else if (navigator.userAgent.indexOf("Firefox") !== -1) {
-                                              window.open('about:preferences#privacy');
-                                            } else {
-                                              alert("Please manually enable location access in your browser settings.");
-                                            }
+                                        onClick={async () => {
+                                          const ok = await confirm({
+                                            title: "Open browser settings?",
+                                            description: "This will take you to your browser's location permissions page.",
+                                            confirmLabel: "Open settings",
+                                          });
+                                          if (!ok) return;
+                                          if (navigator.userAgent.indexOf("Chrome") !== -1) {
+                                            window.open("chrome://settings/content/location");
+                                          } else if (navigator.userAgent.indexOf("Firefox") !== -1) {
+                                            window.open("about:preferences#privacy");
+                                          } else {
+                                            toast({
+                                              title: "Enable location",
+                                              description: "Please enable location access in your browser settings.",
+                                            });
                                           }
                                         }}
                                       >
@@ -609,12 +651,13 @@ export default function ApplyPermitPage() {
                                 name="location.latitude"
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>Latitude</FormLabel>
+                                    <FormLabel>Latitude<RequiredMark /></FormLabel>
                                     <FormControl>
-                                      <Input 
-                                        type="number" 
-                                        step="any" 
-                                        placeholder="Latitude" 
+                                      <Input
+                                        type="number"
+                                        step="any"
+                                        inputMode="decimal"
+                                        aria-label="Latitude (decimal degrees)"
                                         {...field}
                                         onChange={(e) => {
                                           const value = parseFloat(e.target.value);
@@ -623,25 +666,27 @@ export default function ApplyPermitPage() {
                                             setMarkerPosition([value, markerPosition[1]]);
                                           }
                                         }}
-                                        value={field.value || ""} 
+                                        value={field.value || ""}
                                       />
                                     </FormControl>
+                                    <FormDescription>Decimal degrees, e.g. -26.2330</FormDescription>
                                     <FormMessage />
                                   </FormItem>
                                 )}
                               />
-                              
+
                               <FormField
                                 control={form.control}
                                 name="location.longitude"
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>Longitude</FormLabel>
+                                    <FormLabel>Longitude<RequiredMark /></FormLabel>
                                     <FormControl>
-                                      <Input 
-                                        type="number" 
-                                        step="any" 
-                                        placeholder="Longitude" 
+                                      <Input
+                                        type="number"
+                                        step="any"
+                                        inputMode="decimal"
+                                        aria-label="Longitude (decimal degrees)"
                                         {...field}
                                         onChange={(e) => {
                                           const value = parseFloat(e.target.value);
@@ -650,9 +695,10 @@ export default function ApplyPermitPage() {
                                             setMarkerPosition([markerPosition[0], value]);
                                           }
                                         }}
-                                        value={field.value || ""} 
+                                        value={field.value || ""}
                                       />
                                     </FormControl>
+                                    <FormDescription>Decimal degrees, e.g. 30.4977</FormDescription>
                                     <FormMessage />
                                   </FormItem>
                                 )}
@@ -682,8 +728,12 @@ export default function ApplyPermitPage() {
                           )}
                         />
                         
-                        <div className="border rounded-md p-4 mb-6 bg-gray-50 dark:bg-gray-800/50 max-h-80 overflow-y-auto">
-                          <h3 className="font-semibold mb-2">Disclaimer</h3>
+                        <Collapsible defaultOpen className="border rounded-md p-4 mb-6 bg-gray-50 dark:bg-gray-800/50">
+                          <CollapsibleTrigger className="flex w-full items-center justify-between text-left font-semibold mb-2 group">
+                            <span>Disclaimer</span>
+                            <ChevronDown className="h-5 w-5 transition-transform group-data-[state=open]:rotate-180" aria-hidden="true" />
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="md:max-h-80 md:overflow-y-auto">
                           <div className="text-sm text-gray-700 dark:text-gray-300 space-y-4">
                             <p>Please read this disclaimer carefully before using the Alasia Marketing permit management app ("the App"). By using the App, you agree to the terms and conditions stated below.</p>
                             
@@ -726,7 +776,8 @@ export default function ApplyPermitPage() {
                             
                             <p>This disclaimer is subject to change without notice. It is your responsibility to review and understand the most up-to-date version of the disclaimer before using the App.</p>
                           </div>
-                        </div>
+                          </CollapsibleContent>
+                        </Collapsible>
                         
                         <FormField
                           control={form.control}
@@ -734,15 +785,17 @@ export default function ApplyPermitPage() {
                           render={({ field }) => (
                             <FormItem className="flex flex-row items-start space-x-3 space-y-0 mb-6">
                               <FormControl>
-                                <Checkbox 
+                                <Checkbox
+                                  id="acceptDisclaimer"
                                   checked={field.value}
                                   onCheckedChange={field.onChange}
+                                  className="mt-0.5"
                                 />
                               </FormControl>
                               <div className="space-y-1 leading-none">
-                                <FormLabel className="font-medium cursor-pointer">
-                                  I have read and agree to the disclaimer
-                                </FormLabel>
+                                <label htmlFor="acceptDisclaimer" className="font-medium cursor-pointer select-none block py-1">
+                                  I have read and agree to the disclaimer<RequiredMark />
+                                </label>
                                 <FormMessage />
                               </div>
                             </FormItem>
@@ -750,13 +803,14 @@ export default function ApplyPermitPage() {
                         />
                         
                         <div className="flex justify-end">
-                          <Button 
-                            type="submit" 
-                            disabled={isSubmitting || !form.watch("acceptDisclaimer")} 
-                            className="w-full md:w-auto"
+                          <Button
+                            type="submit"
+                            disabled={isSubmitting || !form.watch("acceptDisclaimer")}
+                            className="w-full md:w-auto h-11"
+                            size="lg"
                           >
-                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Submit Application
+                            {isSubmitting && <LoadingSpinner size="sm" className="mr-2 text-primary-foreground" />}
+                            {isSubmitting ? "Submitting…" : "Submit Application"}
                           </Button>
                         </div>
                       </form>

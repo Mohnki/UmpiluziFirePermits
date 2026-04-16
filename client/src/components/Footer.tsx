@@ -21,10 +21,10 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold text-lg mb-4">Quick Links</h4>
             <ul className="space-y-2">
-              <li><a href="#" className="text-gray-400 hover:text-white transition">Home</a></li>
-              <li><a href="#about" className="text-gray-400 hover:text-white transition">What We Do</a></li>
-              <li><a href="#permits" className="text-gray-400 hover:text-white transition">Fire Permits</a></li>
-              <li><a href="#contact" className="text-gray-400 hover:text-white transition">Contact</a></li>
+              <li><a href="#" className="text-gray-300 hover:text-white hover:underline focus:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded transition">Home</a></li>
+              <li><a href="#about" className="text-gray-300 hover:text-white hover:underline focus:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded transition">What We Do</a></li>
+              <li><a href="#permits" className="text-gray-300 hover:text-white hover:underline focus:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded transition">Fire Permits</a></li>
+              <li><a href="#contact" className="text-gray-300 hover:text-white hover:underline focus:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded transition">Contact</a></li>
             </ul>
           </div>
 

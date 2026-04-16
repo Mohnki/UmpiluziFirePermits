@@ -197,9 +197,9 @@ export default function TodaysPermits() {
             </div>
             
             {loadingPermits ? (
-              <div className="flex items-center justify-center py-20">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                <span className="ml-2">Loading permits map...</span>
+              <div className="flex flex-col items-center justify-center py-20 gap-3" role="status" aria-live="polite">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" aria-hidden="true" />
+                <span className="text-sm text-muted-foreground">Loading permits map…</span>
               </div>
             ) : (
               <div className="rounded-lg overflow-hidden border">
@@ -207,7 +207,7 @@ export default function TodaysPermits() {
                   {todaysPermits.length === 0 ? (
                     <div className="flex items-center justify-center h-full bg-gray-50 dark:bg-gray-700">
                       <div className="text-center">
-                        <MapPin className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                        <MapPin className="h-12 w-12 mx-auto mb-4 text-gray-400" aria-hidden="true" />
                         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
                           No Active Permits Today
                         </h3>
@@ -232,6 +232,8 @@ export default function TodaysPermits() {
                           style={{ height: '100%', width: '100%' }}
                           bounds={todaysPermits.map(p => [p.location!.latitude, p.location!.longitude])}
                           boundsOptions={{ padding: [20, 20] }}
+                          role="region"
+                          aria-label="Map of today's active burn permits. Use arrow keys to pan, plus and minus keys to zoom."
                         >
                           <TileLayer
                             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -255,7 +257,7 @@ export default function TodaysPermits() {
                                     <div className="space-y-1 text-sm">
                                       <div><strong>Burn Type:</strong> {burnType?.name || 'Unknown Type'}</div>
                                       <div><strong>Area:</strong> {area?.name || 'Unknown Area'}</div>
-                                      <div><strong>Valid:</strong> {new Date(permit.startDate).toLocaleDateString()} - {new Date(permit.endDate).toLocaleDateString()}</div>
+                                      <div><strong>Valid:</strong> <span className="tabular-nums">{new Date(permit.startDate).toLocaleDateString("en-ZA")} – {new Date(permit.endDate).toLocaleDateString("en-ZA")}</span></div>
                                       <div><strong>Status:</strong> 
                                         <Badge variant="default" className="ml-1 text-xs">
                                           {permit.status.toUpperCase()}

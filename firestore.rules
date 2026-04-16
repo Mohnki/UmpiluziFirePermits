@@ -1,0 +1,105 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isAreaManager() {
+      return isAuthenticated() &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'area-manager';
+    }
+
+    function isCurrentUser(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isManagerOfArea(areaId) {
+      return isAuthenticated() &&
+             exists(/databases/$(database)/documents/areas/$(areaId)) &&
+             get(/databases/$(database)/documents/areas/$(areaId)).data.areaManagerId == request.auth.uid;
+    }
+
+    function isOwnerOfFarm(farmId) {
+      return isAuthenticated() &&
+             exists(/databases/$(database)/documents/farms/$(farmId)) &&
+             get(/databases/$(database)/documents/farms/$(farmId)).data.userId == request.auth.uid;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if isCurrentUser(userId) || isAdmin() || isAreaManager();
+      allow create: if isAuthenticated();
+      allow update: if isCurrentUser(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Areas collection
+    match /areas/{areaId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin();
+      allow update: if isAdmin() || isManagerOfArea(areaId);
+      allow delete: if isAdmin();
+    }
+
+    // Burn Types collection
+    match /burnTypes/{burnTypeId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Burn Permits collection
+    match /burnPermits/{permitId} {
+      allow read: if isAuthenticated() && (
+                    resource.data.userId == request.auth.uid ||
+                    isAdmin() ||
+                    (isAreaManager() && isManagerOfArea(resource.data.areaId))
+                  );
+      allow create: if isAuthenticated();
+      allow update: if isAdmin() ||
+                    (isAreaManager() && isManagerOfArea(resource.data.areaId)) ||
+                    (isCurrentUser(resource.data.userId) && resource.data.status == "pending");
+      allow delete: if isAdmin();
+    }
+
+    // Burn Bans collection
+    match /burnBans/{banId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin() || isAreaManager();
+      allow update, delete: if isAdmin() ||
+                            (isAreaManager() && resource.data.createdBy == request.auth.uid);
+    }
+
+    // Farms collection
+    match /farms/{farmId} {
+      allow read: if isAuthenticated() && (
+                     isCurrentUser(resource.data.userId) ||
+                     isAdmin() ||
+                     (isAreaManager() && isManagerOfArea(resource.data.areaId))
+                  );
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isOwnerOfFarm(farmId) || isAdmin();
+      allow delete: if isOwnerOfFarm(farmId) || isAdmin();
+    }
+
+    // Documents collection — writes go through Cloud Functions (Admin SDK bypasses rules).
+    // Client-side reads allowed for public docs; admins see all.
+    match /documents/{documentId} {
+      allow read: if isAuthenticated() && (resource.data.isPublic == true || isAdmin());
+      allow create, update, delete: if false;
+    }
+
+    // API usage logs — server-only (Admin SDK). Deny all client access.
+    match /apiUsageLogs/{logId} {
+      allow read, write: if false;
+    }
+  }
+}

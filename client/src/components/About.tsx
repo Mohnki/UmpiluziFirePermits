@@ -1,11 +1,12 @@
 import {
-  Goal,
-  MapPinIcon,
-  ScaleIcon,
   Clipboard,
   Shield,
   AlertTriangle,
   ArrowRight,
+  Flame,
+  Users,
+  BookOpen,
+  Target,
 } from "lucide-react";
 import { Link } from "wouter";
 import {
@@ -15,202 +16,155 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
+const services = [
+  {
+    icon: Clipboard,
+    title: "Fire management planning",
+    body: "Legal compliance, risk mapping, strategic fire breaks, and fire management plans for your land.",
+  },
+  {
+    icon: Shield,
+    title: "Fire preparedness",
+    body: "Training courses, daily Fire Danger Index forecasts during fire season, and community awareness.",
+  },
+  {
+    icon: Users,
+    title: "Stakeholder coordination",
+    body: "We represent landowners with Fire Brigade, Eskom, Working on Fire, municipalities, and government.",
+  },
+  {
+    icon: BookOpen,
+    title: "Knowledge & advice",
+    body: "Guidance on integrated fire management, fuel reduction, equipment, and controlled burning.",
+  },
+];
+
+const aims = [
+  "Ensure all members comply with the National Veld and Forest Fire Act.",
+  "Encourage integrated fire management for landowners and public entities.",
+  "Prevent and control wildfires across the region.",
+  "Maintain ecosystem diversity in natural areas through managed fire.",
+  "Minimise the risk and adverse consequences of wildfire hazards.",
+];
+
+const nonServices = [
+  "Provide a firefighting service",
+  "Fulfil the role of the fire brigade",
+  "Handle structural firefighting",
+  "Enforce voluntary membership",
+];
+
 export default function About() {
-  const aims = [
-    "Ensure that all members comply with the legal requirements of the National Veld and Forest Fire Act.",
-    "Encourage integrated fire management for private landowners and public entities.",
-    "Prevent and control wildfires.",
-    "Manage wildfires in natural areas in order to maintain diversity of species and ecosystems.",
-    "Manage wildfire hazards so as to minimise the risk and any adverse consequences.",
-  ];
-
-  const services = [
-    "Develop and implement a Veldfire Management Strategy for the area",
-    "Assist members to meet their responsibilities according to the Act, our constitution and our rules",
-    "Improve the knowledge base to help land users implement integrated fire management strategies",
-    "Improve awareness on integrated fire management and prevention and empower local communities to become more aware of the risks of fire",
-    "Reduce fire risk associated with the occurrence of wildfires by devising integrated fire management plans",
-    "Assist members with managing any incidents of wildfire as appropriate",
-    "Represent landowners at local and provincial forums for veldfire management and report back to landowners on decisions that may impact them",
-  ];
-
-  const nonServices = [
-    "Provide a firefighting service",
-    "Fulfil the role of the fire brigade services",
-    "Get involved in structural firefighting or related issues",
-    "Enforce membership to the organisation. Membership is voluntary other than for state organisations that own land or manage land, for which membership is compulsory",
-  ];
-
   return (
-    <section id="about" className="py-12 md:py-16 bg-white">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-            WHAT WE DO
+    <section id="about" className="py-16 md:py-24 bg-muted/30">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-2xl mb-12">
+          <p className="text-sm font-semibold uppercase tracking-wider text-primary mb-2">
+            About UFPA
+          </p>
+          <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
+            Integrated community fire management.
           </h2>
-          <div className="w-20 h-1 bg-primary mx-auto mt-4 mb-6"></div>
-          <p className="text-muted-foreground max-w-3xl mx-auto">
-            We provide an integrated community fire management service to
-            members of the Association.
+          <p className="text-muted-foreground text-lg">
+            The Umpiluzi Fire Protection Association supports landowners with
+            compliant, coordinated, and effective fire management — so the
+            land, the livestock, and the people stay safe.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-10 mb-12">
-          <div className="bg-muted p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold mb-4 text-primary flex items-center">
-              <Clipboard className="h-6 w-6 mr-2" />
-              INTEGRATED FIRE MANAGEMENT PLANNING
-            </h3>
-            <ul className="space-y-2">
-              <li className="flex items-start">
-                <span className="text-primary mr-2">•</span>
-                <span>
-                  We help you to become legally compliant, as per national
-                  regulations
+        {/* Service grid */}
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-12">
+          {services.map((s) => {
+            const Icon = s.icon;
+            return (
+              <div
+                key={s.title}
+                className="rounded-xl border bg-card p-6 shadow-sm hover:shadow-md transition-shadow"
+              >
+                <span
+                  aria-hidden="true"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary mb-4"
+                >
+                  <Icon className="h-5 w-5" />
                 </span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-primary mr-2">•</span>
-                <span>
-                  We identify high risk areas and help with risk reduction
-                </span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-primary mr-2">•</span>
-                <span>We support Fire Management Plans</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-primary mr-2">•</span>
-                <span>
-                  We facilitate fire break planning for communal areas and
-                  strategic fire breaks
-                </span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-primary mr-2">•</span>
-                <span>
-                  We offer advice on compliance with the law (National Veld and
-                  Forest Fire Act)
-                </span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-primary mr-2">•</span>
-                <span>We help map members</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-primary mr-2">•</span>
-                <span>
-                  We offer advice on Integrated Fire Management (including fire
-                  breaks, fuel reduction, equipment needed, etc.)
-                </span>
-              </li>
-            </ul>
-          </div>
-
-          <div className="bg-muted p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold mb-4 text-primary flex items-center">
-              <Shield className="h-6 w-6 mr-2" />
-              FIRE PREPAREDNESS
-            </h3>
-            <ul className="space-y-2">
-              <li className="flex items-start">
-                <span className="text-primary mr-2">•</span>
-                <span>
-                  We organise training courses (including courses on Basic Fire
-                  Suppression, Controlled Burning, Infield Simulation and more)
-                </span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-primary mr-2">•</span>
-                <span>
-                  We provide a daily Fire Danger Index forecast during the fire
-                  season
-                </span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-primary mr-2">•</span>
-                <span>
-                  We support awareness: Media, Social Media and general public
-                </span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-primary mr-2">•</span>
-                <span>We facilitate Fire Management Unit preparedness</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-primary mr-2">•</span>
-                <span>
-                  We support stakeholder engagement (including with the Fire
-                  Brigade, Eskom, Farmers' Associations, Working on Fire,
-                  Municipalities, Forestry, Transnet, national government
-                  departments, donors, conservancies)
-                </span>
-              </li>
-            </ul>
-          </div>
+                <h3 className="font-semibold mb-2">{s.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{s.body}</p>
+              </div>
+            );
+          })}
         </div>
 
-        <div className="bg-orange-50 p-6 rounded-lg shadow-md mb-10">
-          <h3 className="text-xl font-semibold mb-4 text-primary flex items-center">
-            <AlertTriangle className="h-6 w-6 mr-2" />
-            UFPA DOES NOT
-          </h3>
-          <ul className="space-y-2">
-            {nonServices.map((item, index) => (
-              <li key={index} className="flex items-start">
-                <span className="text-primary mr-2">•</span>
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="mb-10">
-          <h3 className="text-xl font-semibold mb-4 text-center">
-            THE AIMS OF UFPA ARE TO
-          </h3>
-          <ul className="space-y-2 max-w-3xl mx-auto">
-            {aims.map((aim, index) => (
-              <li key={index} className="flex items-start">
-                <span className="text-primary mr-2">•</span>
-                <span>{aim}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="bg-muted p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-semibold mb-4 text-center">
-            WE PROVIDE AN INTEGRATED COMMUNITY FIRE MANAGEMENT SERVICE
-          </h3>
-          <ul className="space-y-2">
-            {services.map((service, index) => (
-              <li key={index} className="flex items-start">
-                <span className="text-primary mr-2">•</span>
-                <span>{service}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Member Benefits Call to Action */}
-        <div className="text-center mt-12">
-          <div className="bg-gradient-to-r from-primary/10 to-orange-500/10 rounded-lg p-8 max-w-4xl mx-auto border border-primary/20">
-            <div className="flex justify-center mb-4">
-              <Shield className="h-12 w-12 text-primary" />
+        {/* Aims + What UFPA does not do side by side */}
+        <div className="grid gap-6 md:grid-cols-2 mb-12">
+          <div className="rounded-xl border bg-card p-6 md:p-8 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <Target className="h-5 w-5 text-primary" aria-hidden="true" />
+              <h3 className="text-lg font-semibold">Our aims</h3>
             </div>
-            <h3 className="text-2xl font-bold text-foreground mb-4">Discover Your Member Benefits</h3>
-            <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-              From legal protection and training opportunities to fire danger forecasts and expert advice - 
-              explore the comprehensive benefits of UFPA membership.
-            </p>
-            <Link href="/safety">
-              <button className="bg-primary text-primary-foreground hover:bg-primary/90 transition px-6 py-3 rounded-lg font-medium inline-flex items-center">
-                View All Benefits
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </button>
-            </Link>
+            <ul className="space-y-3">
+              {aims.map((aim) => (
+                <li key={aim} className="flex items-start gap-3 text-sm">
+                  <Flame className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
+                  <span className="text-foreground/90">{aim}</span>
+                </li>
+              ))}
+            </ul>
           </div>
+
+          <div className="rounded-xl border bg-orange-50/60 dark:bg-orange-950/20 border-orange-200/50 dark:border-orange-900/50 p-6 md:p-8 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-400" aria-hidden="true" />
+              <h3 className="text-lg font-semibold">What UFPA does not do</h3>
+            </div>
+            <ul className="space-y-3">
+              {nonServices.map((item) => (
+                <li key={item} className="flex items-start gap-3 text-sm">
+                  <span aria-hidden="true" className="mt-1.5 h-1.5 w-1.5 rounded-full bg-orange-500 flex-shrink-0" />
+                  <span className="text-foreground/90">{item}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs text-muted-foreground mt-4 pt-4 border-t border-orange-200/50 dark:border-orange-900/50">
+              Membership is voluntary except for state organisations that own or manage land.
+            </p>
+          </div>
+        </div>
+
+        {/* Full service list collapsed */}
+        <Accordion type="single" collapsible className="max-w-4xl">
+          <AccordionItem value="full-list" className="border rounded-xl bg-card px-6">
+            <AccordionTrigger className="text-left font-semibold hover:no-underline">
+              See the full list of what UFPA provides members
+            </AccordionTrigger>
+            <AccordionContent className="text-sm text-muted-foreground">
+              <ul className="space-y-2 pt-2">
+                <li>• Develop and implement a veld-fire management strategy for the area</li>
+                <li>• Assist members to meet their responsibilities under the Act, our constitution, and our rules</li>
+                <li>• Improve the knowledge base to help land users implement integrated fire management</li>
+                <li>• Raise awareness on integrated fire management and empower local communities</li>
+                <li>• Reduce fire risk through integrated fire management plans</li>
+                <li>• Assist members managing wildfire incidents as appropriate</li>
+                <li>• Represent landowners at local and provincial forums and report back to members</li>
+              </ul>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+
+        {/* Member benefits CTA */}
+        <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-xl border bg-gradient-to-r from-primary/5 to-orange-500/5 p-6">
+          <div className="flex items-center gap-4">
+            <Shield className="h-8 w-8 text-primary" aria-hidden="true" />
+            <div>
+              <h3 className="font-semibold">Discover your member benefits</h3>
+              <p className="text-sm text-muted-foreground">Legal protection, training, fire-danger forecasts, and more.</p>
+            </div>
+          </div>
+          <Link href="/safety">
+            <button className="inline-flex items-center h-11 px-5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              View all benefits
+              <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+            </button>
+          </Link>
         </div>
       </div>
     </section>

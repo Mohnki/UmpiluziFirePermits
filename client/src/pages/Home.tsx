@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/lib/AuthContext";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
+import HowItWorks from "@/components/HowItWorks";
 import About from "@/components/About";
 import PermitsInfo from "@/components/PermitsInfo";
 import Documents from "@/components/Documents";
@@ -50,8 +51,9 @@ export default function Home() {
         <Header />
         <main className="flex-grow">
           <Hero />
-          <About />
+          <HowItWorks />
           <PermitsInfo />
+          <About />
           <Documents />
           <Contact />
         </main>

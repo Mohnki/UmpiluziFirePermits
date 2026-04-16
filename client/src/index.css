@@ -29,22 +29,35 @@
   --background: 222 14% 20%;
   --foreground: 210 40% 98%;
   --muted: 217 10% 27%;
-  --muted-foreground: 215 20.2% 65.1%;
+  --muted-foreground: 215 20.2% 75%;
   --popover: 222 14% 20%;
   --popover-foreground: 210 40% 98%;
   --card: 222 14% 20%;
   --card-foreground: 210 40% 98%;
-  --border: 217 10% 27%;
-  --input: 217 10% 27%;
-  --primary: 0 78% 48%; /* #DB2B1B - fire red */
-  --primary-foreground: 210 40% 98%;
-  --secondary: 37 95% 56%; /* #F9A826 - fire orange */
+  --border: 217 10% 30%;
+  --input: 217 10% 30%;
+  --primary: 0 85% 62%; /* lighter red for dark-mode contrast (~5.5:1 on dark bg) */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 37 95% 62%;
   --secondary-foreground: 222 14% 20%;
-  --accent: 28 81% 52%; /* #E67E22 - fire accent */
+  --accent: 28 81% 58%;
   --accent-foreground: 210 40% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 0 0% 98%;
-  --ring: 212.7 26.8% 83.9%;
+  --destructive: 0 75% 55%;
+  --destructive-foreground: 0 0% 100%;
+  --ring: 0 85% 62%;
+}
+
+/* Restore visible focus rings for keyboard users */
+*:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Improve disabled-input contrast so error/helper text remains readable */
+input:disabled,
+textarea:disabled,
+select:disabled {
+  opacity: 0.7;
 }
 
 @layer base {
